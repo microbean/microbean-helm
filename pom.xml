@@ -222,6 +222,9 @@
     <findbugs.effort>Max</findbugs.effort>
     <findbugs.excludeFilterFile>src/findbugs/exclude.xml</findbugs.excludeFilterFile>
     <findbugs.threshold>Medium</findbugs.threshold>
+
+    <!-- maven-javadoc-plugin properties; see https://maven.apache.org/plugins/maven-javadoc-plugin/javadoc-mojo.html -->
+    <links>http://www.grpc.io/grpc-java/javadoc/,https://developers.google.com/protocol-buffers/docs/reference/java/,https://google.github.io/guava/releases/19.0/api/docs/</links>
     
     <!-- maven-release-plugin properties; see http://maven.apache.org/maven-release/maven-release-plugin/perform-mojo.html -->
     <goals>deploy,site-deploy</goals>
