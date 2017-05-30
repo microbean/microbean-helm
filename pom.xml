@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.microbean</groupId>
+  <artifactId>microbean-helm</artifactId>
+  <version>2.4.2-SNAPSHOT</version>
+
+  <parent>
+    <groupId>org.microbean</groupId>
+    <artifactId>microbean-pluginmanagement-pom</artifactId>
+    <version>3</version>
+  </parent>
+
+  <name>MicroBean Helm</name>
+  <description>Java bindings for the Helm API</description>
+  <inceptionYear>2017</inceptionYear>
+  <url>https://microbean.github.io/${project.artifactId}</url>
+
+  <scm>
+    <connection>scm:git:git@github.com:microbean/${project.artifactId}.git</connection>
+    <developerConnection>scm:git:git@github.com:microbean/${project.artifactId}.git</developerConnection>
+    <url>https://github.com/microbean/${project.artifactId}/</url>
+  </scm>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>3.3.1</version>
+        <type>jar</type>
+      </dependency>
+      
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+
+    <!-- Compile-scoped dependencies. -->
+    
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+    
+  </dependencies>
+
+  <build>
+
+    <extensions>
+      <extension>
+        <groupId>kr.motd.maven</groupId>
+        <artifactId>os-maven-plugin</artifactId>
+        <version>1.3.0.Final</version>
+      </extension>
+    </extensions>
+
+    <sourceDirectory>${project.build.directory}/generated-sources/protobuf/java</sourceDirectory>
+    
+    <resources>
+
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      
+      <resource>
+        <targetPath>META-INF</targetPath>
+        <directory />
+        <includes>
+          <include>LICENSE</include>
+        </includes>
+      </resource>
+
+    </resources>
+
+    <pluginManagement>
+      <plugins>
+
+        <plugin>
+          <artifactId>maven-scm-plugin</artifactId>
+          <version>1.9.5</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>3.0.4</version>
+        </plugin>
+        
+        <plugin>
+          <groupId>org.jboss.jandex</groupId>
+          <artifactId>jandex-maven-plugin</artifactId>
+          <version>1.0.5</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.xolstice.maven.plugins</groupId>
+          <artifactId>protobuf-maven-plugin</artifactId>
+          <version>0.5.0</version>
+          <extensions>true</extensions>
+          <configuration>
+            <protocArtifact>com.google.protobuf:protoc:3.3.0:exe:${os.detected.classifier}</protocArtifact>
+          </configuration>
+        </plugin>
+        
+      </plugins>
+    </pluginManagement>
+    
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-scm-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>Checkout Helm Protocol Buffers source code</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>checkout</goal>
+            </goals>
+            <configuration>
+              <checkoutDirectory>${project.build.directory}/generated-sources/helm</checkoutDirectory>
+              <connectionUrl>scm:git:git@github.com:kubernetes/helm.git</connectionUrl>
+              <includes>_proto/hapi/**</includes>
+              <scmVersion>v2.4.2</scmVersion>
+              <scmVersionType>tag</scmVersionType>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.github.github</groupId>
+        <artifactId>site-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.xolstice.maven.plugins</groupId>
+        <artifactId>protobuf-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>Generate Java from protocol buffers</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <checkStaleness>true</checkStaleness>
+              <protoSourceRoot>${project.build.directory}/generated-sources/helm/_proto</protoSourceRoot>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
+    </plugins>
+  </build>
+
+  <properties>
+
+    <!-- findbugs-maven-plugin properties; see http://gleclaire.github.io/findbugs-maven-plugin/findbugs-mojo.html -->
+    <findbugs.effort>Max</findbugs.effort>
+    <findbugs.excludeFilterFile>src/findbugs/exclude.xml</findbugs.excludeFilterFile>
+    <findbugs.threshold>Medium</findbugs.threshold>
+    
+    <!-- maven-release-plugin properties; see http://maven.apache.org/maven-release/maven-release-plugin/perform-mojo.html -->
+    <goals>deploy,site-deploy</goals>
+
+    <!-- maven-scm-plugin properties; see http://maven.apache.org/components/scm/maven-scm-plugin/checkout-mojo.html -->
+    <skipCheckoutIfExists>true</skipCheckoutIfExists>
+    
+  </properties>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
+  
+</project>
