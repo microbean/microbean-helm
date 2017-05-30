@@ -26,6 +26,21 @@
     <url>https://github.com/microbean/${project.artifactId}/</url>
   </scm>
 
+  <!--
+
+     For more on the structure of this pom.xml file, which is chiefly
+     concerned with downloading some .proto meta-source files,
+     generating Java source code from them, and compiling the
+     resulting source code, see the following links:
+
+       * https://www.xolstice.org/protobuf-maven-plugin/:
+         The Maven plugin for working with Google's protocol buffers.
+
+       * https://github.com/grpc/grpc-java#download:
+         Documentation for hte grpc-java protoc plugin.
+
+  -->
+  
   <dependencyManagement>
     <dependencies>
 
@@ -33,6 +48,27 @@
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
         <version>3.3.1</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-netty</artifactId>
+        <version>1.3.0</version>
+        <type>jar</type>
+      </dependency>
+      
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-protobuf</artifactId>
+        <version>1.3.0</version>
+        <type>jar</type>
+      </dependency>
+      
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-stub</artifactId>
+        <version>1.3.0</version>
         <type>jar</type>
       </dependency>
       
@@ -49,6 +85,27 @@
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
+
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-netty</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
     
   </dependencies>
 
@@ -62,8 +119,6 @@
       </extension>
     </extensions>
 
-    <sourceDirectory>${project.build.directory}/generated-sources/protobuf/java</sourceDirectory>
-    
     <resources>
 
       <resource>
@@ -104,10 +159,6 @@
           <groupId>org.xolstice.maven.plugins</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
           <version>0.5.0</version>
-          <extensions>true</extensions>
-          <configuration>
-            <protocArtifact>com.google.protobuf:protoc:3.3.0:exe:${os.detected.classifier}</protocArtifact>
-          </configuration>
         </plugin>
         
       </plugins>
@@ -149,10 +200,14 @@
             <phase>generate-sources</phase>
             <goals>
               <goal>compile</goal>
+              <goal>compile-custom</goal>
             </goals>
             <configuration>
               <checkStaleness>true</checkStaleness>
+              <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.3.0:exe:${os.detected.classifier}</pluginArtifact>
+              <pluginId>grpc-java</pluginId>
               <protoSourceRoot>${project.build.directory}/generated-sources/helm/_proto</protoSourceRoot>
+              <protocArtifact>com.google.protobuf:protoc:3.3.0:exe:${os.detected.classifier}</protocArtifact>
             </configuration>
           </execution>
         </executions>
