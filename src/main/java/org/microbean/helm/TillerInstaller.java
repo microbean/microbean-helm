@@ -62,8 +62,20 @@ import io.fabric8.kubernetes.api.model.extensions.DeploymentBuilder;
  * A class that idiomatically but faithfully emulates the
  * Tiller-installing behavior of the {@code helm init} command.
  *
+ * <p>In general, this class follows the logic as expressed in <a
+ * href="https://github.com/kubernetes/helm/blob/master/cmd/helm/installer/install.go">the
+ * {@code install.go} source code from the Helm project</a>,
+ * problematic or not.  The intent is to have an installer, usable as
+ * an idiomatic Java library, that behaves just like {@code helm
+ * init}.</p>
+ *
+ * <p><strong>Note:</strong> This class is experimental and its API is
+ * subject to change without notice.</p>
+ *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
+ *
+ * @see #init()
  *
  * @see <a
  * href="https://github.com/kubernetes/helm/blob/master/cmd/helm/installer/install.go">The
@@ -91,13 +103,16 @@ public class TillerInstaller {
 
   private static final String TILLER_TLS_CERTS_PATH = "/etc/certs";
 
-  private static final String VERSION = "v2.4.2";
+  /**
+   * The version of Tiller to install.
+   */
+  public static final String VERSION = "2.4.2";
 
   /*
    * Derivative static fields.
    */
   
-  private static final String DEFAULT_IMAGE_NAME = "gcr.io/kubernetes-helm/" + DEFAULT_NAME + ":" + VERSION;
+  private static final String DEFAULT_IMAGE_NAME = "gcr.io/kubernetes-helm/" + DEFAULT_NAME + ":v" + VERSION;
 
   private static final String DEFAULT_DEPLOYMENT_NAME = DEFAULT_NAME + "-deploy";
 
@@ -141,12 +156,20 @@ public class TillerInstaller {
    */
   
 
-  public void init() throws IOException {
-    this.init(false);
+  public void init() {
+    try {
+      this.init(false, null, null, null, null, null, null, null, false, false, false, null, null, null);
+    } catch (final IOException willNotHappen) {
+      throw new AssertionError(willNotHappen);
+    }
   }
   
-  public void init(final boolean upgrade) throws IOException {
-    this.init(upgrade, null, null, null, null, null, null, null, false, false, false, null, null, null);
+  public void init(final boolean upgrade) {
+    try {
+      this.init(upgrade, null, null, null, null, null, null, null, false, false, false, null, null, null);
+    } catch (final IOException willNotHappen) {
+      throw new AssertionError(willNotHappen);
+    }
   }
 
   public void init(final boolean upgrade,
@@ -164,6 +187,7 @@ public class TillerInstaller {
                    final URI tlsCertUri,
                    final URI tlsCaCertUri)
     throws IOException {
+    namespace = normalizeNamespace(namespace);
     labels = normalizeLabels(labels);
     try {
       this.install(namespace,
@@ -203,7 +227,7 @@ public class TillerInstaller {
     }
   }
 
-  public void install(final String namespace,
+  public void install(String namespace,
                       final String deploymentName,
                       final String serviceName,
                       Map<String, String> labels,
@@ -217,9 +241,10 @@ public class TillerInstaller {
                       final URI tlsCertUri,
                       final URI tlsCaCertUri)
     throws IOException {
+    namespace = normalizeNamespace(namespace);
     labels = normalizeLabels(labels);
     final Deployment deployment =
-      this.createDeployment(normalizeNamespace(namespace),
+      this.createDeployment(namespace,
                             deploymentName,
                             labels,
                             serviceAccountName,
@@ -487,7 +512,7 @@ public class TillerInstaller {
     final ServicePort servicePort = new ServicePort();
     servicePort.setName(DEFAULT_NAME);
     servicePort.setPort(Integer.valueOf(44134));
-    servicePort.setTargetPort(new IntOrString("tiller"));
+    servicePort.setTargetPort(new IntOrString(DEFAULT_NAME));
     serviceSpec.setPorts(Arrays.asList(servicePort));
 
     serviceSpec.setSelector(labels);
@@ -518,7 +543,7 @@ public class TillerInstaller {
       labels.put("app", "helm");
     }
     if (!labels.containsKey("name")) {
-      labels.put("name", "tiller");
+      labels.put("name", DEFAULT_NAME);
     }
     return labels;
   }

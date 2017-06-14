@@ -266,6 +266,9 @@
 
     <!-- maven-scm-plugin properties; see http://maven.apache.org/components/scm/maven-scm-plugin/checkout-mojo.html -->
     <skipCheckoutIfExists>true</skipCheckoutIfExists>
+
+    <!-- maven-surefire-plugin properties; see http://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html -->
+    <skipTests>true</skipTests>
     
   </properties>
 
