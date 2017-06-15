@@ -2,3 +2,4 @@ hapi.chart
 hapi.release
 hapi.services.tiller
 hapi.version
+org.microbean.helm
