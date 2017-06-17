@@ -78,6 +78,21 @@
       </dependency>
 
       <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-tcnative-boringssl-static</artifactId>
+        <version>1.1.33.Fork26</version>
+        <type>jar</type>
+        <classifier>${os.detected.classifier}</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-kubernetes</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <type>jar</type>
+      </dependency>
+      
+      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
         <version>1.7.25</version>
@@ -126,6 +141,23 @@
       <scope>compile</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-kubernetes</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+    <!-- Runtime-scoped dependencies. -->
+
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-tcnative-boringssl-static</artifactId>
+      <type>jar</type>
+      <classifier>${os.detected.classifier}</classifier>
+      <scope>runtime</scope>
+    </dependency>
+    
     <!-- Test-scoped dependencies. -->
     
     <dependency>
@@ -222,6 +254,17 @@
       </plugin>
 
       <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <skipInstallationTest>${skipInstallationTest}</skipInstallationTest>
+            <skipTests>${skipTests}</skipTests>
+            <testGetRelease.releaseName>${testGetRelease.releaseName}</testGetRelease.releaseName>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      
+      <plugin>
         <groupId>com.github.github</groupId>
         <artifactId>site-maven-plugin</artifactId>
       </plugin>
@@ -268,7 +311,9 @@
     <skipCheckoutIfExists>true</skipCheckoutIfExists>
 
     <!-- maven-surefire-plugin properties; see http://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html -->
-    <skipTests>true</skipTests>
+    <skipTests>false</skipTests>
+
+    <skipInstallationTest>true</skipInstallationTest>
     
   </properties>
 

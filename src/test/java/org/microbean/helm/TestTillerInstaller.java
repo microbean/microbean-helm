@@ -18,7 +18,57 @@ package org.microbean.helm;
 
 import java.io.IOException;
 
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import hapi.release.ReleaseOuterClass.Release;
+
+import hapi.services.tiller.ReleaseServiceGrpc;
+import hapi.services.tiller.Tiller.GetHistoryRequest;
+import hapi.services.tiller.Tiller.GetHistoryResponse;
+
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodList;
+
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.LocalPortForward;
+import io.fabric8.kubernetes.client.PortForward;
+
+import io.fabric8.kubernetes.client.dsl.internal.PortForwarder;
+import io.fabric8.kubernetes.client.dsl.internal.PortForwarderWebsocket;
+
+import io.fabric8.kubernetes.client.Watch;
+import io.fabric8.kubernetes.client.Watcher;
+
+import io.fabric8.kubernetes.client.dsl.Listable;
+
+import io.fabric8.kubernetes.client.dsl.base.OperationSupport;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+
+import io.grpc.stub.MetadataUtils;
+
+import okhttp3.OkHttpClient;
+
 import org.junit.Test;
+
+import org.microbean.kubernetes.Pods;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNotNull;
 
 public class TestTillerInstaller {
 
@@ -28,8 +78,40 @@ public class TestTillerInstaller {
 
   @Test
   public void testTillerInstallation() throws IOException {
+    assumeFalse(Boolean.getBoolean("skipInstallationTest"));
     final TillerInstaller installer = new TillerInstaller();
     installer.init(true);
+  }
+
+  @Test
+  public void testGetRelease() throws IOException {
+    final String releaseName = System.getProperty("testGetRelease.releaseName");
+    assumeNotNull(releaseName);
+    assumeFalse(releaseName.isEmpty());
+    try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
+         final Tiller tiller = new Tiller(client)) {
+    
+      final GetHistoryRequest.Builder builder = GetHistoryRequest.newBuilder();
+      assertNotNull(builder);
+      builder.setMax(1);
+      builder.setName(releaseName);
+      final GetHistoryRequest request = builder.build();
+      assertNotNull(request);
+      assertEquals(releaseName, request.getName());
+
+      final ReleaseServiceGrpc.ReleaseServiceBlockingStub stub = tiller.getReleaseServiceBlockingStub();
+      assertNotNull(stub);
+
+      final GetHistoryResponse response = stub.getHistory(request);
+      assertNotNull(response);
+      assertEquals(1, response.getReleasesCount());
+      final List<? extends Release> releasesList = response.getReleasesList();
+      assertNotNull(releasesList);
+      assertEquals(1, releasesList.size());
+      final Release release = releasesList.get(0);
+      assertNotNull(release);
+      assertEquals(releaseName, release.getName());      
+    }       
   }
   
 }
