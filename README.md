@@ -25,7 +25,7 @@ you
 [build and work with those charts and the _releases_ they produce from Java][4] and
 send them back and forth to and from Tiller.
 
-## Installation
+## Tiller Installation
 
 In a normal Helm usage scenario, Tiller
 is
@@ -33,7 +33,7 @@ is
 It runs as a Pod in a Kubernetes cluster.  microbean-helm features the
 `TillerInstaller` class that can do the same thing from Java.
 
-## Connectivity
+## Tiller Connectivity
 
 Because Tiller normally runs as a Pod, communicating with it from
 outside the cluster is not straightforward.  The `helm` command line
@@ -41,11 +41,27 @@ client forwards a local port to a port on the Tiller Pod and, via this
 tunnel, establishes communication with the Tiller server.  The
 microbean-helm project does the same thing but via a Java library.
 
-## Communication
+## Tiller Communication
 
 Tiller is fundamentally a [gRPC][6] application.  The microbean-helm
 project [generates the Java bindings][7] to its gRPC API, allowing
 applications to communicate with Tiller using Java classes.
+
+# Installation
+
+To install microbean-helm, simply include it as a dependency in your
+project.  If you're using Maven, the dependency stanza should look
+like this:
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-helm</artifactId>
+      <version>2.4.2.1-SNAPSHOT</version> <!-- or another -->
+      <type>jar</type>
+    </dependency>
+    
+Releases are [available in Maven Central][10].  Snapshots are available
+in [Sonatype Snapshots][11].
 
 # Documentation
 
@@ -61,3 +77,5 @@ The microbean-helm project [documentation is online][8].
 [7]: https://microbean.github.io/microbean-helm/apidocs/index.html
 [8]: https://microbean.github.io/microbean-helm/
 [9]: https://docs.helm.sh/glossary/#release
+[10]: http://search.maven.org/#search%7Cga%7C1%7Ca%3Amicrobean-helm
+[11]: https://oss.sonatype.org/content/repositories/snapshots/org/microbean/microbean-helm/
