@@ -20,9 +20,10 @@ send them back and forth to and from Tiller.
 
 ## Installation
 
-In a normal Helm usage scenario, Tiller is installed just-in-time by
-the `helm` command line client (via the `helm init` subcommand).  It
-runs as a Pod in a Kubernetes cluster.  microbean-helm features the
+In a normal Helm usage scenario, Tiller
+is
+[installed just-in-time by the `helm` command line client (via the `helm init` subcommand)][5].
+It runs as a Pod in a Kubernetes cluster.  microbean-helm features the
 `TillerInstaller` class that can do the same thing from Java.
 
 ## Connectivity
@@ -35,19 +36,20 @@ microbean-helm project does the same thing but via a Java library.
 
 ## Communication
 
-Tiller is fundamentally a [gRPC][5] application.  The microbean-helm
-project [generates the Java bindings][6] to its gRPC API, allowing
+Tiller is fundamentally a [gRPC][6] application.  The microbean-helm
+project [generates the Java bindings][7] to its gRPC API, allowing
 applications to communicate with Tiller using Java classes.
 
 # Documentation
 
-The microbean-helm project [documentation is online][7].
+The microbean-helm project [documentation is online][8].
 
 [0]: https://helm.sh/
 [1]: https://kubernetes.io/
 [2]: https://docs.helm.sh/glossary/#tiller
 [3]: https://docs.helm.sh/developing_charts/#
 [4]: https://microbean.github.io/microbean-helm/apidocs/hapi/services/tiller/ReleaseServiceGrpc.ReleaseServiceStub.html
-[5]: http://www.grpc.io/
-[6]: https://microbean.github.io/microbean-helm/apidocs/index.html
-[7]: https://microbean.github.io/microbean-helm/
+[5]: https://docs.helm.sh/using_helm/#easy-in-cluster-installation
+[6]: http://www.grpc.io/
+[7]: https://microbean.github.io/microbean-helm/apidocs/index.html
+[8]: https://microbean.github.io/microbean-helm/
