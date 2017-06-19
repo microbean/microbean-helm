@@ -27,6 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
+
+import hapi.chart.ChartOuterClass.Chart;
+
 import hapi.release.ReleaseOuterClass.Release;
 
 import hapi.services.tiller.ReleaseServiceGrpc;
@@ -110,7 +115,17 @@ public class TestTillerInstaller {
       assertEquals(1, releasesList.size());
       final Release release = releasesList.get(0);
       assertNotNull(release);
-      assertEquals(releaseName, release.getName());      
+      assertEquals(releaseName, release.getName());
+      final Chart chart = release.getChart();
+      assertNotNull(chart);
+      final List<Any> files = chart.getFilesList();
+      assertNotNull(files);
+      for (final Any file : files) {
+        assertNotNull(file);
+        final ByteString value = file.getValue();
+        assertNotNull(value);
+        assertTrue(value.isValidUtf8());
+      }
     }       
   }
   
