@@ -10,6 +10,26 @@ and [releases][9].
 Until now, Java developers had to use the `helm` command line client
 to do these operations.
 
+# Installation
+
+To install microbean-helm, simply include it as a dependency in your
+project.  If you're using Maven, the dependency stanza should look
+like this:
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-helm</artifactId>
+      <version>2.4.2.1-SNAPSHOT</version> <!-- or another -->
+      <type>jar</type>
+    </dependency>
+    
+Releases are [available in Maven Central][10].  Snapshots are available
+in [Sonatype Snapshots][11].
+
+# Documentation
+
+The microbean-helm project [documentation is online][8].
+
 # Helm
 
 [Helm][0] is the package manager for [Kubernetes][1].  It consists of
@@ -46,26 +66,6 @@ microbean-helm project does the same thing but via a Java library.
 Tiller is fundamentally a [gRPC][6] application.  The microbean-helm
 project [generates the Java bindings][7] to its gRPC API, allowing
 applications to communicate with Tiller using Java classes.
-
-# Installation
-
-To install microbean-helm, simply include it as a dependency in your
-project.  If you're using Maven, the dependency stanza should look
-like this:
-
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-helm</artifactId>
-      <version>2.4.2.1-SNAPSHOT</version> <!-- or another -->
-      <type>jar</type>
-    </dependency>
-    
-Releases are [available in Maven Central][10].  Snapshots are available
-in [Sonatype Snapshots][11].
-
-# Documentation
-
-The microbean-helm project [documentation is online][8].
 
 [0]: https://helm.sh/
 [1]: https://kubernetes.io/
