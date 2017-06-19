@@ -1,0 +1,6 @@
+io.fabric8.kubernetes.api.builder
+io.fabric8.kubernetes.api.model
+io.fabric8.kubernetes.api.model.extensions
+io.fabric8.kubernetes.api.model.validators
+io.fabric8.kubernetes.internal
+io.fabric8.openshift.api.model

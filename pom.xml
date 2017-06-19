@@ -206,6 +206,22 @@
       <plugins>
 
         <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <offlineLinks>
+              <offlineLink>
+                <url>http://static.javadoc.io/io.fabric8/kubernetes-client/2.3.1</url>
+                <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-client/2.3.1</location>
+              </offlineLink>
+              <offlineLink>
+                <url>http://static.javadoc.io/io.fabric8/kubernetes-model/1.0.73</url>
+                <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-model/1.0.73</location>
+              </offlineLink>
+            </offlineLinks>
+          </configuration>
+        </plugin>
+        
+        <plugin>
           <artifactId>maven-scm-plugin</artifactId>
           <version>1.9.5</version>
         </plugin>
@@ -302,7 +318,7 @@
     <findbugs.threshold>Medium</findbugs.threshold>
 
     <!-- maven-javadoc-plugin properties; see https://maven.apache.org/plugins/maven-javadoc-plugin/javadoc-mojo.html -->
-    <links>http://www.grpc.io/grpc-java/javadoc/,https://developers.google.com/protocol-buffers/docs/reference/java/,https://google.github.io/guava/releases/19.0/api/docs/</links>
+    <links>http://www.grpc.io/grpc-java/javadoc/,https://developers.google.com/protocol-buffers/docs/reference/java/,https://google.github.io/guava/releases/19.0/api/docs/,https://microbean.github.io/microbean-kubernetes/apidocs/</links>
     
     <!-- maven-release-plugin properties; see http://maven.apache.org/maven-release/maven-release-plugin/perform-mojo.html -->
     <goals>deploy,site-deploy</goals>

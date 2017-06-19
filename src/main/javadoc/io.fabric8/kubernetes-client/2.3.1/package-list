@@ -1,0 +1,11 @@
+io.fabric8.kubernetes.client
+io.fabric8.kubernetes.client.dsl
+io.fabric8.kubernetes.client.dsl.base
+io.fabric8.kubernetes.client.dsl.internal
+io.fabric8.kubernetes.client.handlers
+io.fabric8.kubernetes.client.internal
+io.fabric8.kubernetes.client.internal.patchmixins
+io.fabric8.kubernetes.client.internal.readiness
+io.fabric8.kubernetes.client.internal.serializationmixins
+io.fabric8.kubernetes.client.osgi
+io.fabric8.kubernetes.client.utils
