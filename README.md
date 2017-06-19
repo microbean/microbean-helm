@@ -35,14 +35,15 @@ microbean-helm project does the same thing but via a Java library.
 ## Communication
 
 Tiller is fundamentally a [gRPC][2] application.  The microbean-helm
-project generates the Java bindings to its gRPC API, allowing
+project [generates the Java bindings][3] to its gRPC API, allowing
 applications to communicate with Tiller using Java classes.
 
 # Documentation
 
-The microbean-helm project [documentation is online][3].
+The microbean-helm project [documentation is online][4].
 
 [0]: https://helm.sh/
 [1]: https://kubernetes.io/
-[2]: https://grpc.io/
-[3]: https://microbean.github.io/microbean-helm/
+[2]: http://www.grpc.io/
+[3]: https://microbean.github.io/microbean-helm/apidocs/index.html
+[4]: https://microbean.github.io/microbean-helm/
