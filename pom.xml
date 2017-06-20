@@ -330,6 +330,7 @@
 
     <!-- maven-surefire-plugin properties; see http://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html -->
     <skipTests>false</skipTests>
+    <trimStackTrace>false</trimStackTrace>
 
     <skipInstallationTest>true</skipInstallationTest>
     
