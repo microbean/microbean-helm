@@ -43,6 +43,13 @@
     <dependencies>
 
       <dependency>
+        <groupId>com.github.zafarkhaja</groupId>
+        <artifactId>java-semver</artifactId>
+        <version>0.9.0</version>
+        <type>jar</type>
+      </dependency>
+      
+      <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
         <version>3.3.1</version>
@@ -87,6 +94,13 @@
       </dependency>
 
       <dependency>
+        <groupId>org.kamranzafar</groupId>
+        <artifactId>jtar</artifactId>
+        <version>2.3</version>
+        <type>jar</type>
+      </dependency>
+      
+      <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-kubernetes</artifactId>
         <version>0.1.0</version>
@@ -99,6 +113,13 @@
         <version>1.7.25</version>
         <type>jar</type>
       </dependency>
+
+      <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>1.18</version>
+        <type>jar</type>
+      </dependency>
       
     </dependencies>
   </dependencyManagement>
@@ -106,6 +127,13 @@
   <dependencies>
 
     <!-- Compile-scoped dependencies. -->
+
+    <dependency>
+      <groupId>com.github.zafarkhaja</groupId>
+      <artifactId>java-semver</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
     
     <dependency>
       <groupId>com.google.protobuf</groupId>
@@ -143,11 +171,26 @@
     </dependency>
 
     <dependency>
+      <groupId>org.kamranzafar</groupId>
+      <artifactId>jtar</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+    
+    <dependency>
       <groupId>org.microbean</groupId>
       <artifactId>microbean-kubernetes</artifactId>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
 
     <!-- Runtime-scoped dependencies. -->
 

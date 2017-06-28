@@ -31,6 +31,8 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
 import hapi.chart.ChartOuterClass.Chart;
+import hapi.chart.ConfigOuterClass.Config;
+import hapi.chart.TemplateOuterClass.Template;
 
 import hapi.release.ReleaseOuterClass.Release;
 
@@ -118,10 +120,21 @@ public class TestTillerInstaller {
       assertEquals(releaseName, release.getName());
       final Chart chart = release.getChart();
       assertNotNull(chart);
+      final Config values = chart.getValues();
+      assertNotNull(values);
+      System.out.println("*** values (raw): " + values.getRaw());
+      System.out.println("*** values (value map): " + values.getValuesMap());
+      final List<Template> templates = chart.getTemplatesList();
+      assertNotNull(templates);
+      for (final Template template : templates) {
+        assertNotNull(template);
+        System.out.println("*** retrieved template: " + template);
+      }
       final List<Any> files = chart.getFilesList();
       assertNotNull(files);
       for (final Any file : files) {
         assertNotNull(file);
+        System.out.println("*** retrieved: " + file.getTypeUrl());
         final ByteString value = file.getValue();
         assertNotNull(value);
         assertTrue(value.isValidUtf8());
