@@ -33,103 +33,109 @@
 <span class="sourceLineNo">025</span>import java.net.URLConnection;<a name="line.25"></a>
 <span class="sourceLineNo">026</span><a name="line.26"></a>
 <span class="sourceLineNo">027</span>import java.nio.file.Paths;<a name="line.27"></a>
-<span class="sourceLineNo">028</span><a name="line.28"></a>
-<span class="sourceLineNo">029</span>import java.util.Arrays;<a name="line.29"></a>
-<span class="sourceLineNo">030</span>import java.util.Collection;<a name="line.30"></a>
-<span class="sourceLineNo">031</span>import java.util.List;<a name="line.31"></a>
-<span class="sourceLineNo">032</span><a name="line.32"></a>
-<span class="sourceLineNo">033</span>import java.util.zip.GZIPInputStream;<a name="line.33"></a>
+<span class="sourceLineNo">028</span>import java.nio.file.Path;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.nio.file.PathMatcher;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Arrays;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.Collection;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.List;<a name="line.33"></a>
 <span class="sourceLineNo">034</span><a name="line.34"></a>
-<span class="sourceLineNo">035</span>import hapi.chart.ChartOuterClass.Chart;<a name="line.35"></a>
+<span class="sourceLineNo">035</span>import java.util.zip.GZIPInputStream;<a name="line.35"></a>
 <span class="sourceLineNo">036</span><a name="line.36"></a>
-<span class="sourceLineNo">037</span>import hapi.chart.MetadataOuterClass.Metadata;<a name="line.37"></a>
+<span class="sourceLineNo">037</span>import hapi.chart.ChartOuterClass.Chart;<a name="line.37"></a>
 <span class="sourceLineNo">038</span><a name="line.38"></a>
-<span class="sourceLineNo">039</span>import org.junit.Test;<a name="line.39"></a>
-<span class="sourceLineNo">040</span>import org.junit.Before;<a name="line.40"></a>
-<span class="sourceLineNo">041</span>import org.junit.After;<a name="line.41"></a>
-<span class="sourceLineNo">042</span><a name="line.42"></a>
-<span class="sourceLineNo">043</span>import org.junit.runner.RunWith;<a name="line.43"></a>
+<span class="sourceLineNo">039</span>import hapi.chart.MetadataOuterClass.Metadata;<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>import org.junit.Test;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import org.junit.Before;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import org.junit.After;<a name="line.43"></a>
 <span class="sourceLineNo">044</span><a name="line.44"></a>
-<span class="sourceLineNo">045</span>import org.junit.runners.Parameterized;<a name="line.45"></a>
-<span class="sourceLineNo">046</span>import org.junit.runners.Parameterized.Parameters;<a name="line.46"></a>
-<span class="sourceLineNo">047</span><a name="line.47"></a>
-<span class="sourceLineNo">048</span>import org.kamranzafar.jtar.TarInputStream;<a name="line.48"></a>
+<span class="sourceLineNo">045</span>import org.junit.runner.RunWith;<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>import org.junit.runners.Parameterized;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import org.junit.runners.Parameterized.Parameters;<a name="line.48"></a>
 <span class="sourceLineNo">049</span><a name="line.49"></a>
-<span class="sourceLineNo">050</span>import static org.junit.Assert.assertNotNull;<a name="line.50"></a>
-<span class="sourceLineNo">051</span>import static org.junit.Assert.assertTrue;<a name="line.51"></a>
-<span class="sourceLineNo">052</span>import static org.junit.Assert.assertEquals;<a name="line.52"></a>
-<span class="sourceLineNo">053</span><a name="line.53"></a>
-<span class="sourceLineNo">054</span>@RunWith(Parameterized.class)<a name="line.54"></a>
-<span class="sourceLineNo">055</span>public class TestHelmIgnorePathMatcher {<a name="line.55"></a>
+<span class="sourceLineNo">050</span>import org.kamranzafar.jtar.TarInputStream;<a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span>import static org.junit.Assert.assertNotNull;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>import static org.junit.Assert.assertTrue;<a name="line.53"></a>
+<span class="sourceLineNo">054</span>import static org.junit.Assert.assertEquals;<a name="line.54"></a>
+<span class="sourceLineNo">055</span>import static org.junit.Assert.fail;<a name="line.55"></a>
 <span class="sourceLineNo">056</span><a name="line.56"></a>
-<span class="sourceLineNo">057</span>  @Parameters(name = "{0}, {1}, {2}")<a name="line.57"></a>
-<span class="sourceLineNo">058</span>  public static Collection&lt;Object[]&gt; data() {<a name="line.58"></a>
-<span class="sourceLineNo">059</span>    return Arrays.asList(new Object[][] {<a name="line.59"></a>
-<span class="sourceLineNo">060</span>        {"helm.txt", "helm.txt", true},<a name="line.60"></a>
-<span class="sourceLineNo">061</span>        {"helm.*", "helm.txt", true},<a name="line.61"></a>
-<span class="sourceLineNo">062</span>        {"helm.*", "rudder.txt", false},<a name="line.62"></a>
-<span class="sourceLineNo">063</span>        {"*.txt", "tiller.txt", true},<a name="line.63"></a>
-<span class="sourceLineNo">064</span>        {"*.txt", "cargo/a.txt", true},<a name="line.64"></a>
-<span class="sourceLineNo">065</span>        {"cargo/*.txt", "cargo/a.txt", true},<a name="line.65"></a>
-<span class="sourceLineNo">066</span>        {"cargo/*.*", "cargo/a.txt", true},<a name="line.66"></a>
-<span class="sourceLineNo">067</span>        {"cargo/*.txt", "mast/a.txt", false},<a name="line.67"></a>
-<span class="sourceLineNo">068</span>        {"ru[c-e]?er.txt", "rudder.txt", true},<a name="line.68"></a>
-<span class="sourceLineNo">069</span>        {"templates/.?*", "templates/.dotfile", true},<a name="line.69"></a>
-<span class="sourceLineNo">070</span>        // "." should never get ignored. https://github.com/kubernetes/helm/issues/1776<a name="line.70"></a>
-<span class="sourceLineNo">071</span>        {".*", ".", false},<a name="line.71"></a>
-<span class="sourceLineNo">072</span>        {".*", "./", false},<a name="line.72"></a>
-<span class="sourceLineNo">073</span><a name="line.73"></a>
-<span class="sourceLineNo">074</span>        <a name="line.74"></a>
-<span class="sourceLineNo">075</span>        // Directory tests<a name="line.75"></a>
-<span class="sourceLineNo">076</span>        {"cargo/", "cargo", true},<a name="line.76"></a>
-<span class="sourceLineNo">077</span>        {"cargo/", "cargo/", true},<a name="line.77"></a>
-<span class="sourceLineNo">078</span>        {"cargo/", "mast/", false},<a name="line.78"></a>
-<span class="sourceLineNo">079</span>        {"helm.txt/", "helm.txt", false},<a name="line.79"></a>
-<span class="sourceLineNo">080</span>        <a name="line.80"></a>
-<span class="sourceLineNo">081</span>        // Negation tests<a name="line.81"></a>
-<span class="sourceLineNo">082</span>        {"!helm.txt", "helm.txt", false},<a name="line.82"></a>
-<span class="sourceLineNo">083</span>        {"!helm.txt", "tiller.txt", true},<a name="line.83"></a>
-<span class="sourceLineNo">084</span>        {"!*.txt", "cargo", true},<a name="line.84"></a>
-<span class="sourceLineNo">085</span>        {"!cargo/", "mast/", true},<a name="line.85"></a>
-<span class="sourceLineNo">086</span>        <a name="line.86"></a>
-<span class="sourceLineNo">087</span>        // Absolute path tests<a name="line.87"></a>
-<span class="sourceLineNo">088</span>        {"/a.txt", "a.txt", true},<a name="line.88"></a>
-<span class="sourceLineNo">089</span>        {"/a.txt", "cargo/a.txt", false},<a name="line.89"></a>
-<span class="sourceLineNo">090</span>        {"/cargo/a.txt", "cargo/a.txt", true}<a name="line.90"></a>
-<span class="sourceLineNo">091</span>      });<a name="line.91"></a>
-<span class="sourceLineNo">092</span>  }<a name="line.92"></a>
-<span class="sourceLineNo">093</span><a name="line.93"></a>
-<span class="sourceLineNo">094</span>  private final String pattern;<a name="line.94"></a>
-<span class="sourceLineNo">095</span><a name="line.95"></a>
-<span class="sourceLineNo">096</span>  private final String testText;<a name="line.96"></a>
-<span class="sourceLineNo">097</span><a name="line.97"></a>
-<span class="sourceLineNo">098</span>  private final boolean match;<a name="line.98"></a>
-<span class="sourceLineNo">099</span><a name="line.99"></a>
-<span class="sourceLineNo">100</span>  private HelmIgnorePathMatcher pathMatcher;<a name="line.100"></a>
-<span class="sourceLineNo">101</span>  <a name="line.101"></a>
-<span class="sourceLineNo">102</span>  public TestHelmIgnorePathMatcher(final String pattern, final String testText, final boolean match) {<a name="line.102"></a>
-<span class="sourceLineNo">103</span>    super();<a name="line.103"></a>
-<span class="sourceLineNo">104</span>    this.pattern = pattern;<a name="line.104"></a>
-<span class="sourceLineNo">105</span>    this.testText = testText;<a name="line.105"></a>
-<span class="sourceLineNo">106</span>    this.match = match;<a name="line.106"></a>
-<span class="sourceLineNo">107</span>  }<a name="line.107"></a>
-<span class="sourceLineNo">108</span><a name="line.108"></a>
-<span class="sourceLineNo">109</span>  @Before<a name="line.109"></a>
-<span class="sourceLineNo">110</span>  public void setUp() {<a name="line.110"></a>
-<span class="sourceLineNo">111</span>    this.pathMatcher = new HelmIgnorePathMatcher();<a name="line.111"></a>
-<span class="sourceLineNo">112</span>  }<a name="line.112"></a>
-<span class="sourceLineNo">113</span><a name="line.113"></a>
-<span class="sourceLineNo">114</span>  @After<a name="line.114"></a>
-<span class="sourceLineNo">115</span>  public void tearDown() {<a name="line.115"></a>
-<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">057</span>@RunWith(Parameterized.class)<a name="line.57"></a>
+<span class="sourceLineNo">058</span>public class TestHelmIgnorePathMatcher {<a name="line.58"></a>
+<span class="sourceLineNo">059</span><a name="line.59"></a>
+<span class="sourceLineNo">060</span>  @Parameters(name = "{0}, {1}, {2}")<a name="line.60"></a>
+<span class="sourceLineNo">061</span>  public static Collection&lt;Object[]&gt; data() {<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    return Arrays.asList(new Object[][] {<a name="line.62"></a>
+<span class="sourceLineNo">063</span>        {"helm.txt", "helm.txt", true},<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        {"helm.*", "helm.txt", true},<a name="line.64"></a>
+<span class="sourceLineNo">065</span>        {"helm.*", "rudder.txt", false},<a name="line.65"></a>
+<span class="sourceLineNo">066</span>        {"*.txt", "tiller.txt", true},<a name="line.66"></a>
+<span class="sourceLineNo">067</span>        {"*.txt", "cargo/a.txt", true},<a name="line.67"></a>
+<span class="sourceLineNo">068</span>        {"cargo/*.txt", "cargo/a.txt", true},<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        {"cargo/*.*", "cargo/a.txt", true},<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        {"cargo/*.txt", "mast/a.txt", false},<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        {"ru[c-e]?er.txt", "rudder.txt", true},<a name="line.71"></a>
+<span class="sourceLineNo">072</span>        {"templates/.?*", "templates/.dotfile", true},<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        // "." should never get ignored. https://github.com/kubernetes/helm/issues/1776<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        {".*", ".", false},<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        {".*", "./", false},<a name="line.75"></a>
+<span class="sourceLineNo">076</span><a name="line.76"></a>
+<span class="sourceLineNo">077</span>        <a name="line.77"></a>
+<span class="sourceLineNo">078</span>        // Directory tests<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        {"cargo/", "cargo", true},<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        {"cargo/", "cargo/", true},<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        {"cargo/", "mast/", false},<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        {"helm.txt/", "helm.txt", false},<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        <a name="line.83"></a>
+<span class="sourceLineNo">084</span>        // Negation tests<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        {"!helm.txt", "helm.txt", false},<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        {"!helm.txt", "tiller.txt", true},<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        {"!*.txt", "cargo", true},<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        {"!cargo/", "mast/", true},<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        <a name="line.89"></a>
+<span class="sourceLineNo">090</span>        // Absolute path tests<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        {"/a.txt", "a.txt", true},<a name="line.91"></a>
+<span class="sourceLineNo">092</span>        {"/a.txt", "cargo/a.txt", false},<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        {"/cargo/a.txt", "cargo/a.txt", true}<a name="line.93"></a>
+<span class="sourceLineNo">094</span>      });<a name="line.94"></a>
+<span class="sourceLineNo">095</span>  }<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>  private final String pattern;<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>  private final String testText;<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>  private final boolean match;<a name="line.101"></a>
+<span class="sourceLineNo">102</span><a name="line.102"></a>
+<span class="sourceLineNo">103</span>  private PathMatcher pathMatcher;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>  <a name="line.104"></a>
+<span class="sourceLineNo">105</span>  public TestHelmIgnorePathMatcher(final String pattern, final String testText, final boolean match) {<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    super();<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    this.pattern = pattern;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    this.testText = testText;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    this.match = match;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>  }<a name="line.110"></a>
+<span class="sourceLineNo">111</span><a name="line.111"></a>
+<span class="sourceLineNo">112</span>  @Before<a name="line.112"></a>
+<span class="sourceLineNo">113</span>  public void setUp() {<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    final HelmIgnorePathMatcher helmIgnorePathMatcher = new HelmIgnorePathMatcher();<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    helmIgnorePathMatcher.addPattern(this.pattern);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    this.pathMatcher = helmIgnorePathMatcher;<a name="line.116"></a>
 <span class="sourceLineNo">117</span>  }<a name="line.117"></a>
 <span class="sourceLineNo">118</span><a name="line.118"></a>
-<span class="sourceLineNo">119</span>  @Test<a name="line.119"></a>
-<span class="sourceLineNo">120</span>  public void testStuff() {<a name="line.120"></a>
-<span class="sourceLineNo">121</span>    this.pathMatcher.addPattern(this.pattern);<a name="line.121"></a>
-<span class="sourceLineNo">122</span>    assertEquals(this.pattern + " did not match " + this.testText, this.match, this.pathMatcher.matches(Paths.get(this.testText)));<a name="line.122"></a>
-<span class="sourceLineNo">123</span>  }<a name="line.123"></a>
-<span class="sourceLineNo">124</span>}<a name="line.124"></a>
+<span class="sourceLineNo">119</span>  @After<a name="line.119"></a>
+<span class="sourceLineNo">120</span>  public void tearDown() {<a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>  }<a name="line.122"></a>
+<span class="sourceLineNo">123</span><a name="line.123"></a>
+<span class="sourceLineNo">124</span>  @Test<a name="line.124"></a>
+<span class="sourceLineNo">125</span>  public void testStuff() {<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    final Path path = Paths.get(this.testText);<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    assertNotNull(path);<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    assertEquals(this.pattern + " did not match " + this.testText, this.match, this.pathMatcher.matches(path));<a name="line.128"></a>
+<span class="sourceLineNo">129</span>  }<a name="line.129"></a>
+<span class="sourceLineNo">130</span>}<a name="line.130"></a>
 
 
 
