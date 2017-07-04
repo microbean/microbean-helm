@@ -34,23 +34,97 @@ import java.util.function.Predicate;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import java.util.stream.Collectors;
 
+/**
+ * A {@link PathMatcher} and a {@link Predicate Predicate&lt;Path&gt;}
+ * that {@linkplain #matches(Path) matches} paths using the syntax of
+ * a {@code .helmignore} file.
+ *
+ * <p>This class passes <a
+ * href="https://github.com/kubernetes/helm/blob/v2.5.0/pkg/ignore/rules_test.go#L91-L121">all
+ * of the unit tests present</a> in the <a
+ * href="http://godoc.org/k8s.io/helm/pkg/ignore">Helm project's
+ * package concerned with {@code .helmignore} files</a>.  It may
+ * permit richer syntax, but there are no guarantees made regarding
+ * the behavior of this class in such cases.</p>
+ *
+ * <h2>Thread Safety</h2>
+ *
+ * <p>This class is safe for concurrent use by multiple threads.</p>
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see <a href="http://godoc.org/k8s.io/helm/pkg/ignore">The Helm
+ * project's package concerned with {@code .helmignore} files</a>
+ */
 public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
 
+
+  /*
+   * Instance fields.
+   */
+
+
+  /**
+   * A {@link Collection} of {@link Predicate Predicate&lt;Path&gt;}s,
+   * one of which must {@linkplain #matches(Path) match} for the
+   * {@link #matches(Path)} method to return {@code true}.
+   *
+   * <p>This field is never {@code null}.</p>
+   *
+   * @see #addPatterns(Collection)
+   */
   private final Collection<Predicate<Path>> rules;
-  
+
+
+  /*
+   * Constructors.
+   */
+
+
+  /**
+   * Creates a new {@link HelmIgnorePathMatcher}.
+   */
   public HelmIgnorePathMatcher() {
     super();
     this.rules = new ArrayList<>();
+    this.addPattern("templates/.?*");
   }
 
+  /**
+   * Creates a new {@link HelmIgnorePathMatcher}.
+   *
+   * @param stringPatterns a {@link Collection} of <a
+   * href="http://godoc.org/k8s.io/helm/pkg/ignore">valid {@code
+   * .helmignore} patterns</a>; may be {@code null}
+   *
+   * @exception PatternSyntaxException if any of the patterns is
+   * invalid
+   */
   public HelmIgnorePathMatcher(final Collection<? extends String> stringPatterns) {
     this();
     this.addPatterns(stringPatterns);
   }
 
+  /**
+   * Creates a new {@link HelmIgnorePathMatcher}.
+   *
+   * @param reader a {@link Reader} expected to provide access to a
+   * logical collection of lines of text, each line of which is a <a
+   * href="http://godoc.org/k8s.io/helm/pkg/ignore">valid {@code
+   * .helmignore} pattern</a> (or blank line, or comment); may be
+   * {@code null}; never {@linkplain Reader#close() closed}
+   *
+   * @exception IOException if an error related to the supplied {@code
+   * reader} is encountered
+   *
+   * @exception PatternSyntaxException if any of the patterns is
+   * invalid
+   */
   public HelmIgnorePathMatcher(final Reader reader) throws IOException {
     this();
     if (reader != null) {
@@ -71,22 +145,68 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
       }
     }
   }
-  
+
+  /**
+   * Creates a new {@link HelmIgnorePathMatcher}.
+   *
+   * @param helmIgnoreFile a {@link Path} expected to provide access
+   * to a logical collection of lines of text, each line of which is a
+   * <a href="http://godoc.org/k8s.io/helm/pkg/ignore">valid {@code
+   * .helmignore} pattern</a> (or blank line, or comment); may be
+   * {@code null}; never {@linkplain Reader#close() closed}
+   *
+   * @exception IOException if an error related to the supplied {@code
+   * helmIgnoreFile} is encountered
+   *
+   * @exception PatternSyntaxException if any of the patterns is
+   * invalid
+   *
+   * @see #HelmIgnorePathMatcher(Reader)
+   */
   public HelmIgnorePathMatcher(final Path helmIgnoreFile) throws IOException {
-    this();
-    if (helmIgnoreFile != null) {
-      final Collection<? extends String> lines = Files.lines(helmIgnoreFile).collect(Collectors.toList());
-      if (lines != null && !lines.isEmpty()) {
-        this.addPatterns(lines);
-      }
-    }
+    this(Files.newBufferedReader(helmIgnoreFile));
   }
 
-  public void addPattern(final String stringPattern) {
+
+  /*
+   * Instance methods.
+   */
+
+
+  /**
+   * Calls the {@link #addPatterns(Collection)} method with a
+   * {@linkplain Collections#singleton(Object) singleton
+   * <code>Set</code>} consisting of the supplied {@code
+   * stringPattern}.
+   *
+   * @param stringPattern a <a
+   * href="http://godoc.org/k8s.io/helm/pkg/ignore">valid {@code
+   * .helmignore} pattern</a>; may be {@code null} or {@linkplain
+   * String#isEmpty() empty} or prefixed with a {@code #} character,
+   * in which case no action will be taken
+   *
+   * @see #addPatterns(Collection)
+   *
+   * @see #matches(Path)
+   */
+  public final void addPattern(final String stringPattern) {
     this.addPatterns(Collections.singleton(stringPattern));
   }
-  
-  public void addPatterns(final Collection<? extends String> stringPatterns) {
+
+  /**
+   * Adds all of the <a
+   * href="http://godoc.org/k8s.io/helm/pkg/ignore">valid {@code
+   * .helmignore} patterns</a> present in the supplied {@link
+   * Collection} of such patterns.
+   *
+   * @param stringPatterns a {@link Collection} of <a
+   * href="http://godoc.org/k8s.io/helm/pkg/ignore">valid {@code
+   * .helmignore} patterns</a>; may be {@code null} in which case no
+   * action will be taken
+   *
+   * @see #matches(Path)
+   */
+  public void addPatterns(final Collection<? extends String> stringPatterns) {    
     if (stringPatterns != null && !stringPatterns.isEmpty()) {
       for (String stringPattern : stringPatterns) {
         if (stringPattern != null && !stringPattern.isEmpty()) {
@@ -162,7 +282,9 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
             regex.append("$"); // From Go's Filepath.Match: "Match requires pattern to match all of name, not just a substring."
             final Pattern pattern = Pattern.compile(regex.toString());
             final Predicate<Path> rule = new RegexRule(pattern, requireDirectory, basename);
-            this.rules.add(negate ? rule.negate() : rule);
+            synchronized (this.rules) {
+              this.rules.add(negate ? rule.negate() : rule);
+            }
           }
         }
       }
@@ -181,39 +303,111 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
    * @see #matches(Path)
    */
   @Override
-  public boolean test(final Path path) {
+  public final boolean test(final Path path) {
     return this.matches(path);
   }
-  
+
+  /**
+   * Returns {@code true} if at least one of the patterns added via
+   * the {@link #addPatterns(Collection)} method logically matches the
+   * supplied {@link Path}.
+   *
+   * @param path the {@link Path} to match; may be {@code null} in
+   * which case {@code false} will be returned
+   *
+   * @return {@code true} if at least one of the patterns added via
+   * the {@link #addPatterns(Collection)} method logically matches the
+   * supplied {@link Path}; {@code false} otherwise
+   */
   @Override
   public boolean matches(final Path path) {
+    boolean returnValue = false;
     if (path != null) {
       // https://github.com/kubernetes/helm/issues/1776
       final String pathString = path.toString();
-      if (pathString.equals(".") || pathString.equals("./")) {
-        return false;
+      if (!pathString.equals(".") && !pathString.equals("./")) {
+        synchronized (this.rules) {
+          for (final Predicate<Path> rule : this.rules) {
+            if (rule != null && rule.test(path)) {
+              returnValue = true;
+              break;
+            }
+          }
+        }
       }
     }
-    for (final Predicate<Path> rule : this.rules) {
-      if (rule != null && rule.test(path)) {
-        return true;
-      }
-    }
-    return false;
+    return returnValue;
   }
+
+
+  /*
+   * Inner and nested classes.
+   */
   
+
+  /**
+   * A {@link Predicate Predicate&lt;Path&gt;} that may also apply
+   * {@link Path}-specific tests.
+   *
+   * @author <a href="https://about.me/lairdnelson"
+   * target="_parent">Laird Nelson</a>
+   */
   private static abstract class Rule implements Predicate<Path> {
 
-    protected final boolean requireDirectory;
 
-    protected final boolean basename;
-    
+    /*
+     * Instance fields.
+     */
+
+
+    /**
+     * Whether a {@link Path} must {@linkplain Files#isDirectory(Path)
+     * be a directory} in order for this {@link Rule} to match.
+     */
+    private final boolean requireDirectory;
+
+    /**
+     * Whether the {@linkplain Path#getFileName() final component in a
+     * <code>Path</code>} is matched, or the entire {@link Path}.
+     */
+    private final boolean basename;
+
+
+    /*
+     * Constructors.
+     */
+
+
+    /**
+     * Creates a new {@link Rule}.
+     *
+     * @param requireDirectory whether a {@link Path} must {@linkplain
+     * Files#isDirectory(Path) be a directory} in order for this
+     * {@link Rule} to match
+     *
+     * @param basename hhether the {@linkplain Path#getFileName()
+     * final component in a <code>Path</code>} is matched, or the
+     * entire {@link Path}
+     */
     protected Rule(final boolean requireDirectory, final boolean basename) {
       super();
       this.requireDirectory = requireDirectory;
       this.basename = basename;
     }
 
+    /**
+     * Returns a {@link Path} that can be tested, given a {@link Path}
+     * and the application of the {@code requireDirectory} and {@code
+     * basename} parameters passed to the {@linkplain #Rule(boolean,
+     * boolean) constructor}.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * @param path the {@link Path} to normalize; may be {@code null}
+     * in which case {@code null} will be returned
+     *
+     * @return a {@link Path} to be further tested; or {@code null}
+     */
     protected final Path normalizePath(final Path path) {
       Path returnValue = path;
       if (path != null) {
@@ -229,17 +423,75 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
 
   }
 
+  /**
+   * A {@link Rule} that uses regular expressions to match {@link Path}s.
+   *
+   * @author <a href="https://about.me/lairdnelson"
+   * target="_parent">Laird Nelson</a>
+   *
+   * @see Pattern
+   */
   private static final class RegexRule extends Rule {
 
+
+    /*
+     * Instance fields.
+     */
+
+
+    /**
+     * The {@link Pattern} specifying what {@link Path} instances
+     * should be matched.
+     *
+     * <p>This field may be {@code null}.</p>
+     */
     private final Pattern pattern;
-    
+
+
+    /*
+     * Constructors.
+     */
+
+
+    /**
+     * Creates a new {@link RegexRule}.
+     *
+     * @param pattern the {@link Pattern} specifying what {@link Path}
+     * instances should be matched; may be {@code null}
+     *
+     * @param requireDirectory whether only {@link Path} instances
+     * that {@linkplain Files#isDirectory(Path) are directories} are
+     * subject to further matching
+     *
+     * @param basename whether only {@linkplain Path#getFileName() the
+     * last component of a <code>Path</code>} is considered for
+     * matching
+     *
+     * @see #test(Path)
+     */
     private RegexRule(final Pattern pattern, final boolean requireDirectory, final boolean basename) {
       super(requireDirectory, basename);
       this.pattern = pattern;
     }
 
+
+    /*
+     * Instance methods.
+     */
+
+
+    /**
+     * Tests the supplied {@link Path} to see if it matches the
+     * conditions supplied at construction time.
+     *
+     * @param path the {@link Path} to test; may be {@code null} in
+     * which case {@code false} will be returned
+     *
+     * @return {@code true} if this {@link RegexRule} matches the
+     * supplied {@link Path}; {@code false} otherwise
+     */
     @Override
-    public boolean test(Path path) {
+    public final boolean test(Path path) {
       boolean returnValue = false;
       path = this.normalizePath(path);
       if (path != null) {

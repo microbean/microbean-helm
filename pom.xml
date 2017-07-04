@@ -257,12 +257,20 @@
           <configuration>
             <offlineLinks>
               <offlineLink>
+                <url>http://static.javadoc.io/com.github.zafarkhaja/java-semver/0.9.0</url>
+                <location>${project.basedir}/src/main/javadoc/com.github.zafarkhaja/java-semver/0.9.0</location>
+              </offlineLink>
+              <offlineLink>
                 <url>http://static.javadoc.io/io.fabric8/kubernetes-client/2.3.1</url>
                 <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-client/2.3.1</location>
               </offlineLink>
               <offlineLink>
                 <url>http://static.javadoc.io/io.fabric8/kubernetes-model/1.0.73</url>
                 <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-model/1.0.73</location>
+              </offlineLink>
+              <offlineLink>
+                <url>http://static.javadoc.io/org.kamranzafar/jtar/2.3</url>
+                <location>${project.basedir}/src/main/javadoc/org.kamranzafar/jtar/2.3</location>
               </offlineLink>
             </offlineLinks>
           </configuration>
