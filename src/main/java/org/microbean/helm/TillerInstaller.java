@@ -591,10 +591,13 @@ public class TillerInstaller {
     if (uri == null) {
       returnValue = null;
     } else {
-      final URL url = uri.toURL();    
+      final URL url = uri.toURL();
+      assert url != null;
       final InputStream uriStream = url.openStream();
       if (uriStream == null) {
         returnValue = null;
+      } else if (uriStream instanceof BufferedInputStream) {
+        returnValue = (BufferedInputStream)uriStream;
       } else {
         returnValue = new BufferedInputStream(uriStream);
       }

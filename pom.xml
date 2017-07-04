@@ -220,7 +220,7 @@
     </dependency>
     
   </dependencies>
-
+  
   <build>
 
     <extensions>
@@ -247,6 +247,8 @@
 
     </resources>
 
+    <testResources/>
+    
     <pluginManagement>
       <plugins>
 
@@ -295,6 +297,40 @@
     <plugins>
 
       <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgs>
+            <arg>-Xlint</arg>
+            <arg>-Xlint:-cast</arg>
+            <arg>-Xlint:-deprecation</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>Copy test resources</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+              <includeEmptyDirectories>true</includeEmptyDirectories>
+              <resources>
+                <resource>
+                  <directory>src/test/resources</directory>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <plugin>
         <artifactId>maven-scm-plugin</artifactId>
         <executions>
           <execution>
@@ -323,6 +359,29 @@
             <testGetRelease.releaseName>${testGetRelease.releaseName}</testGetRelease.releaseName>
           </systemPropertyVariables>
         </configuration>
+        <executions>
+          <execution>
+            <id>default-test</id>
+            <configuration>
+              <excludes>
+                <exclude>org/microbean/helm/chart/TestHelmIgnorePathMatcher.java</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>TestHelmIgnorePathMatcher</id>
+            <phase>test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>org/microbean/helm/chart/TestHelmIgnorePathMatcher.java</include>
+              </includes>
+              <workingDirectory>${project.build.testOutputDirectory}/TestHelmIgnorePathMatcher</workingDirectory>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       
       <plugin>
