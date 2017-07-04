@@ -4,3 +4,4 @@ hapi.services.rudder
 hapi.services.tiller
 hapi.version
 org.microbean.helm
+org.microbean.helm.chart

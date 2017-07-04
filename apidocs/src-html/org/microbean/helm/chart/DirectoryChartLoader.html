@@ -1,0 +1,310 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-<a name="line.1"></a>
+<span class="sourceLineNo">002</span> *<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * Copyright © 2017 MicroBean.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * you may not use this file except in compliance with the License.<a name="line.6"></a>
+<span class="sourceLineNo">007</span> * You may obtain a copy of the License at<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> * Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * implied.  See the License for the specific language governing<a name="line.14"></a>
+<span class="sourceLineNo">015</span> * permissions and limitations under the License.<a name="line.15"></a>
+<span class="sourceLineNo">016</span> */<a name="line.16"></a>
+<span class="sourceLineNo">017</span>package org.microbean.helm.chart;<a name="line.17"></a>
+<span class="sourceLineNo">018</span><a name="line.18"></a>
+<span class="sourceLineNo">019</span>import java.io.BufferedInputStream;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import java.io.File;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import java.io.IOException;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import java.io.InputStream;<a name="line.22"></a>
+<span class="sourceLineNo">023</span><a name="line.23"></a>
+<span class="sourceLineNo">024</span>import java.net.URI;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import java.net.URL;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.nio.file.Files;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.nio.file.FileVisitResult;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.nio.file.FileVisitor;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.nio.file.Path;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.nio.file.attribute.BasicFileAttributes;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.util.ArrayList;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.util.List;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.util.Map;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.util.Objects;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>import java.util.zip.GZIPInputStream;<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>import com.google.protobuf.Any;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import com.google.protobuf.ByteString;<a name="line.42"></a>
+<span class="sourceLineNo">043</span><a name="line.43"></a>
+<span class="sourceLineNo">044</span>import hapi.chart.ChartOuterClass.Chart;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import hapi.chart.ConfigOuterClass.Config;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import hapi.chart.MetadataOuterClass.Maintainer;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import hapi.chart.MetadataOuterClass.Metadata;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import hapi.chart.TemplateOuterClass.Template;<a name="line.48"></a>
+<span class="sourceLineNo">049</span><a name="line.49"></a>
+<span class="sourceLineNo">050</span>import org.kamranzafar.jtar.TarEntry;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>import org.kamranzafar.jtar.TarInputStream;<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>import org.yaml.snakeyaml.Yaml;<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>public class DirectoryChartLoader extends StreamOrientedChartLoader&lt;Path&gt; {<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>  @Override<a name="line.57"></a>
+<span class="sourceLineNo">058</span>  public Chart load(final Path path) throws IOException {<a name="line.58"></a>
+<span class="sourceLineNo">059</span>    Chart returnValue = null;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    if (path != null) {<a name="line.60"></a>
+<span class="sourceLineNo">061</span>      if (Files.isDirectory(path)) {<a name="line.61"></a>
+<span class="sourceLineNo">062</span>        returnValue = loadDirectory(path);<a name="line.62"></a>
+<span class="sourceLineNo">063</span>      } else {<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        final URI pathUri = path.toUri();<a name="line.64"></a>
+<span class="sourceLineNo">065</span>        assert pathUri != null;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>        final URL pathUrl = pathUri.toURL();<a name="line.66"></a>
+<span class="sourceLineNo">067</span>        assert pathUrl != null;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>        try (final TarInputStream stream = new TarInputStream(new BufferedInputStream(new GZIPInputStream(pathUrl.openStream())))) {<a name="line.68"></a>
+<span class="sourceLineNo">069</span>          returnValue = new TapeArchiveChartLoader().load(stream);<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        }<a name="line.70"></a>
+<span class="sourceLineNo">071</span>      }<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    }<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    return returnValue;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>  }<a name="line.74"></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a>
+<span class="sourceLineNo">076</span>  private Chart loadDirectory(final Path path) throws IOException {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    Chart returnValue = null;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    if (path != null) {<a name="line.78"></a>
+<span class="sourceLineNo">079</span>      if (Files.isDirectory(path)) {<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        final Chart[] chartHolder = new Chart[1];<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        Files.walkFileTree(path, new FileVisitor&lt;Path&gt;() {<a name="line.81"></a>
+<span class="sourceLineNo">082</span>            <a name="line.82"></a>
+<span class="sourceLineNo">083</span>            private Path startPath;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>            <a name="line.84"></a>
+<span class="sourceLineNo">085</span>            private final List&lt;Template&gt; templates = new ArrayList&lt;&gt;();<a name="line.85"></a>
+<span class="sourceLineNo">086</span><a name="line.86"></a>
+<span class="sourceLineNo">087</span>            private final List&lt;Chart&gt; subcharts = new ArrayList&lt;&gt;();<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>            final List&lt;Any&gt; files = new ArrayList&lt;&gt;();<a name="line.89"></a>
+<span class="sourceLineNo">090</span><a name="line.90"></a>
+<span class="sourceLineNo">091</span>            private Config config;<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>            private Metadata metadata;<a name="line.93"></a>
+<span class="sourceLineNo">094</span><a name="line.94"></a>
+<span class="sourceLineNo">095</span>            private ChartDirectoryType chartDirectoryType = ChartDirectoryType.NORMAL;<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>            @Override<a name="line.97"></a>
+<span class="sourceLineNo">098</span>            public FileVisitResult preVisitDirectory(final Path directory, final BasicFileAttributes attributes) throws IOException {<a name="line.98"></a>
+<span class="sourceLineNo">099</span>              Objects.requireNonNull(directory);<a name="line.99"></a>
+<span class="sourceLineNo">100</span>              Objects.requireNonNull(attributes);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>              assert attributes.isDirectory();<a name="line.101"></a>
+<span class="sourceLineNo">102</span>              FileVisitResult returnValue = FileVisitResult.CONTINUE;<a name="line.102"></a>
+<span class="sourceLineNo">103</span>              if (this.startPath == null) {<a name="line.103"></a>
+<span class="sourceLineNo">104</span>                assert !isTemplateDirectory(directory);<a name="line.104"></a>
+<span class="sourceLineNo">105</span>                assert !isSubchartDirectory(directory);<a name="line.105"></a>
+<span class="sourceLineNo">106</span>                assert ChartDirectoryType.NORMAL.equals(this.chartDirectoryType);<a name="line.106"></a>
+<span class="sourceLineNo">107</span>                this.startPath = directory;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>              } else if (ignore(directory)) {<a name="line.108"></a>
+<span class="sourceLineNo">109</span>                returnValue = FileVisitResult.SKIP_SUBTREE;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>              } else if (isTemplateDirectory(directory)) {<a name="line.110"></a>
+<span class="sourceLineNo">111</span>                // Entering "templates/".<a name="line.111"></a>
+<span class="sourceLineNo">112</span>                this.chartDirectoryType = ChartDirectoryType.TEMPLATE;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>              } else if (isSubchartDirectory(directory)) {<a name="line.113"></a>
+<span class="sourceLineNo">114</span>                // Entering "charts/".<a name="line.114"></a>
+<span class="sourceLineNo">115</span>                this.chartDirectoryType = ChartDirectoryType.SUBCHART;<a name="line.115"></a>
+<span class="sourceLineNo">116</span>              } else if (ChartDirectoryType.TEMPLATE.equals(this.chartDirectoryType)) {<a name="line.116"></a>
+<span class="sourceLineNo">117</span>                // Entering a subdirectory of "templates/".  Carry on.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>              } else if (ChartDirectoryType.SUBCHART.equals(this.chartDirectoryType)) {<a name="line.118"></a>
+<span class="sourceLineNo">119</span>                // Entering a subdirectory of "charts/".  Recursively<a name="line.119"></a>
+<span class="sourceLineNo">120</span>                // load it and skip its entry.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>                this.subcharts.add(loadDirectory(directory));<a name="line.121"></a>
+<span class="sourceLineNo">122</span>                returnValue = FileVisitResult.SKIP_SUBTREE;<a name="line.122"></a>
+<span class="sourceLineNo">123</span>              } else {<a name="line.123"></a>
+<span class="sourceLineNo">124</span>                // Entering a directory that is part of neither the<a name="line.124"></a>
+<span class="sourceLineNo">125</span>                // "templates/" nor the "charts/" tree.  By definition<a name="line.125"></a>
+<span class="sourceLineNo">126</span>                // it's normal.<a name="line.126"></a>
+<span class="sourceLineNo">127</span>                this.chartDirectoryType = ChartDirectoryType.NORMAL;<a name="line.127"></a>
+<span class="sourceLineNo">128</span>              }<a name="line.128"></a>
+<span class="sourceLineNo">129</span>              return returnValue;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>            }<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>            @Override<a name="line.132"></a>
+<span class="sourceLineNo">133</span>            public FileVisitResult postVisitDirectory(final Path directory, final IOException exception) throws IOException {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>              if (exception != null) {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>                throw exception;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>              }<a name="line.136"></a>
+<span class="sourceLineNo">137</span>              Objects.requireNonNull(directory);<a name="line.137"></a>
+<span class="sourceLineNo">138</span>              this.chartDirectoryType = ChartDirectoryType.NORMAL;<a name="line.138"></a>
+<span class="sourceLineNo">139</span>              if (directory != null &amp;&amp; directory.equals(this.startPath)) {<a name="line.139"></a>
+<span class="sourceLineNo">140</span>                assert chartHolder[0] == null;<a name="line.140"></a>
+<span class="sourceLineNo">141</span>                final Chart.Builder chartBuilder = Chart.newBuilder();<a name="line.141"></a>
+<span class="sourceLineNo">142</span>                assert chartBuilder != null;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>                if (this.metadata != null) {<a name="line.143"></a>
+<span class="sourceLineNo">144</span>                  chartBuilder.setMetadata(this.metadata);<a name="line.144"></a>
+<span class="sourceLineNo">145</span>                }<a name="line.145"></a>
+<span class="sourceLineNo">146</span>                if (this.config != null) {<a name="line.146"></a>
+<span class="sourceLineNo">147</span>                  chartBuilder.setValues(this.config);<a name="line.147"></a>
+<span class="sourceLineNo">148</span>                }<a name="line.148"></a>
+<span class="sourceLineNo">149</span>                chartBuilder.addAllTemplates(this.templates);<a name="line.149"></a>
+<span class="sourceLineNo">150</span>                chartBuilder.addAllFiles(this.files);<a name="line.150"></a>
+<span class="sourceLineNo">151</span>                chartBuilder.addAllDependencies(this.subcharts);<a name="line.151"></a>
+<span class="sourceLineNo">152</span>                chartHolder[0] = chartBuilder.build();<a name="line.152"></a>
+<span class="sourceLineNo">153</span>              }<a name="line.153"></a>
+<span class="sourceLineNo">154</span>              return FileVisitResult.CONTINUE;<a name="line.154"></a>
+<span class="sourceLineNo">155</span>            }<a name="line.155"></a>
+<span class="sourceLineNo">156</span>            <a name="line.156"></a>
+<span class="sourceLineNo">157</span>            @Override<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attributes) throws IOException {<a name="line.158"></a>
+<span class="sourceLineNo">159</span>              Objects.requireNonNull(file);<a name="line.159"></a>
+<span class="sourceLineNo">160</span>              Objects.requireNonNull(attributes);<a name="line.160"></a>
+<span class="sourceLineNo">161</span>              assert !attributes.isDirectory();<a name="line.161"></a>
+<span class="sourceLineNo">162</span>              if (!ignore(file)) {<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>                if (ChartDirectoryType.SUBCHART.equals(this.chartDirectoryType)) {<a name="line.164"></a>
+<span class="sourceLineNo">165</span>                  // When we enter the charts/ directory, we do not<a name="line.165"></a>
+<span class="sourceLineNo">166</span>                  // descend into it, but rather call ourselves<a name="line.166"></a>
+<span class="sourceLineNo">167</span>                  // recursively (see above).  So we should never<a name="line.167"></a>
+<span class="sourceLineNo">168</span>                  // encounter a file *inside* the charts/ directory<a name="line.168"></a>
+<span class="sourceLineNo">169</span>                  // *as a subchart*.<a name="line.169"></a>
+<span class="sourceLineNo">170</span>                  throw new IllegalStateException();<a name="line.170"></a>
+<span class="sourceLineNo">171</span>                }<a name="line.171"></a>
+<span class="sourceLineNo">172</span>                <a name="line.172"></a>
+<span class="sourceLineNo">173</span>                assert this.startPath != null;<a name="line.173"></a>
+<span class="sourceLineNo">174</span><a name="line.174"></a>
+<span class="sourceLineNo">175</span>                final Path relativePath = this.startPath.relativize(file);<a name="line.175"></a>
+<span class="sourceLineNo">176</span>                assert relativePath != null;<a name="line.176"></a>
+<span class="sourceLineNo">177</span><a name="line.177"></a>
+<span class="sourceLineNo">178</span>                try (final InputStream stream = new BufferedInputStream(file.toUri().toURL().openStream())) {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>                  if (ChartDirectoryType.TEMPLATE.equals(this.chartDirectoryType)) {<a name="line.179"></a>
+<span class="sourceLineNo">180</span>                    this.templates.add(createTemplate(stream, relativePath.toString()));<a name="line.180"></a>
+<span class="sourceLineNo">181</span>                  } else if (isValuesFile(file)) {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>                    if (this.config == null) {<a name="line.182"></a>
+<span class="sourceLineNo">183</span>                      this.config = createConfig(stream);<a name="line.183"></a>
+<span class="sourceLineNo">184</span>                    }<a name="line.184"></a>
+<span class="sourceLineNo">185</span>                  } else if (isChartFile(file)) {<a name="line.185"></a>
+<span class="sourceLineNo">186</span>                    if (this.metadata == null) {<a name="line.186"></a>
+<span class="sourceLineNo">187</span>                      this.metadata = createMetadata(stream);<a name="line.187"></a>
+<span class="sourceLineNo">188</span>                    }<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                  } else {<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                    this.files.add(createAny(stream, relativePath.toString()));<a name="line.190"></a>
+<span class="sourceLineNo">191</span>                  }<a name="line.191"></a>
+<span class="sourceLineNo">192</span>                }<a name="line.192"></a>
+<span class="sourceLineNo">193</span>              }<a name="line.193"></a>
+<span class="sourceLineNo">194</span>              return FileVisitResult.CONTINUE;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>            }<a name="line.195"></a>
+<span class="sourceLineNo">196</span><a name="line.196"></a>
+<span class="sourceLineNo">197</span>            @Override<a name="line.197"></a>
+<span class="sourceLineNo">198</span>            public FileVisitResult visitFileFailed(final Path file, final IOException exception) throws IOException {<a name="line.198"></a>
+<span class="sourceLineNo">199</span>              if (exception != null) {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>                throw exception;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>              }<a name="line.201"></a>
+<span class="sourceLineNo">202</span>              return FileVisitResult.CONTINUE;<a name="line.202"></a>
+<span class="sourceLineNo">203</span>            }<a name="line.203"></a>
+<span class="sourceLineNo">204</span><a name="line.204"></a>
+<span class="sourceLineNo">205</span>          });<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        returnValue = chartHolder[0];        <a name="line.206"></a>
+<span class="sourceLineNo">207</span>      }<a name="line.207"></a>
+<span class="sourceLineNo">208</span>    }<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    return returnValue;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>  }<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>  protected boolean isChartFile(final Path path) {<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    return path != null &amp;&amp; path.endsWith("Chart.yaml");<a name="line.213"></a>
+<span class="sourceLineNo">214</span>  }<a name="line.214"></a>
+<span class="sourceLineNo">215</span>  <a name="line.215"></a>
+<span class="sourceLineNo">216</span>  protected boolean isValuesFile(final Path path) {<a name="line.216"></a>
+<span class="sourceLineNo">217</span>    return path != null &amp;&amp; path.endsWith("values.yaml");<a name="line.217"></a>
+<span class="sourceLineNo">218</span>  }<a name="line.218"></a>
+<span class="sourceLineNo">219</span><a name="line.219"></a>
+<span class="sourceLineNo">220</span>  protected boolean isSubchartDirectory(final Path path) {<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    return path != null &amp;&amp; path.endsWith("charts");<a name="line.221"></a>
+<span class="sourceLineNo">222</span>  }<a name="line.222"></a>
+<span class="sourceLineNo">223</span><a name="line.223"></a>
+<span class="sourceLineNo">224</span>  protected boolean isTemplateDirectory(final Path path) {<a name="line.224"></a>
+<span class="sourceLineNo">225</span>    return path != null &amp;&amp; path.endsWith("templates");<a name="line.225"></a>
+<span class="sourceLineNo">226</span>  }<a name="line.226"></a>
+<span class="sourceLineNo">227</span>  <a name="line.227"></a>
+<span class="sourceLineNo">228</span>  protected boolean ignore(final Path file) {<a name="line.228"></a>
+<span class="sourceLineNo">229</span>    return false; // TODO: implement with .helmignore file, etc.<a name="line.229"></a>
+<span class="sourceLineNo">230</span>  }<a name="line.230"></a>
+<span class="sourceLineNo">231</span><a name="line.231"></a>
+<span class="sourceLineNo">232</span>  private static enum ChartDirectoryType {<a name="line.232"></a>
+<span class="sourceLineNo">233</span>    NORMAL, SUBCHART, TEMPLATE<a name="line.233"></a>
+<span class="sourceLineNo">234</span>  }<a name="line.234"></a>
+<span class="sourceLineNo">235</span>            <a name="line.235"></a>
+<span class="sourceLineNo">236</span><a name="line.236"></a>
+<span class="sourceLineNo">237</span>  <a name="line.237"></a>
+<span class="sourceLineNo">238</span>}<a name="line.238"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

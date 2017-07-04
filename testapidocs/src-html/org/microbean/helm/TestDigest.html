@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-<a name="line.1"></a>
+<span class="sourceLineNo">002</span> *<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * Copyright © 2017 MicroBean.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * you may not use this file except in compliance with the License.<a name="line.6"></a>
+<span class="sourceLineNo">007</span> * You may obtain a copy of the License at<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> * Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * implied.  See the License for the specific language governing<a name="line.14"></a>
+<span class="sourceLineNo">015</span> * permissions and limitations under the License.<a name="line.15"></a>
+<span class="sourceLineNo">016</span> */<a name="line.16"></a>
+<span class="sourceLineNo">017</span>package org.microbean.helm;<a name="line.17"></a>
+<span class="sourceLineNo">018</span><a name="line.18"></a>
+<span class="sourceLineNo">019</span>import java.io.ByteArrayOutputStream;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import java.io.IOException;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import java.io.BufferedInputStream;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import java.io.InputStream;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>import java.io.InputStreamReader;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import java.io.BufferedReader;<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>import java.net.URL;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.nio.ByteBuffer;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.nio.charset.StandardCharsets;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.security.MessageDigest;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.security.NoSuchAlgorithmException;<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.xml.bind.DatatypeConverter;<a name="line.35"></a>
+<span class="sourceLineNo">036</span><a name="line.36"></a>
+<span class="sourceLineNo">037</span>import org.junit.Test;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>import static org.junit.Assert.assertEquals;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import static org.junit.Assert.assertNotNull;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import static org.junit.Assert.assertTrue;<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>public class TestDigest {<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>  public TestDigest() {<a name="line.45"></a>
+<span class="sourceLineNo">046</span>    super();<a name="line.46"></a>
+<span class="sourceLineNo">047</span>  }<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>  @Test<a name="line.49"></a>
+<span class="sourceLineNo">050</span>  public void testDigest() throws IOException, NoSuchAlgorithmException {<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    final URL redisChart = Thread.currentThread().getContextClassLoader().getResource("redis-0.5.1/redis-0.5.1.tgz");<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    assertNotNull(redisChart);<a name="line.52"></a>
+<span class="sourceLineNo">053</span>    final URL digest = Thread.currentThread().getContextClassLoader().getResource("redis-0.5.1/digest");<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    assertNotNull(digest);<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    assertTrue(digest.getProtocol().equals("file"));<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    String expectedDigest = null;<a name="line.56"></a>
+<span class="sourceLineNo">057</span>    try (final BufferedReader reader = new BufferedReader(new InputStreamReader(digest.openStream(), StandardCharsets.UTF_8))) {<a name="line.57"></a>
+<span class="sourceLineNo">058</span>      assertNotNull(reader);<a name="line.58"></a>
+<span class="sourceLineNo">059</span>      expectedDigest = reader.readLine();<a name="line.59"></a>
+<span class="sourceLineNo">060</span>      assertNotNull(expectedDigest);<a name="line.60"></a>
+<span class="sourceLineNo">061</span>      expectedDigest = expectedDigest.toUpperCase();<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    }<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    final MessageDigest md = MessageDigest.getInstance("SHA-256");<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    assertNotNull(md);<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    ByteBuffer buffer = null;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    try (final InputStream rawInputStream = redisChart.openStream();<a name="line.66"></a>
+<span class="sourceLineNo">067</span>         final BufferedInputStream stream = rawInputStream instanceof BufferedInputStream ? (BufferedInputStream)rawInputStream : new BufferedInputStream(rawInputStream)) {<a name="line.67"></a>
+<span class="sourceLineNo">068</span>      assertNotNull(rawInputStream);<a name="line.68"></a>
+<span class="sourceLineNo">069</span>      assertNotNull(stream);<a name="line.69"></a>
+<span class="sourceLineNo">070</span>      buffer = readByteBuffer(stream);<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    }<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    assertNotNull(buffer);<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    md.update(buffer);<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    assertEquals(expectedDigest, DatatypeConverter.printHexBinary(md.digest()));<a name="line.74"></a>
+<span class="sourceLineNo">075</span>  }<a name="line.75"></a>
+<span class="sourceLineNo">076</span><a name="line.76"></a>
+<span class="sourceLineNo">077</span>  private static final ByteBuffer readByteBuffer(final InputStream stream) throws IOException {<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    return ByteBuffer.wrap(read(stream));<a name="line.78"></a>
+<span class="sourceLineNo">079</span>  }<a name="line.79"></a>
+<span class="sourceLineNo">080</span>  <a name="line.80"></a>
+<span class="sourceLineNo">081</span>  private static final byte[] read(final InputStream stream) throws IOException {<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    byte[] returnValue = null;<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    if (stream != null) {<a name="line.83"></a>
+<span class="sourceLineNo">084</span>      try (final ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        int bytesRead;<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        final byte[] data = new byte[4096];<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        while ((bytesRead = stream.read(data, 0, data.length)) != -1) {<a name="line.87"></a>
+<span class="sourceLineNo">088</span>          buffer.write(data, 0, bytesRead);<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        }<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        buffer.flush();<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        returnValue = buffer.toByteArray();<a name="line.91"></a>
+<span class="sourceLineNo">092</span>      }<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    }<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    return returnValue;<a name="line.94"></a>
+<span class="sourceLineNo">095</span>  }<a name="line.95"></a>
+<span class="sourceLineNo">096</span>  <a name="line.96"></a>
+<span class="sourceLineNo">097</span>}<a name="line.97"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
