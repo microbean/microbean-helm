@@ -25,6 +25,8 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,6 +52,7 @@ import org.kamranzafar.jtar.TarInputStream;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class TestHelmIgnorePathMatcher {
@@ -97,7 +100,7 @@ public class TestHelmIgnorePathMatcher {
 
   private final boolean match;
 
-  private HelmIgnorePathMatcher pathMatcher;
+  private PathMatcher pathMatcher;
   
   public TestHelmIgnorePathMatcher(final String pattern, final String testText, final boolean match) {
     super();
@@ -108,7 +111,9 @@ public class TestHelmIgnorePathMatcher {
 
   @Before
   public void setUp() {
-    this.pathMatcher = new HelmIgnorePathMatcher();
+    final HelmIgnorePathMatcher helmIgnorePathMatcher = new HelmIgnorePathMatcher();
+    helmIgnorePathMatcher.addPattern(this.pattern);
+    this.pathMatcher = helmIgnorePathMatcher;
   }
 
   @After
@@ -118,7 +123,8 @@ public class TestHelmIgnorePathMatcher {
 
   @Test
   public void testStuff() {
-    this.pathMatcher.addPattern(this.pattern);
-    assertEquals(this.pattern + " did not match " + this.testText, this.match, this.pathMatcher.matches(Paths.get(this.testText)));
+    final Path path = Paths.get(this.testText);
+    assertNotNull(path);
+    assertEquals(this.pattern + " did not match " + this.testText, this.match, this.pathMatcher.matches(path));
   }
 }

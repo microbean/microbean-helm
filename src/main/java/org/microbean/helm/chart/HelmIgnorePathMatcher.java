@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
 
-  private final Collection<Rule> rules;
+  private final Collection<Predicate<Path>> rules;
   
   public HelmIgnorePathMatcher() {
     super();
@@ -134,7 +134,7 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
             }
 
             final StringBuilder regex = new StringBuilder();
-            // regex.append("^"); // From Go's Filepath.Match: "Match requires pattern to match all of name, not just a substring."
+            regex.append("^"); // From Go's Filepath.Match: "Match requires pattern to match all of name, not just a substring."
 
             final char[] chars = stringPattern.toCharArray();
             assert chars != null;
@@ -151,13 +151,7 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
                 regex.append("[^").append(File.separator).append("]*");
                 break;
               case '?':
-                regex.append("[^").append(File.separator).append("]");
-                break;
-              case '\\':
-                if (i + 1 == length) {
-                  throw new IllegalArgumentException(stringPattern);
-                }
-                regex.append(String.valueOf(chars[++i]));
+                regex.append("[^").append(File.separator).append("]?");
                 break;
               default:
                 regex.append(String.valueOf(c));
@@ -165,15 +159,27 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
               }
             }
 
-            // regex.append("$"); // From Go's Filepath.Match: "Match requires pattern to match all of name, not just a substring."
+            regex.append("$"); // From Go's Filepath.Match: "Match requires pattern to match all of name, not just a substring."
             final Pattern pattern = Pattern.compile(regex.toString());
-            this.rules.add(new Rule(pattern, negate, requireDirectory, basename));
+            final Predicate<Path> rule = new RegexRule(pattern, requireDirectory, basename);
+            this.rules.add(negate ? rule.negate() : rule);
           }
         }
       }
     }
   }
-  
+
+  /**
+   * Calls the {@link #matches(Path)} method with the supplied {@link
+   * Path} and returns its results.
+   *
+   * @param path a {@link Path} to test; may be {@code null}
+   *
+   * @return {@code true} if the supplied {@code path} matches; {@code
+   * false} otherwise
+   *
+   * @see #matches(Path)
+   */
   @Override
   public boolean test(final Path path) {
     return this.matches(path);
@@ -188,7 +194,7 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
         return false;
       }
     }
-    for (final Rule rule : this.rules) {
+    for (final Predicate<Path> rule : this.rules) {
       if (rule != null && rule.test(path)) {
         return true;
       }
@@ -196,50 +202,57 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
     return false;
   }
   
-  private static final class Rule implements Predicate<Path> {
+  private static abstract class Rule implements Predicate<Path> {
 
-    private final Pattern pattern;
+    protected final boolean requireDirectory;
 
-    private final boolean negate;
-
-    private final boolean requireDirectory;
-
-    private final boolean basename;
+    protected final boolean basename;
     
-    private Rule(final Pattern pattern, final boolean negate, final boolean requireDirectory, final boolean basename) {
+    protected Rule(final boolean requireDirectory, final boolean basename) {
       super();
-      this.pattern = pattern;
-      this.negate = negate;
       this.requireDirectory = requireDirectory;
       this.basename = basename;
+    }
+
+    protected final Path normalizePath(final Path path) {
+      Path returnValue = path;
+      if (path != null) {
+        if (this.basename) {
+          returnValue = path.getFileName();
+        }
+        if (this.requireDirectory && !Files.isDirectory(path)) {
+          returnValue = null;
+        }
+      }
+      return returnValue;
+    }
+
+  }
+
+  private static final class RegexRule extends Rule {
+
+    private final Pattern pattern;
+    
+    private RegexRule(final Pattern pattern, final boolean requireDirectory, final boolean basename) {
+      super(requireDirectory, basename);
+      this.pattern = pattern;
     }
 
     @Override
     public boolean test(Path path) {
       boolean returnValue = false;
+      path = this.normalizePath(path);
       if (path != null) {
-        if (this.basename) {
-          path = path.getFileName();
+        if (this.pattern == null) {
+          returnValue = true;
+        } else {
+          final Matcher matcher = this.pattern.matcher(path.toString());
+          assert matcher != null;
+          returnValue = matcher.matches();
         }
-        
-        if (!this.requireDirectory || Files.isDirectory(path)) {
-          if (this.pattern == null) {
-            returnValue = true;
-          } else {
-            final String pathString = path.toString();
-            assert pathString != null;
-            final Matcher matcher = this.pattern.matcher(pathString);
-            assert matcher != null;
-            returnValue = matcher.matches();
-          }
-        }
-      }
-      if (this.negate) {
-        returnValue = !returnValue;
       }
       return returnValue;
     }
-    
   }
   
 }
