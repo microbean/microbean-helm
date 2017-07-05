@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 
+import java.nio.charset.StandardCharsets;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -135,14 +137,7 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
         bufferedReader = new BufferedReader(reader);
       }
       assert bufferedReader != null;
-      final Collection<String> lines = new ArrayList<>();
-      String line = null;
-      while ((line = bufferedReader.readLine()) != null) {
-        lines.add(line);
-      }
-      if (!lines.isEmpty()) {
-        this.addPatterns(lines);
-      }
+      this.addPatterns(bufferedReader.lines().collect(Collectors.toList()));
     }
   }
 
@@ -164,7 +159,7 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
    * @see #HelmIgnorePathMatcher(Reader)
    */
   public HelmIgnorePathMatcher(final Path helmIgnoreFile) throws IOException {
-    this(Files.newBufferedReader(helmIgnoreFile));
+    this(helmIgnoreFile == null ? (Collection<? extends String>)null : Files.readAllLines(helmIgnoreFile, StandardCharsets.UTF_8));
   }
 
 
@@ -190,7 +185,7 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
    * @see #matches(Path)
    */
   public final void addPattern(final String stringPattern) {
-    this.addPatterns(Collections.singleton(stringPattern));
+    this.addPatterns(stringPattern == null ? (Collection<? extends String>)null : Collections.singleton(stringPattern));
   }
 
   /**
@@ -198,6 +193,8 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
    * href="http://godoc.org/k8s.io/helm/pkg/ignore">valid {@code
    * .helmignore} patterns</a> present in the supplied {@link
    * Collection} of such patterns.
+   *
+   * <p>Overrides must not call {@link #addPattern(String)}.</p>
    *
    * @param stringPatterns a {@link Collection} of <a
    * href="http://godoc.org/k8s.io/helm/pkg/ignore">valid {@code
@@ -212,15 +209,16 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
         if (stringPattern != null && !stringPattern.isEmpty()) {
           stringPattern = stringPattern.trim();
           if (!stringPattern.isEmpty() && !stringPattern.startsWith("#")) {
-            if (stringPattern.contains("**")) {
-              throw new IllegalArgumentException("double-star (**) syntax is not supported"); // see rules.go
+
+            if (stringPattern.equals("!") || stringPattern.equals("/")) {
+              throw new IllegalArgumentException("invalid pattern: " + stringPattern);
+            } else if (stringPattern.contains("**")) {
+              throw new IllegalArgumentException("invalid pattern: " + stringPattern + " (double-star (**) syntax is not supported)"); // see rules.go
             }
 
             final boolean negate;
             if (stringPattern.startsWith("!")) {
-              if (stringPattern.length() <= 1) {
-                throw new IllegalArgumentException(stringPattern);
-              }
+              assert stringPattern.length() > 1;
               negate = true;
               stringPattern = stringPattern.substring(1);
             } else {
@@ -229,33 +227,26 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
 
             final boolean requireDirectory;
             if (stringPattern.endsWith("/")) {
-              if (stringPattern.length() <= 1) {
-                throw new IllegalArgumentException(stringPattern);
-              }
-              stringPattern = stringPattern.substring(0, stringPattern.length() - 1);
+              assert stringPattern.length() > 1;
               requireDirectory = true;
+              stringPattern = stringPattern.substring(0, stringPattern.length() - 1);
             } else {
               requireDirectory = false;
             }
 
             final boolean basename;
-            final int slashIndex = stringPattern.indexOf('/');
-            if (slashIndex == 0) {
-              if (stringPattern.length() <= 1) {
-                stringPattern = "";
-              } else {
+            final int firstSlashIndex = stringPattern.indexOf('/');
+            if (firstSlashIndex < 0) {
+              basename = true;
+            } else {
+              if (firstSlashIndex == 0) {
+                assert stringPattern.length() > 1;
                 stringPattern = stringPattern.substring(1);
               }
               basename = false;
-            } else if (slashIndex > 0) {
-              basename = false;
-            } else {
-              basename = true;
             }
 
-            final StringBuilder regex = new StringBuilder();
-            regex.append("^"); // From Go's Filepath.Match: "Match requires pattern to match all of name, not just a substring."
-
+            final StringBuilder regex = new StringBuilder("^");
             final char[] chars = stringPattern.toCharArray();
             assert chars != null;
             assert chars.length > 0;
@@ -267,21 +258,19 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
                 regex.append("\\.");
                 break;
               case '*':
-                // "matches any sequence of non-Separator characters"
                 regex.append("[^").append(File.separator).append("]*");
                 break;
               case '?':
                 regex.append("[^").append(File.separator).append("]?");
                 break;
               default:
-                regex.append(String.valueOf(c));
+                regex.append(c);
                 break;
               }
             }
+            regex.append("$");
 
-            regex.append("$"); // From Go's Filepath.Match: "Match requires pattern to match all of name, not just a substring."
-            final Pattern pattern = Pattern.compile(regex.toString());
-            final Predicate<Path> rule = new RegexRule(pattern, requireDirectory, basename);
+            final Predicate<Path> rule = new RegexRule(Pattern.compile(regex.toString()), requireDirectory, basename);
             synchronized (this.rules) {
               this.rules.add(negate ? rule.negate() : rule);
             }
@@ -323,8 +312,8 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
   public boolean matches(final Path path) {
     boolean returnValue = false;
     if (path != null) {
-      // https://github.com/kubernetes/helm/issues/1776
       final String pathString = path.toString();
+      // See https://github.com/kubernetes/helm/issues/1776.
       if (!pathString.equals(".") && !pathString.equals("./")) {
         synchronized (this.rules) {
           for (final Predicate<Path> rule : this.rules) {
