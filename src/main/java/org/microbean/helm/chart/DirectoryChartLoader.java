@@ -28,6 +28,8 @@ import java.nio.file.Files;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.PathMatcher;
 
 import java.nio.file.attribute.BasicFileAttributes;
 
@@ -81,6 +83,8 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
         Files.walkFileTree(path, new FileVisitor<Path>() {
             
             private Path startPath;
+
+            private PathMatcher helmIgnorePathMatcher;
             
             private final List<Template> templates = new ArrayList<>();
 
@@ -105,7 +109,14 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
                 assert !isSubchartDirectory(directory);
                 assert ChartDirectoryType.NORMAL.equals(this.chartDirectoryType);
                 this.startPath = directory;
-              } else if (ignore(directory)) {
+                final Path helmIgnorePath = directory.resolve(".helmignore");
+                assert helmIgnorePath != null;
+                if (Files.isRegularFile(helmIgnorePath)) {
+                  this.helmIgnorePathMatcher = new HelmIgnorePathMatcher(helmIgnorePath);
+                } else {
+                  this.helmIgnorePathMatcher = null;
+                }
+              } else if (this.ignore(directory)) {
                 returnValue = FileVisitResult.SKIP_SUBTREE;
               } else if (isTemplateDirectory(directory)) {
                 // Entering "templates/".
@@ -159,7 +170,7 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
               Objects.requireNonNull(file);
               Objects.requireNonNull(attributes);
               assert !attributes.isDirectory();
-              if (!ignore(file)) {
+              if (!this.ignore(file)) {
 
                 if (ChartDirectoryType.SUBCHART.equals(this.chartDirectoryType)) {
                   // When we enter the charts/ directory, we do not
@@ -202,6 +213,12 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
               return FileVisitResult.CONTINUE;
             }
 
+            private final boolean ignore(final Path path) {
+              return
+                DirectoryChartLoader.this.ignore(path) ||
+                this.helmIgnorePathMatcher == null ? false : this.helmIgnorePathMatcher.matches(path);
+            }
+
           });
         returnValue = chartHolder[0];        
       }
@@ -226,7 +243,7 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
   }
   
   protected boolean ignore(final Path file) {
-    return false; // TODO: implement with .helmignore file, etc.
+    return false;
   }
 
   private static enum ChartDirectoryType {
