@@ -20,8 +20,40 @@ import java.io.IOException;
 
 import hapi.chart.ChartOuterClass.Chart;
 
+/**
+ * An interface indicating that implementations are capable of reading
+ * in the raw materials for a {@linkplain Chart Helm chart} from some
+ * kind of <em>source</em> and creating new {@link Chart} instances
+ * from such raw materials.
+ *
+ * @param <T> the type of source from which {@link Chart}s may be
+ * loaded
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see #load(Object)
+ *
+ * @see Chart
+ */
 public interface ChartLoader<T> {
 
+  /**
+   * Creates a new {@link Chart} from the supplied {@code source} and
+   * returns it.
+   *
+   * <p>Implementations of this method must not return {@code null}.</p>
+   *
+   * @param source the source from which a new {@link Chart} should be
+   * created; must not be {@code null}
+   *
+   * @return a new {@link Chart}; never {@code null}
+   *
+   * @exception NullPointerException if {@code source} is {@code null}
+   *
+   * @exception IOException if reading the supplied {@code source}
+   * could not complete normally
+   */
   public Chart load(final T source) throws IOException;
   
 }

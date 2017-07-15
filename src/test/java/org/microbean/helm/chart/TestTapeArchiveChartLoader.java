@@ -17,6 +17,7 @@
 package org.microbean.helm.chart;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -32,10 +33,12 @@ import hapi.chart.ChartOuterClass.Chart;
 
 import hapi.chart.MetadataOuterClass.Metadata;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
 
+import org.kamranzafar.jtar.TarEntry;
 import org.kamranzafar.jtar.TarInputStream;
 
 import static org.junit.Assert.assertNotNull;
@@ -67,6 +70,22 @@ public class TestTapeArchiveChartLoader {
       this.stream.close();
     }
   }
+
+  @Ignore
+  @Test
+  public void testTarArchiveValidity() throws IOException {
+    TarEntry entry;
+  
+    while ((entry = this.stream.getNextEntry()) != null) {
+      int bytesRead = 0;
+      final byte bytes[] = new byte[4096];
+      System.out.println("*** entry name: " + entry.getName());
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      while((bytesRead = this.stream.read(bytes)) >= 0) {
+        baos.write(bytes, 0, bytesRead);
+      }
+    }
+  }
   
   @Test
   public void testLoad() throws IOException {
@@ -78,6 +97,10 @@ public class TestTapeArchiveChartLoader {
     assertEquals("0.6.6", metadata.getVersion());
     final List<Chart> dependencies = chart.getDependenciesList();
     assertNotNull(dependencies);
+    for (final Chart d : dependencies) {
+      assertNotNull(d);
+      System.out.println("*** dependency: " + d.getMetadata().getName());
+    }
     assertEquals(1, dependencies.size());
   }
 

@@ -17,239 +17,197 @@
 package org.microbean.helm.chart;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.net.URI;
-import java.net.URL;
-
 import java.nio.file.Files;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
+import java.nio.file.LinkOption; // for javadoc only
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.PathMatcher;
 
-import java.nio.file.attribute.BasicFileAttributes;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+
+import java.util.stream.Stream;
 
 import java.util.zip.GZIPInputStream;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
-import hapi.chart.ChartOuterClass.Chart;
-import hapi.chart.ConfigOuterClass.Config;
-import hapi.chart.MetadataOuterClass.Maintainer;
-import hapi.chart.MetadataOuterClass.Metadata;
-import hapi.chart.TemplateOuterClass.Template;
+import hapi.chart.ChartOuterClass.Chart; // for javadoc only
 
-import org.kamranzafar.jtar.TarEntry;
-import org.kamranzafar.jtar.TarInputStream;
-
-import org.yaml.snakeyaml.Yaml;
-
+/**
+ * A {@link StreamOrientedChartLoader
+ * StreamOrientedChartLoader&lt;Path&gt;} that creates {@link Chart}
+ * instances from filesystem directories represented as {@link Path}
+ * objects.
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see #toNamedInputStreamEntries(Path)
+ *
+ * @see StreamOrientedChartLoader
+ */
 public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
 
+
+  /*
+   * Constructors.
+   */
+  
+  
+  /**
+   * Creates a new {@link DirectoryChartLoader}.
+   */
+  public DirectoryChartLoader() {
+    super();
+  }
+
+
+  /*
+   * Instance methods.
+   */
+  
+
+  /**
+   * Converts the supplied {@link Path}, which must be non-{@code
+   * null} and {@linkplain Files#isDirectory(Path, LinkOption...) a
+   * directory}, into an {@link Iterable} of {@link Entry} instances,
+   * each of which consists of an {@link InputStream} associated with
+   * a name.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method are not permitted to return {@code
+   * null}.
+   *
+   * @param path the {@link Path} to read; must be non-{@code null}
+   * and must be {@linkplain Files#isDirectory(Path, LinkOption...) a
+   * directory} or an effectively empty {@link Iterable} will be
+   * returned
+   *
+   * @return a non-{@code null} {@link Iterable} of {@link Entry}
+   * instances representing named {@link InputStream}s
+   *
+   * @exception IOException if there is a problem reading from the
+   * directory represented by the supplied {@link Path} or any of its
+   * subdirectories or files
+   */
   @Override
-  public Chart load(final Path path) throws IOException {
-    Chart returnValue = null;
-    if (path != null) {
-      if (Files.isDirectory(path)) {
-        returnValue = loadDirectory(path);
+  protected Iterable<? extends Entry<? extends String, ? extends InputStream>> toNamedInputStreamEntries(final Path path) throws IOException {
+    final Iterable<Entry<String, InputStream>> returnValue;
+    if (path == null || !Files.isDirectory(path)) {
+      returnValue = new EmptyIterable();
+    } else {
+      returnValue = new PathWalker(path);
+    }
+    return returnValue;
+  }
+
+
+  /*
+   * Inner and nested classes.
+   */
+
+  
+  private static final class PathWalker implements Iterable<Entry<String, InputStream>> {
+
+    private final Path directoryParent;
+
+    private final Stream<? extends Path> pathStream;
+    
+    private PathWalker(final Path directory) throws IOException {
+      super();
+      Objects.requireNonNull(directory);
+      if (!Files.isDirectory(directory)) {
+        throw new IllegalArgumentException("!Files.isDirectory(directory): " + directory);
+      }
+      final Path directoryParent = directory.getParent();
+      if (directoryParent == null) {
+        throw new IllegalArgumentException("directory.getParent() == null");
+      }
+      this.directoryParent = directoryParent;
+      final Stream<Path> pathStream;
+      final Path helmIgnore = directory.resolve(".helmIgnore");
+      assert helmIgnore != null;
+      // TODO: p in the filters below needs to be tested to see if
+      // it's, for example, foo/charts/bar/.fred--that .-prefixed
+      // directory and all of its files has to be ignored.
+      if (!Files.exists(helmIgnore)) {
+        pathStream = Files.walk(directory)
+          .filter(p -> p != null && !Files.isDirectory(p));
       } else {
-        final URI pathUri = path.toUri();
-        assert pathUri != null;
-        final URL pathUrl = pathUri.toURL();
-        assert pathUrl != null;
-        try (final TarInputStream stream = new TarInputStream(new BufferedInputStream(new GZIPInputStream(pathUrl.openStream())))) {
-          returnValue = new TapeArchiveChartLoader().load(stream);
+        final HelmIgnorePathMatcher helmIgnorePathMatcher = new HelmIgnorePathMatcher(helmIgnore);
+        pathStream = Files.walk(directory)
+          .filter(p -> p != null && !Files.isDirectory(p) && !helmIgnorePathMatcher.matches(p));
+      }
+      this.pathStream = pathStream;
+    }
+
+    @Override
+    public final Iterator<Entry<String, InputStream>> iterator() {
+      return new PathIterator(this.directoryParent, this.pathStream.iterator());
+    }
+    
+  }
+
+  private static final class PathIterator implements Iterator<Entry<String, InputStream>> {
+
+    private final Path directoryParent;
+    
+    private final Iterator<? extends Path> pathIterator;
+
+    private Entry<String, InputStream> currentEntry;
+    
+    private PathIterator(final Path directoryParent, final Iterator<? extends Path> pathIterator) {
+      super();
+      Objects.requireNonNull(directoryParent);
+      Objects.requireNonNull(pathIterator);
+      if (!Files.isDirectory(directoryParent)) {
+        throw new IllegalArgumentException("!Files.isDirectory(directoryParent): " + directoryParent);
+      }
+      this.directoryParent = directoryParent;
+      this.pathIterator = pathIterator;
+    }
+
+    @Override
+    public final boolean hasNext() {
+      if (this.currentEntry != null) {
+        final InputStream oldStream = this.currentEntry.getValue();
+        if (oldStream != null) {
+          try {
+            oldStream.close();
+          } catch (final IOException ignore) {
+
+          }
         }
-      }
+        this.currentEntry = null;
+      }      
+      return this.pathIterator != null && this.pathIterator.hasNext();
     }
-    return returnValue;
-  }
 
-  private Chart loadDirectory(final Path path) throws IOException {
-    Chart returnValue = null;
-    if (path != null) {
-      if (Files.isDirectory(path)) {
-        final Chart[] chartHolder = new Chart[1];
-        Files.walkFileTree(path, new FileVisitor<Path>() {
-            
-            private Path startPath;
-
-            private PathMatcher helmIgnorePathMatcher;
-            
-            private final List<Template> templates = new ArrayList<>();
-
-            private final List<Chart> subcharts = new ArrayList<>();
-
-            final List<Any> files = new ArrayList<>();
-
-            private Config config;
-
-            private Metadata metadata;
-
-            private ChartDirectoryType chartDirectoryType = ChartDirectoryType.NORMAL;
-
-            @Override
-            public FileVisitResult preVisitDirectory(final Path directory, final BasicFileAttributes attributes) throws IOException {
-              Objects.requireNonNull(directory);
-              Objects.requireNonNull(attributes);
-              assert attributes.isDirectory();
-              FileVisitResult returnValue = FileVisitResult.CONTINUE;
-              if (this.startPath == null) {
-                assert !isTemplateDirectory(directory);
-                assert !isSubchartDirectory(directory);
-                assert ChartDirectoryType.NORMAL.equals(this.chartDirectoryType);
-                this.startPath = directory;
-                final Path helmIgnorePath = directory.resolve(".helmignore");
-                assert helmIgnorePath != null;
-                if (Files.isRegularFile(helmIgnorePath)) {
-                  this.helmIgnorePathMatcher = new HelmIgnorePathMatcher(helmIgnorePath);
-                } else {
-                  this.helmIgnorePathMatcher = null;
-                }
-              } else if (this.ignore(directory)) {
-                returnValue = FileVisitResult.SKIP_SUBTREE;
-              } else if (isTemplateDirectory(directory)) {
-                // Entering "templates/".
-                this.chartDirectoryType = ChartDirectoryType.TEMPLATE;
-              } else if (isSubchartDirectory(directory)) {
-                // Entering "charts/".
-                this.chartDirectoryType = ChartDirectoryType.SUBCHART;
-              } else if (ChartDirectoryType.TEMPLATE.equals(this.chartDirectoryType)) {
-                // Entering a subdirectory of "templates/".  Carry on.
-              } else if (ChartDirectoryType.SUBCHART.equals(this.chartDirectoryType)) {
-                // Entering a subdirectory of "charts/".  Recursively
-                // load it and skip its entry.
-                this.subcharts.add(loadDirectory(directory));
-                returnValue = FileVisitResult.SKIP_SUBTREE;
-              } else {
-                // Entering a directory that is part of neither the
-                // "templates/" nor the "charts/" tree.  By definition
-                // it's normal.
-                this.chartDirectoryType = ChartDirectoryType.NORMAL;
-              }
-              return returnValue;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(final Path directory, final IOException exception) throws IOException {
-              if (exception != null) {
-                throw exception;
-              }
-              Objects.requireNonNull(directory);
-              this.chartDirectoryType = ChartDirectoryType.NORMAL;
-              if (directory != null && directory.equals(this.startPath)) {
-                assert chartHolder[0] == null;
-                final Chart.Builder chartBuilder = Chart.newBuilder();
-                assert chartBuilder != null;
-                if (this.metadata != null) {
-                  chartBuilder.setMetadata(this.metadata);
-                }
-                if (this.config != null) {
-                  chartBuilder.setValues(this.config);
-                }
-                chartBuilder.addAllTemplates(this.templates);
-                chartBuilder.addAllFiles(this.files);
-                chartBuilder.addAllDependencies(this.subcharts);
-                chartHolder[0] = chartBuilder.build();
-              }
-              return FileVisitResult.CONTINUE;
-            }
-            
-            @Override
-            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attributes) throws IOException {
-              Objects.requireNonNull(file);
-              Objects.requireNonNull(attributes);
-              assert !attributes.isDirectory();
-              if (!this.ignore(file)) {
-
-                if (ChartDirectoryType.SUBCHART.equals(this.chartDirectoryType)) {
-                  // When we enter the charts/ directory, we do not
-                  // descend into it, but rather call ourselves
-                  // recursively (see above).  So we should never
-                  // encounter a file *inside* the charts/ directory
-                  // *as a subchart*.
-                  throw new IllegalStateException();
-                }
-                
-                assert this.startPath != null;
-
-                final Path relativePath = this.startPath.relativize(file);
-                assert relativePath != null;
-
-                try (final InputStream stream = new BufferedInputStream(file.toUri().toURL().openStream())) {
-                  if (ChartDirectoryType.TEMPLATE.equals(this.chartDirectoryType)) {
-                    this.templates.add(createTemplate(stream, relativePath.toString()));
-                  } else if (isValuesFile(file)) {
-                    if (this.config == null) {
-                      this.config = createConfig(stream);
-                    }
-                  } else if (isChartFile(file)) {
-                    if (this.metadata == null) {
-                      this.metadata = createMetadata(stream);
-                    }
-                  } else {
-                    this.files.add(createAny(stream, relativePath.toString()));
-                  }
-                }
-              }
-              return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult visitFileFailed(final Path file, final IOException exception) throws IOException {
-              if (exception != null) {
-                throw exception;
-              }
-              return FileVisitResult.CONTINUE;
-            }
-
-            private final boolean ignore(final Path path) {
-              return
-                DirectoryChartLoader.this.ignore(path) ||
-                this.helmIgnorePathMatcher == null ? false : this.helmIgnorePathMatcher.matches(path);
-            }
-
-          });
-        returnValue = chartHolder[0];        
+    @Override
+    public final Entry<String, InputStream> next() {
+      final Path originalFile = this.pathIterator.next();
+      assert originalFile != null;
+      assert !Files.isDirectory(originalFile);
+      final Path relativeFile = this.directoryParent.relativize(originalFile);
+      assert relativeFile != null;
+      final String relativePathString = relativeFile.toString().replace('\\', '/');
+      assert relativePathString != null;
+      try {
+        this.currentEntry = new SimpleImmutableEntry<>(relativePathString, new BufferedInputStream(Files.newInputStream(originalFile)));
+      } catch (final IOException wrapMe) {
+        throw (NoSuchElementException)new NoSuchElementException(wrapMe.getMessage()).initCause(wrapMe);
       }
+      return this.currentEntry;
     }
-    return returnValue;
+    
   }
-
-  protected boolean isChartFile(final Path path) {
-    return path != null && path.endsWith("Chart.yaml");
-  }
-  
-  protected boolean isValuesFile(final Path path) {
-    return path != null && path.endsWith("values.yaml");
-  }
-
-  protected boolean isSubchartDirectory(final Path path) {
-    return path != null && path.endsWith("charts");
-  }
-
-  protected boolean isTemplateDirectory(final Path path) {
-    return path != null && path.endsWith("templates");
-  }
-  
-  protected boolean ignore(final Path file) {
-    return false;
-  }
-
-  private static enum ChartDirectoryType {
-    NORMAL, SUBCHART, TEMPLATE
-  }
-            
-
   
 }

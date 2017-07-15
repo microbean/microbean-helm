@@ -24,6 +24,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 import java.nio.file.Files;
+import java.nio.file.LinkOption; // for javadoc only
 import java.nio.file.Path;
 
 import java.nio.file.PathMatcher;
@@ -350,8 +351,9 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
 
 
     /**
-     * Whether a {@link Path} must {@linkplain Files#isDirectory(Path)
-     * be a directory} in order for this {@link Rule} to match.
+     * Whether a {@link Path} must {@linkplain Files#isDirectory(Path,
+     * LinkOption...)  be a directory} in order for this {@link Rule}
+     * to match.
      */
     private final boolean requireDirectory;
 
@@ -371,8 +373,8 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
      * Creates a new {@link Rule}.
      *
      * @param requireDirectory whether a {@link Path} must {@linkplain
-     * Files#isDirectory(Path) be a directory} in order for this
-     * {@link Rule} to match
+     * Files#isDirectory(Path, LinkOption...) be a directory} in order
+     * for this {@link Rule} to match
      *
      * @param basename hhether the {@linkplain Path#getFileName()
      * final component in a <code>Path</code>} is matched, or the
@@ -387,8 +389,7 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
     /**
      * Returns a {@link Path} that can be tested, given a {@link Path}
      * and the application of the {@code requireDirectory} and {@code
-     * basename} parameters passed to the {@linkplain #Rule(boolean,
-     * boolean) constructor}.
+     * basename} parameters passed to the constructor.
      *
      * <p>This method may return {@code null}.</p>
      *
@@ -449,8 +450,8 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
      * instances should be matched; may be {@code null}
      *
      * @param requireDirectory whether only {@link Path} instances
-     * that {@linkplain Files#isDirectory(Path) are directories} are
-     * subject to further matching
+     * that {@linkplain Files#isDirectory(Path, LinkOption...) are
+     * directories} are subject to further matching
      *
      * @param basename whether only {@linkplain Path#getFileName() the
      * last component of a <code>Path</code>} is considered for

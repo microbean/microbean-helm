@@ -16,115 +16,128 @@
  */
 package org.microbean.helm.chart;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import com.google.protobuf.Any;
-import com.google.protobuf.ByteString;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Map.Entry;
 
 import hapi.chart.ChartOuterClass.Chart;
-import hapi.chart.ConfigOuterClass.Config;
-import hapi.chart.MetadataOuterClass.Maintainer;
-import hapi.chart.MetadataOuterClass.Metadata;
-import hapi.chart.TemplateOuterClass.Template;
 
 import org.kamranzafar.jtar.TarEntry;
 import org.kamranzafar.jtar.TarInputStream;
 
-import org.yaml.snakeyaml.Yaml;
-
+/**
+ * A {@link StreamOrientedChartLoader
+ * StreamOrientedChartLoader&lt;TarInputStream&gt;} that creates
+ * {@link Chart} instances from {@link TarInputStream} instances.
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see #toNamedInputStreamEntries(TarInputStream)
+ *
+ * @see StreamOrientedChartLoader
+ */
 public class TapeArchiveChartLoader extends StreamOrientedChartLoader<TarInputStream> {
 
+
+  /*
+   * Constructors.
+   */
+
+
+  /**
+   * Creates a new {@link TapeArchiveChartLoader}.
+   */
   public TapeArchiveChartLoader() {
     super();
   }
+
+
+  /*
+   * Instance methods.
+   */
+
   
+  /**
+   * Converts the supplied {@link TarInputStream} into an {@link
+   * Iterable} of {@link Entry} instances, each of which consists of
+   * an {@link InputStream} representing an entry within the archive
+   * together with its name.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method are not permitted to return {@code
+   * null}.
+   *
+   * @param stream the {@link TarInputStream} to read; must be
+   * non-{@code null} or an effectively empty {@link Iterable} will be
+   * returned
+   *
+   * @return a non-{@code null} {@link Iterable} of {@link Entry}
+   * instances representing named {@link InputStream}s
+   *
+   * @exception IOException if there is a problem reading from the
+   * supplied {@link TarInputStream}
+   */
   @Override
-  public Chart load(final TarInputStream stream) throws IOException {
-    return this.load(stream, null, 0);
-  }
-
-  Chart load(final TarInputStream stream, TarEntry entry, final int offset) throws IOException {
-    Chart returnValue = null;
-    if (stream != null) {
-
-      final List<Template> templates = new ArrayList<>();
-      final List<Chart> subcharts = new ArrayList<>();
-      Config config = null;
-      Metadata metadata = null;
-      final List<Any> files = new ArrayList<>();
-
-      if (entry == null) {
-        entry = stream.getNextEntry();
-      }
-      while (entry != null) {
-        if (!entry.isDirectory()) {
-          String entryFullName = entry.getName();
-          if (entryFullName == null || entryFullName.isEmpty() || entryFullName.startsWith("/")) {
-            throw new IllegalArgumentException("bad chart entry: " + entryFullName);
-          }
-          if (offset > 0) {
-            entryFullName = entryFullName.substring(offset);
-          }
-          if (entryFullName == null || entryFullName.isEmpty() || entryFullName.startsWith("/")) {
-            throw new IllegalArgumentException("bad chart entry: " + entryFullName);
-          }
-          int firstSlashIndex = entryFullName.indexOf('/');
-          if (firstSlashIndex <= 0 || firstSlashIndex + 1 == entryFullName.length()) {
-            throw new IllegalArgumentException("bad chart entry: " + entryFullName);
-          }
-          final String chartName = entryFullName.substring(0, firstSlashIndex);
-          assert chartName != null;
-          assert !chartName.isEmpty();
-          final String relativeChartFile = entryFullName.substring(firstSlashIndex + 1);
-          assert relativeChartFile != null;
-          assert !relativeChartFile.isEmpty();
-          switch (relativeChartFile) {
-          case "values.yaml":
-            config = this.createConfig(stream);
-            break;
-          case "Chart.yaml":
-            metadata = this.createMetadata(stream);
-            break;
-          default:
-            if (relativeChartFile.startsWith("templates/")) {
-              if (relativeChartFile.length() > 10) { // 10 == "templates/".length()
-                templates.add(this.createTemplate(stream, relativeChartFile));
+  protected Iterable<? extends Entry<? extends String, ? extends InputStream>> toNamedInputStreamEntries(final TarInputStream stream) throws IOException {
+    if (stream == null) {
+      return new EmptyIterable();
+    } else {
+      return new Iterable<Entry<String, InputStream>>() {
+        @Override
+        public Iterator<Entry<String, InputStream>> iterator() {
+          return new Iterator<Entry<String, InputStream>>() {
+            private TarEntry currentEntry;
+            
+            {
+              try {
+                this.currentEntry = stream.getNextEntry();
+              } catch (final IOException ignore) {
+                this.currentEntry = null;
               }
-            } else if (relativeChartFile.startsWith("charts/")) {
-              if (relativeChartFile.length() > 7) { // 7 == "charts/".length()
-                final char c = relativeChartFile.charAt(7);
-                if (c != '.' && c != '_') {
-                  final Chart subchart = this.load(stream, entry, new StringBuilder(chartName).append("/charts/").length()); // recursive
-                  if (subchart != null) {
-                    subcharts.add(subchart);
-                  }
-                }
-              }
-            } else {
-              files.add(this.createAny(stream, relativeChartFile));
             }
-            break;
-          }
+            
+            @Override
+            public boolean hasNext() {
+              return this.currentEntry != null;
+            }
+            
+            @Override
+            public Entry<String, InputStream> next() {
+              if (this.currentEntry == null) {
+                throw new NoSuchElementException();
+              }
+              ByteArrayInputStream bais = null;
+              try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                int bytesRead = 0;
+                final byte bytes[] = new byte[4096];
+                while((bytesRead = stream.read(bytes)) >= 0) {
+                  baos.write(bytes, 0, bytesRead);
+                }
+                baos.flush();
+                bais = new ByteArrayInputStream(baos.toByteArray());
+              } catch (final IOException wrapMe) {
+                throw (NoSuchElementException)new NoSuchElementException(wrapMe.getMessage()).initCause(wrapMe);
+              }
+              final Entry<String, InputStream> returnValue = new SimpleImmutableEntry<>(this.currentEntry.getName(), bais);
+              try {
+                this.currentEntry = stream.getNextEntry();
+              } catch (final IOException ignore) {
+                this.currentEntry = null;
+              }
+              return returnValue;
+            }
+          };
         }
-        entry = stream.getNextEntry();
-      }
-
-      final Chart.Builder builder = Chart.newBuilder();
-      assert builder != null;
-      builder.setMetadata(metadata);
-      builder.setValues(config);
-      builder.addAllTemplates(templates);
-      builder.addAllFiles(files);
-      builder.addAllDependencies(subcharts);
-
-      returnValue = builder.build();
+      };
     }
-    return returnValue;
   }
 
 }
