@@ -140,4 +140,15 @@ public class TapeArchiveChartLoader extends StreamOrientedChartLoader<TarInputSt
     }
   }
 
+  /**
+   * Does nothing on purpose.
+   *
+   * @exception IOException if a subclass has overridden this method
+   * and an error occurs
+   */
+  @Override
+  public void close() throws IOException {
+
+  }
+
 }

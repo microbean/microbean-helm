@@ -209,5 +209,15 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
     }
     
   }
+
+  /**
+   * Does nothing on purpose.
+   *
+   * @exception IOException if a subclass has overridden this method
+   * and an error occurs
+   */
+  public void close() throws IOException {
+    
+  }
   
 }

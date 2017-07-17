@@ -26,6 +26,10 @@ import hapi.chart.ChartOuterClass.Chart;
  * kind of <em>source</em> and creating new {@link Chart} instances
  * from such raw materials.
  *
+ * <p>Implementations should pay close attention to any potential
+ * resource leaks and control them in their implementation of the
+ * {@link AutoCloseable#close()} method.</p>
+ *
  * @param <T> the type of source from which {@link Chart}s may be
  * loaded
  *
@@ -36,7 +40,7 @@ import hapi.chart.ChartOuterClass.Chart;
  *
  * @see Chart
  */
-public interface ChartLoader<T> {
+public interface ChartLoader<T> extends AutoCloseable {
 
   /**
    * Creates a new {@link Chart} from the supplied {@code source} and
