@@ -362,7 +362,9 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
+            <org.slf4j.simpleLogger.log.io.fabric8>info</org.slf4j.simpleLogger.log.io.fabric8>
             <skipInstallationTest>${skipInstallationTest}</skipInstallationTest>
+            <skipClusterTests>${skipClusterTests}</skipClusterTests>
             <skipTests>${skipTests}</skipTests>
             <testGetRelease.releaseName>${testGetRelease.releaseName}</testGetRelease.releaseName>
           </systemPropertyVariables>
@@ -377,7 +379,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>TestHelmIgnorePathMatcher</id>
+            <id>Run TestHelmIgnorePathMatcher only</id>
             <phase>test</phase>
             <goals>
               <goal>test</goal>
@@ -386,6 +388,9 @@
               <includes>
                 <include>org/microbean/helm/chart/TestHelmIgnorePathMatcher.java</include>
               </includes>
+              <excludes>
+                <exclude>**/**</exclude>
+              </excludes>
               <workingDirectory>${project.build.testOutputDirectory}/TestHelmIgnorePathMatcher</workingDirectory>
             </configuration>
           </execution>
@@ -441,6 +446,7 @@
     <!-- maven-surefire-plugin properties; see http://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html -->
     <trimStackTrace>false</trimStackTrace>
 
+    <skipClusterTests>true</skipClusterTests>
     <skipInstallationTest>true</skipInstallationTest>
     
   </properties>

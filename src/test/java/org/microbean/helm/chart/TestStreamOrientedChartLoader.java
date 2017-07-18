@@ -91,14 +91,14 @@ public class TestStreamOrientedChartLoader {
   public void testGetTemplateFileNameDeep() {
     final String input = "/wordpress/charts/foobar/templates/argle.yaml";
     final String output = StreamOrientedChartLoader.getTemplateFileName(input);
-    assertEquals("argle.yaml", output);
+    assertEquals("templates/argle.yaml", output);
   }
 
   @Test
   public void testGetTemplateFileNameRidiculous() {
     final String input = "/wordpress/charts/foobar/templates/bork/templates/argle.yaml";
     final String output = StreamOrientedChartLoader.getTemplateFileName(input);
-    assertEquals("argle.yaml", output);
+    assertEquals("templates/argle.yaml", output);
   }
 
   

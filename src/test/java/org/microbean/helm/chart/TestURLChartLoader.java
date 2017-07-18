@@ -73,7 +73,6 @@ public class TestURLChartLoader {
     assertNotNull(dependencies);
     for (final Chart d : dependencies) {
       assertNotNull(d);
-      System.out.println("*** dependency: " + d.getMetadata().getName());
     }
     assertEquals(1, dependencies.size());
   }

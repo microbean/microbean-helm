@@ -16,43 +16,41 @@
  */
 package org.microbean.helm.chart;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 
-import java.util.List;
-
-import java.util.zip.GZIPInputStream;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import hapi.chart.ChartOuterClass.Chart;
 
-import hapi.chart.MetadataOuterClass.Metadata;
+import hapi.release.ReleaseOuterClass.Release;
+
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
 
-import org.kamranzafar.jtar.TarEntry;
-import org.kamranzafar.jtar.TarInputStream;
+import org.microbean.helm.Tiller;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-public class TestTapeArchiveChartLoader {
+import static org.junit.Assume.assumeFalse;
 
-  private TarInputStream stream;
+public class TestCharts {
+
+  private URL redisUrl;
   
   @Before
   public void setUp() throws IOException {
-    // Chart is arbitrary, but it does have subcharts in it, which exercise some tricky logic
-    final URI uri = URI.create("https://kubernetes-charts.storage.googleapis.com/wordpress-0.6.6.tgz");
+    final URI uri = URI.create("https://kubernetes-charts.storage.googleapis.com/redis-0.8.0.tgz");
     assertNotNull(uri);
     final URL url = uri.toURL();
     assertNotNull(url);
@@ -61,30 +59,28 @@ public class TestTapeArchiveChartLoader {
     connection.addRequestProperty("Accept-Encoding", "gzip");
     connection.connect();
     assertEquals("application/x-tar", connection.getContentType());
-    this.stream = new TarInputStream(new BufferedInputStream(new GZIPInputStream(connection.getInputStream())));
+    this.redisUrl = url;
   }
 
   @After
   public void tearDown() throws IOException {
-    if (this.stream != null) {
-      this.stream.close();
-    }
+
   }
 
   @Test
-  public void testLoad() throws IOException {
-    final Chart chart = new TapeArchiveChartLoader().load(this.stream);
-    assertNotNull(chart);
-    final Metadata metadata = chart.getMetadata();
-    assertNotNull(metadata);
-    assertEquals("wordpress", metadata.getName());
-    assertEquals("0.6.6", metadata.getVersion());
-    final List<Chart> dependencies = chart.getDependenciesList();
-    assertNotNull(dependencies);
-    for (final Chart d : dependencies) {
-      assertNotNull(d);
+  public void testInstall() throws ExecutionException, IOException, InterruptedException {
+    assumeFalse(Boolean.getBoolean("skipClusterTests"));
+    try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
+         final Tiller tiller = new Tiller(client)) {
+      final Future<Release> releaseFuture = Charts.install(tiller, this.redisUrl);
+      assertNotNull(releaseFuture);
+      final Release release = releaseFuture.get();
+      assertNotNull(release);
+      assertNotNull(release.getName());
+      assertTrue(release.hasChart());
+      assertTrue(release.hasConfig());
     }
-    assertEquals(1, dependencies.size());
   }
 
 }
+

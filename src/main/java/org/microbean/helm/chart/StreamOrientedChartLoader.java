@@ -98,7 +98,7 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
    */
   private static final Pattern fileNamePattern = Pattern.compile("^/*[^/]+(?!.*/(?:charts|templates)/)/(.+)$");
   
-  private static final Pattern templateFileNamePattern = Pattern.compile("^.+/templates/([^/]+)$");
+  private static final Pattern templateFileNamePattern = Pattern.compile("^.+/(templates/[^/]+)$");
 
   private static final Pattern subchartFileNamePattern = Pattern.compile("^.+/charts/[^._][^/]+/(.+)$");
 

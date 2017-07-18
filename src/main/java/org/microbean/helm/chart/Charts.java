@@ -34,7 +34,7 @@ import hapi.chart.ConfigOuterClass.Config;
 
 import hapi.release.ReleaseOuterClass.Release;
 
-import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceBlockingStub;
+import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceFutureStub;
 import hapi.services.tiller.Tiller.InstallReleaseRequest;
 import hapi.services.tiller.Tiller.InstallReleaseResponse;
 
@@ -158,23 +158,42 @@ public final class Charts {
     }
     if (releaseNamespace != null && !releaseNamespace.isEmpty()) {
       requestBuilder.setNamespace(releaseNamespace);
+    } else {
+      requestBuilder.setNamespace("default"); // TODO: harvest from equivalent of kube config
     }
     requestBuilder.setReuseName(reuseReleaseName);
     requestBuilder.setTimeout(timeoutInSeconds);
+    final Config.Builder configBuilder = Config.newBuilder();
+    assert configBuilder != null;
     if (yamlValues != null && !yamlValues.isEmpty()) {
-      final Config.Builder configBuilder = Config.newBuilder();
-      assert configBuilder != null;
       final ByteString rawBytes = ByteString.copyFrom(yamlValues, StandardCharsets.UTF_8);
       assert rawBytes != null;
       configBuilder.setRawBytes(rawBytes);
-      requestBuilder.setValues(configBuilder.build());
     }
+    requestBuilder.setValues(configBuilder.build());
     requestBuilder.setWait(wait);
     final InstallReleaseRequest request = requestBuilder.build();
     assert request != null;
-    final ReleaseServiceBlockingStub stub = tiller.getReleaseServiceBlockingStub();
+    final ReleaseServiceFutureStub stub = tiller.getReleaseServiceFutureStub();
     assert stub != null;
-    return new FutureTask<Release>(() -> stub.installRelease(request).getRelease());
+    final Future<InstallReleaseResponse> responseFuture = stub.installRelease(request);
+    final FutureTask<Release> returnValue;
+    if (responseFuture == null) {
+      returnValue = new FutureTask<>(() -> {}, null);
+    } else {
+      returnValue = new FutureTask<>(() -> {
+          final Release rv;
+          final InstallReleaseResponse response = responseFuture.get();
+          if (response == null) {
+            rv = null;
+          } else {
+            rv = response.getRelease();
+          }
+          return rv;
+        });
+    }
+    returnValue.run();
+    return returnValue;
   }
-  
+
 }

@@ -54,21 +54,7 @@ import io.fabric8.kubernetes.client.dsl.internal.PortForwarderWebsocket;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 
-import io.fabric8.kubernetes.client.dsl.Listable;
-
-import io.fabric8.kubernetes.client.dsl.base.OperationSupport;
-
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.Metadata;
-
-import io.grpc.stub.MetadataUtils;
-
-import okhttp3.OkHttpClient;
-
 import org.junit.Test;
-
-import org.microbean.kubernetes.Pods;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
