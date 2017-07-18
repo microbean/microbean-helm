@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 
 import hapi.chart.ChartOuterClass.Chart; // for javadoc only
 
@@ -126,11 +127,21 @@ public class URLChartLoader extends StreamOrientedChartLoader<URL> {
     }
     final Iterable<? extends Entry<? extends String, ? extends InputStream>> returnValue;
     if (path == null || !Files.isDirectory(path)) {
-      final TarInputStream tarInputStream = new TarInputStream(new GZIPInputStream(new BufferedInputStream(url.openStream())));
-      this.closeables.put(tarInputStream, null);
-      final TapeArchiveChartLoader loader = new TapeArchiveChartLoader();
-      this.closeables.put(loader, null);
-      returnValue = loader.toNamedInputStreamEntries(tarInputStream);
+      final String urlString = url.toString();
+      assert urlString != null;
+      if (urlString.endsWith(".zip") || urlString.endsWith(".jar")) {
+        final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(url.openStream()));
+        this.closeables.put(zipInputStream, null);
+        final ZipInputStreamChartLoader loader = new ZipInputStreamChartLoader();
+        this.closeables.put(loader, null);
+        returnValue = loader.toNamedInputStreamEntries(zipInputStream);
+      } else {
+        final TarInputStream tarInputStream = new TarInputStream(new GZIPInputStream(new BufferedInputStream(url.openStream())));
+        this.closeables.put(tarInputStream, null);
+        final TapeArchiveChartLoader loader = new TapeArchiveChartLoader();
+        this.closeables.put(loader, null);
+        returnValue = loader.toNamedInputStreamEntries(tarInputStream);
+      }
     } else {
       final DirectoryChartLoader loader = new DirectoryChartLoader();
       this.closeables.put(loader, null);
