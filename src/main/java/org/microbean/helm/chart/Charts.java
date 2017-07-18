@@ -404,7 +404,10 @@ public final class Charts {
     throws IOException {
     Objects.requireNonNull(tiller);
     Objects.requireNonNull(chartUrl);
-    final Chart chart = new URLChartLoader().load(chartUrl);
+    Chart chart = null;
+    try (final ChartLoader<URL> loader = new URLChartLoader()) {      
+      chart = loader.load(chartUrl);
+    }
     final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
     assert requestBuilder != null;
     requestBuilder.setChart(chart);

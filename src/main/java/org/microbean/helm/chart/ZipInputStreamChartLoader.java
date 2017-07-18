@@ -30,12 +30,60 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+/**
+ * A {@link StreamOrientedChartLoader
+ * StreamOrientedChartLoader&lt;ZipInputStream&gt;} that creates
+ * {@link Chart} instances from {@link ZipInputStream} instances.
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see #toNamedInputStreamEntries(ZipInputStream)
+ *
+ * @see StreamOrientedChartLoader
+ */
 public class ZipInputStreamChartLoader extends StreamOrientedChartLoader<ZipInputStream> {
 
+  
+  /*
+   * Constructors.
+   */
+
+  
+  /**
+   * Creates a new {@link ZipInputStreamChartLoader}.
+   */
   public ZipInputStreamChartLoader() {
     super();
   }
 
+
+  /*
+   * Instance methods.
+   */
+
+
+  /**
+   * Converts the supplied {@link ZipInputStream} into an {@link
+   * Iterable} of {@link Entry} instances, each of which consists of
+   * an {@link InputStream} representing an entry within the archive
+   * together with its name.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method are not permitted to return {@code
+   * null}.
+   *
+   * @param stream the {@link ZipInputStream} to read; must be
+   * non-{@code null} or an effectively empty {@link Iterable} will be
+   * returned
+   *
+   * @return a non-{@code null} {@link Iterable} of {@link Entry}
+   * instances representing named {@link InputStream}s
+   *
+   * @exception IOException if there is a problem reading from the
+   * supplied {@link ZipInputStream}
+   */
   @Override
   protected Iterable<? extends Entry<? extends String, ? extends InputStream>> toNamedInputStreamEntries(final ZipInputStream stream) throws IOException {
     if (stream == null) {
