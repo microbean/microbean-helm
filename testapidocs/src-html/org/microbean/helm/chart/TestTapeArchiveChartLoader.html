@@ -79,40 +79,23 @@
 <span class="sourceLineNo">071</span>    }<a name="line.71"></a>
 <span class="sourceLineNo">072</span>  }<a name="line.72"></a>
 <span class="sourceLineNo">073</span><a name="line.73"></a>
-<span class="sourceLineNo">074</span>  @Ignore<a name="line.74"></a>
-<span class="sourceLineNo">075</span>  @Test<a name="line.75"></a>
-<span class="sourceLineNo">076</span>  public void testTarArchiveValidity() throws IOException {<a name="line.76"></a>
-<span class="sourceLineNo">077</span>    TarEntry entry;<a name="line.77"></a>
-<span class="sourceLineNo">078</span>  <a name="line.78"></a>
-<span class="sourceLineNo">079</span>    while ((entry = this.stream.getNextEntry()) != null) {<a name="line.79"></a>
-<span class="sourceLineNo">080</span>      int bytesRead = 0;<a name="line.80"></a>
-<span class="sourceLineNo">081</span>      final byte bytes[] = new byte[4096];<a name="line.81"></a>
-<span class="sourceLineNo">082</span>      System.out.println("*** entry name: " + entry.getName());<a name="line.82"></a>
-<span class="sourceLineNo">083</span>      final ByteArrayOutputStream baos = new ByteArrayOutputStream();<a name="line.83"></a>
-<span class="sourceLineNo">084</span>      while((bytesRead = this.stream.read(bytes)) &gt;= 0) {<a name="line.84"></a>
-<span class="sourceLineNo">085</span>        baos.write(bytes, 0, bytesRead);<a name="line.85"></a>
-<span class="sourceLineNo">086</span>      }<a name="line.86"></a>
-<span class="sourceLineNo">087</span>    }<a name="line.87"></a>
+<span class="sourceLineNo">074</span>  @Test<a name="line.74"></a>
+<span class="sourceLineNo">075</span>  public void testLoad() throws IOException {<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    final Chart chart = new TapeArchiveChartLoader().load(this.stream);<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    assertNotNull(chart);<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    final Metadata metadata = chart.getMetadata();<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    assertNotNull(metadata);<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    assertEquals("wordpress", metadata.getName());<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    assertEquals("0.6.6", metadata.getVersion());<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    final List&lt;Chart&gt; dependencies = chart.getDependenciesList();<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    assertNotNull(dependencies);<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    for (final Chart d : dependencies) {<a name="line.84"></a>
+<span class="sourceLineNo">085</span>      assertNotNull(d);<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    }<a name="line.86"></a>
+<span class="sourceLineNo">087</span>    assertEquals(1, dependencies.size());<a name="line.87"></a>
 <span class="sourceLineNo">088</span>  }<a name="line.88"></a>
-<span class="sourceLineNo">089</span>  <a name="line.89"></a>
-<span class="sourceLineNo">090</span>  @Test<a name="line.90"></a>
-<span class="sourceLineNo">091</span>  public void testLoad() throws IOException {<a name="line.91"></a>
-<span class="sourceLineNo">092</span>    final Chart chart = new TapeArchiveChartLoader().load(this.stream);<a name="line.92"></a>
-<span class="sourceLineNo">093</span>    assertNotNull(chart);<a name="line.93"></a>
-<span class="sourceLineNo">094</span>    final Metadata metadata = chart.getMetadata();<a name="line.94"></a>
-<span class="sourceLineNo">095</span>    assertNotNull(metadata);<a name="line.95"></a>
-<span class="sourceLineNo">096</span>    assertEquals("wordpress", metadata.getName());<a name="line.96"></a>
-<span class="sourceLineNo">097</span>    assertEquals("0.6.6", metadata.getVersion());<a name="line.97"></a>
-<span class="sourceLineNo">098</span>    final List&lt;Chart&gt; dependencies = chart.getDependenciesList();<a name="line.98"></a>
-<span class="sourceLineNo">099</span>    assertNotNull(dependencies);<a name="line.99"></a>
-<span class="sourceLineNo">100</span>    for (final Chart d : dependencies) {<a name="line.100"></a>
-<span class="sourceLineNo">101</span>      assertNotNull(d);<a name="line.101"></a>
-<span class="sourceLineNo">102</span>      System.out.println("*** dependency: " + d.getMetadata().getName());<a name="line.102"></a>
-<span class="sourceLineNo">103</span>    }<a name="line.103"></a>
-<span class="sourceLineNo">104</span>    assertEquals(1, dependencies.size());<a name="line.104"></a>
-<span class="sourceLineNo">105</span>  }<a name="line.105"></a>
-<span class="sourceLineNo">106</span><a name="line.106"></a>
-<span class="sourceLineNo">107</span>}<a name="line.107"></a>
+<span class="sourceLineNo">089</span><a name="line.89"></a>
+<span class="sourceLineNo">090</span>}<a name="line.90"></a>
 
 
 
