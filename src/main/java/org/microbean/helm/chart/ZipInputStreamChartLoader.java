@@ -30,6 +30,8 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import hapi.chart.ChartOuterClass.Chart; // for javadoc only
+
 /**
  * A {@link StreamOrientedChartLoader
  * StreamOrientedChartLoader&lt;ZipInputStream&gt;} that creates

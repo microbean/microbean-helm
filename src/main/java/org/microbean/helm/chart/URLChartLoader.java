@@ -158,7 +158,7 @@ public class URLChartLoader extends StreamOrientedChartLoader<URL> {
    * and an error occurs
    */
   @Override
-  public void close() throws Exception {
+  public void close() throws IOException {
     if (!this.closeables.isEmpty()) {
       final Collection<? extends AutoCloseable> keys = this.closeables.keySet();
       if (keys != null && !keys.isEmpty()) {
@@ -167,7 +167,13 @@ public class URLChartLoader extends StreamOrientedChartLoader<URL> {
           while (iterator.hasNext()) {
             final AutoCloseable closeable = iterator.next();
             if (closeable != null) {
-              closeable.close();
+              try {
+                closeable.close();
+              } catch (final IOException | RuntimeException throwMe) {
+                throw throwMe;
+              } catch (final Exception willNeverHappen) {
+                throw new AssertionError(willNeverHappen);
+              }
             }
             iterator.remove();
           }

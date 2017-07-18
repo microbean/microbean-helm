@@ -59,5 +59,20 @@ public interface ChartLoader<T> extends AutoCloseable {
    * could not complete normally
    */
   public Chart load(final T source) throws IOException;
+
+  /**
+   * Closes any resources opened by this {@link ChartLoader}.
+   *
+   * <p>This method signature overrides the {@link
+   * AutoCloseable#close()} method to specify that implementations may
+   * throw only {@link RuntimeException} and {@link IOException}
+   * instances.</p>
+   *
+   * @exception IOException if a problem occurs during closing
+   *
+   * @see AutoCloseable#close()
+   */
+  @Override
+  public void close() throws IOException;
   
 }
