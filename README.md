@@ -32,7 +32,7 @@ like this:
     <dependency>
       <groupId>org.microbean</groupId>
       <artifactId>microbean-helm</artifactId>
-      <version>2.4.2.1-SNAPSHOT</version> <!-- or another -->
+      <version>2.6.1.1-SNAPSHOT</version> <!-- or another -->
       <type>jar</type>
     </dependency>
     
