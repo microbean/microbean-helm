@@ -10,6 +10,19 @@ and [releases][9].
 Until now, Java developers had to use the `helm` command line client
 to do these operations.
 
+# Status
+
+The microbean-helm project is currently in a **pre-alpha** state.  It
+should be find with basic chart operations, provided that the charts
+involved do not make heavy use of `requirements.yaml`.
+
+# Versioning
+
+The microbean-helm project's version number tracks the Helm and Tiller
+release it works with, together with a build number.  For example, a
+microbean-helm version of `2.6.1.4` means that the Helm version it
+tracks is `2.6.1` and the build number is `4`.
+
 # Installation
 
 To install microbean-helm, simply include it as a dependency in your
