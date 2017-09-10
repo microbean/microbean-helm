@@ -22,7 +22,10 @@ import java.net.URL;
 
 import java.nio.charset.StandardCharsets;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.List;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -30,7 +33,9 @@ import java.util.concurrent.FutureTask;
 import com.google.protobuf.ByteString;
 
 import hapi.chart.ChartOuterClass.Chart;
+import hapi.chart.ChartOuterClass.ChartOrBuilder;
 import hapi.chart.ConfigOuterClass.Config;
+import hapi.chart.MetadataOuterClass.MetadataOrBuilder;
 
 import hapi.release.ReleaseOuterClass.Release;
 
@@ -405,12 +410,16 @@ public final class Charts {
     Objects.requireNonNull(tiller);
     Objects.requireNonNull(chartUrl);
     Chart chart = null;
-    try (final ChartLoader<URL> loader = new URLChartLoader()) {      
+    try (final ChartLoader<URL> loader = new URLChartLoader()) {
       chart = loader.load(chartUrl);
     }
+    if (chart == null) {
+      throw new IllegalStateException("new URLChartLoader().load(chartUrl) == null; chartUrl: " + chartUrl);
+    }
+    Chart.Builder chartBuilder = chart.toBuilder();
+    assert chartBuilder != null;
     final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
     assert requestBuilder != null;
-    requestBuilder.setChart(chart);
     requestBuilder.setDisableHooks(disableHooks);
     requestBuilder.setDryRun(dryRun);
     if (releaseName != null && !releaseName.isEmpty()) {
@@ -423,6 +432,7 @@ public final class Charts {
     }
     requestBuilder.setReuseName(reuseReleaseName);
     requestBuilder.setTimeout(timeoutInSeconds);
+    
     final Config.Builder configBuilder = Config.newBuilder();
     assert configBuilder != null;
     if (yamlValues != null && !yamlValues.isEmpty()) {
@@ -430,10 +440,26 @@ public final class Charts {
       assert rawBytes != null;
       configBuilder.setRawBytes(rawBytes);
     }
-    requestBuilder.setValues(configBuilder.build());
+    final Config config = configBuilder.build();
+
+    // In the Go code this is ProcessRequirementsEnabled.
+    chartBuilder = Requirements.apply(chartBuilder, config);
+
+    final ChartOrBuilder chartOrBuilder = Requirements.processImportValues(chartBuilder);
+    assert chartOrBuilder != null;
+    if (chartOrBuilder instanceof Chart.Builder) {
+      requestBuilder.setChart(((Chart.Builder)chartOrBuilder).build());
+    } else {
+      assert chartOrBuilder instanceof Chart;
+      requestBuilder.setChart((Chart)chartOrBuilder);
+    }
+    
+    requestBuilder.setValues(config);
     requestBuilder.setWait(wait);
+
     final InstallReleaseRequest request = requestBuilder.build();
     assert request != null;
+
     final ReleaseServiceFutureStub stub = tiller.getReleaseServiceFutureStub();
     assert stub != null;
     final Future<InstallReleaseResponse> responseFuture = stub.installRelease(request);
@@ -453,6 +479,71 @@ public final class Charts {
         });
     }
     returnValue.run();
+    return returnValue;
+  }
+
+  // Ported slavishly from requirements.go getParents()
+  static final List<ChartOrBuilder> getParents(final ChartOrBuilder c, List<ChartOrBuilder> out) {
+    Objects.requireNonNull(c);
+    if (out == null) {
+      out = new ArrayList<ChartOrBuilder>();
+      out.add(c);
+    } else if (out.isEmpty()) {
+      out.add(c);
+    }
+    final Collection<? extends ChartOrBuilder> subcharts = c.getDependenciesOrBuilderList();
+    if (subcharts != null && !subcharts.isEmpty()) {
+      for (final ChartOrBuilder subchart : subcharts) {
+        if (subchart != null) {
+          final int subSubchartCount = subchart.getDependenciesCount();
+          if (subSubchartCount > 0) {
+            out.add(subchart);
+            out = getParents(subchart, out);
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  static final boolean hasDependency(final ChartOrBuilder chart, final String name, final String version) {
+    boolean returnValue = false;
+    if (chart != null) {
+      final Collection<? extends ChartOrBuilder> subcharts = chart.getDependenciesList();
+      if (subcharts != null && !subcharts.isEmpty()) {
+        for (final ChartOrBuilder subchart : subcharts) {
+          if (subchart != null && subchart.hasMetadata()) {
+            final MetadataOrBuilder metadata = subchart.getMetadataOrBuilder();
+            assert metadata != null;
+            final String subchartName = metadata.getName();
+            final String subchartVersion = metadata.getVersion();
+            if (subchartName == null) {
+              if (name == null) {
+                if (subchartVersion == null) {
+                  if (version == null) {
+                    returnValue = true;
+                    break;
+                  }
+                } else if (subchartVersion.equals(version)) {
+                  returnValue = true;
+                  break;
+                }
+              }
+            } else if (subchartName.equals(name)) {
+              if (subchartVersion == null) {
+                if (version == null) {
+                  returnValue = true;
+                  break;
+                }
+              } else if (subchartVersion.equals(version)) {
+                returnValue = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
     return returnValue;
   }
 
