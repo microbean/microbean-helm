@@ -4,7 +4,7 @@
 
   <groupId>org.microbean</groupId>
   <artifactId>microbean-helm</artifactId>
-  <version>2.5.0.1-SNAPSHOT</version>
+  <version>2.6.1.1-SNAPSHOT</version>
 
   <parent>
     <groupId>org.microbean</groupId>
@@ -351,7 +351,7 @@
               <checkoutDirectory>${project.build.directory}/generated-sources/helm</checkoutDirectory>
               <connectionUrl>scm:git:git@github.com:kubernetes/helm.git</connectionUrl>
               <includes>_proto/hapi/**</includes>
-              <scmVersion>v2.5.0</scmVersion>
+              <scmVersion>v2.6.1</scmVersion>
               <scmVersionType>tag</scmVersionType>
             </configuration>
           </execution>
