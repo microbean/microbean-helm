@@ -63,6 +63,10 @@ public class Requirements {
     super();
   }
 
+  public final boolean isEmpty() {
+    return this.dependenciesByName == null || this.dependenciesByName.isEmpty();
+  }
+
   public Collection<Dependency> getDependencies() {
     final Collection<Dependency> returnValue;
     if (this.dependenciesByName == null) {
@@ -294,7 +298,8 @@ public class Requirements {
     Objects.requireNonNull(chartBuilder);
     Chart.Builder returnValue = chartBuilder;
     final Requirements requirements = fromChartOrBuilder(chartBuilder);
-    if (requirements != null) {
+    if (requirements != null && !requirements.isEmpty()) {
+      
       final Collection<Dependency> requirementsDependencies = requirements.getDependencies();
       if (requirementsDependencies != null && !requirementsDependencies.isEmpty()) {
 
@@ -312,25 +317,41 @@ public class Requirements {
           // builders.  I think we have to start by wiping the main
           // builder clean.
           chartBuilder.clearDependencies();
+
+          // TODO: hmm, does clearing the subcharts also clear
+          // existingSubcharts?  Hope not!
+          assert !existingSubcharts.isEmpty();
+
+          // OK, there are now no dependencies in the chart; we're
+          // rebuilding them from scratch.
           
           for (final Chart existingSubchart : existingSubcharts) {
-            boolean dependencyFound = false;
-            for (final Dependency dependency : requirementsDependencies) {
-              if (dependency != null && dependency.identifies(existingSubchart)) {
-                dependencyFound = true;
-                break;
-              }
-            }
-            if (!dependencyFound) {
+            if (existingSubchart != null) {
+              boolean mentionedInRequirementsYaml = false;
 
-              // For the given subchart, we ran through all the
-              // entries in requirements.yaml and didn't find a
-              // matching entry.
+              // For every subchart, does requirements.yaml mention
+              // it?  If requirements.yaml *doesn't* mention it, then
+              // add it to the chart (recall that we've cleared out
+              // the subcharts it had).
               
-              // TODO: almost certainly a more efficient way to do this
-              final Chart.Builder subchartBuilder = chartBuilder.addDependenciesBuilder();
-              assert subchartBuilder != null;
-              subchartBuilder.mergeFrom(existingSubchart);
+              for (final Dependency dependency : requirementsDependencies) {
+                if (dependency != null && dependency.identifies(existingSubchart)) {
+                  mentionedInRequirementsYaml = true;
+                  break;
+                }
+              }
+              
+              if (!mentionedInRequirementsYaml) {
+                
+                // For the given subchart, we ran through all the
+                // entries in requirements.yaml and didn't find a
+                // matching entry.
+                
+                // TODO: almost certainly a more efficient way to do this
+                final Chart.Builder subchartBuilder = chartBuilder.addDependenciesBuilder();
+                assert subchartBuilder != null;
+                subchartBuilder.mergeFrom(existingSubchart);
+              }
             }
           }
         }
@@ -341,15 +362,18 @@ public class Requirements {
         
         // OK, now process the requirements.yaml for real.
         
-        for (final Dependency requirementsDependency : requirementsDependencies) {
-          if (requirementsDependency != null) {
+        for (final Dependency requirement : requirementsDependencies) {
+          if (requirement != null) {
 
             // Now for each Requirements Dependency (for each
             // requirement), see if there's a corresponding subchart.
             // It might have been renamed by the getAliasSubchart()
             // method.
-            
-            final Chart aliasSubchart = requirementsDependency.getAliasSubchart(existingSubcharts);
+
+            // if chartDependency := getAliasDependency(c.Dependencies, req); chartDependency != nil {
+            //   chartDependencies = append(chartDependencies, chartDependency)
+            // }
+            final Chart aliasSubchart = requirement.getAliasSubchart(existingSubcharts);
             if (aliasSubchart != null) {
               final Chart.Builder subchartBuilder = chartBuilder.addDependenciesBuilder();
               assert subchartBuilder != null;
@@ -360,9 +384,13 @@ public class Requirements {
             // Requirements' associated Dependency, and if it has an
             // alias, then we set its name to its alias.  I don't know
             // why.
-            final String alias = requirementsDependency.getAlias();
+            //
+            // if req.Alias != "" {
+            //   req.Name = req.Alias
+            // }
+            final String alias = requirement.getAlias();
             if (alias != null && !alias.isEmpty()) {
-              requirementsDependency.setName(alias);
+              requirement.setName(alias);
             }
             
           }
@@ -402,9 +430,9 @@ public class Requirements {
         
         final Set<String> subchartNamesToRemove = new HashSet<>();
         
-        for (final Dependency requirementsDependency : requirementsDependencies) {
-          if (requirementsDependency != null && !requirementsDependency.isEnabled()) {
-            subchartNamesToRemove.add(requirementsDependency.getName());
+        for (final Dependency requirement : requirementsDependencies) {
+          if (requirement != null && !requirement.isEnabled()) {
+            subchartNamesToRemove.add(requirement.getName());
           }
         }
         
