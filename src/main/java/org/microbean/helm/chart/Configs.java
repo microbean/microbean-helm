@@ -93,22 +93,22 @@ final class Configs {
    * null}
    */
   static final Map<String, Object> coalesceConfigs(final ChartOrBuilder chart, final ConfigOrBuilder config) {
-    Map<String, Object> coalescedValues;
+    Map<String, Object> returnValue;
     if (config == null) {
-      coalescedValues = new HashMap<>();
+      returnValue = new HashMap<>();
     } else {
       final String raw = config.getRaw();
       if (raw == null || raw.isEmpty()) {
-        coalescedValues = new HashMap<>();
+        returnValue = new HashMap<>();
       } else {
         @SuppressWarnings("unchecked")
         final Map<String, Object> configAsMap = (Map<String, Object>)new Yaml().load(raw);
         assert configAsMap != null;
-        coalescedValues = coalesce(chart, configAsMap);
+        returnValue = coalesce(chart, configAsMap);
       }
     }
-    coalescedValues = coalesceDependencies(chart, coalescedValues);
-    return coalescedValues;
+    returnValue = coalesceDependencies(chart, returnValue);
+    return returnValue;
   }
 
   static final Config toConfig(final String yaml) {
@@ -188,7 +188,7 @@ final class Configs {
                       if (value instanceof Map) {
                         @SuppressWarnings("unchecked")
                         final Map<String, Object> src = (Map<String, Object>)value;
-                        coalesceMaps(dest, src);
+                        coalesceMaps(src, dest);
                       }
                     }
                   }
@@ -206,9 +206,9 @@ final class Configs {
     return coalesceDependencies(chart, coalesceValues(chart, dest));
   }
   
-  private static final Map<String, Object> coalesceDependencies(final ChartOrBuilder chart, Map<String, Object> targetMap) {
-    if (targetMap == null) {
-      targetMap = new HashMap<>();
+  private static final Map<String, Object> coalesceDependencies(final ChartOrBuilder chart, Map<String, Object> returnValue) {
+    if (returnValue == null) {
+      returnValue = new HashMap<>();
     }
     if (chart != null) {
       final Iterable<? extends ChartOrBuilder> subcharts = chart.getDependenciesList();
@@ -221,35 +221,37 @@ final class Configs {
               if (subchartName != null) {
 
                 final Map<String, Object> subchartValuesMap;
-                final Object x = targetMap.get(subchartName);
+                final Object x = returnValue.get(subchartName);
                 if (x == null) {
                   subchartValuesMap = new HashMap<>();
-                  targetMap.put(subchartName, subchartValuesMap);
+                  returnValue.put(subchartName, subchartValuesMap);
                 } else if (x instanceof Map) {
                   @SuppressWarnings("unchecked")
                   final Map<String, Object> temp = (Map<String, Object>)x;
                   subchartValuesMap = temp;
                 } else {
-                  throw new IllegalArgumentException("targetMap.get(" + subchartName + "): not a map: " + x);
+                  throw new IllegalArgumentException("returnValue.get(" + subchartName + "): not a map: " + x);
                 }
                 
-                coalesceGlobals(subchartValuesMap, targetMap);
-                targetMap.put(subchartName, coalesce(subchart, subchartValuesMap));
+                coalesceGlobals(subchartValuesMap, returnValue);
+                returnValue.put(subchartName, coalesce(subchart, subchartValuesMap));
               }
             }
           }
         }
       }
     }
-    return targetMap;
+    return returnValue;
   }
 
   private static final void coalesceGlobals(final Map<String, Object> dominantMap, final Map<String, Object> recessiveMap) {
     if (dominantMap != null) {
 
-      // Get whatever is indexed under the "globals" key.  We hope
-      // it's a Map.  If there's nothing there, we'll stuff a new Map
-      // in under that key.
+      // Get whatever is indexed under the "global" key in the
+      // dominantMap.  We hope it's a Map.  If there's nothing there,
+      // we'll stuff a new Map in under that key.  If whatever is
+      // there is non-null but not a Map (like, say, an Integer or
+      // something), we do nothing.
       final Object dominantGlobals = dominantMap.get("global");
       final Map<String, Object> dominantGlobalsMap;
       if (dominantGlobals == null) {
@@ -265,8 +267,9 @@ final class Configs {
       
       if (dominantGlobalsMap != null) {
 
-        // Get whatever is indexed under the "globals" key in the
-        // recessiveMap.  We hope it's a Map.
+        // Get whatever is indexed under the "global" key in the
+        // recessiveMap.  We hope it's a Map.  If it isn't or it's
+        // empty, we do nothing.
         final Object recessiveGlobals = recessiveMap.get("global");
         final Map<String, Object> recessiveGlobalsMap;
         if (recessiveGlobals instanceof Map) {
@@ -278,13 +281,13 @@ final class Configs {
         }
 
         if (recessiveGlobalsMap != null && !recessiveGlobalsMap.isEmpty()) {
-          final Set<Entry<String, Object>> entrySet = recessiveGlobalsMap.entrySet();
-          if (entrySet != null && !entrySet.isEmpty()) {
-            for (final Entry<String, Object> entry : entrySet) {
-              if (entry != null) {
+          final Set<Entry<String, Object>> recessiveEntrySet = recessiveGlobalsMap.entrySet();
+          if (recessiveEntrySet != null && !recessiveEntrySet.isEmpty()) {
+            for (final Entry<String, Object> recessiveEntry : recessiveEntrySet) {
+              if (recessiveEntry != null) {
                 
-                final String recessiveKey = entry.getKey();
-                Object recessiveValue = entry.getValue();
+                final String recessiveKey = recessiveEntry.getKey();
+                Object recessiveValue = recessiveEntry.getValue();
                 if (recessiveValue instanceof Map) {
                   @SuppressWarnings("unchecked")
                   final Map<String, Object> recessiveValueMap = new HashMap<>((Map<String, Object>)recessiveValue);
@@ -293,7 +296,7 @@ final class Configs {
                   if (dominantAnalog instanceof Map) {
                     @SuppressWarnings("unchecked")
                     final Map<String, Object> dominantAnalogMap = (Map<String, Object>)dominantAnalog;
-                    coalesceMaps(recessiveValueMap, dominantAnalogMap);
+                    coalesceMaps(dominantAnalogMap, recessiveValueMap);
                   }
                 }
                 dominantGlobalsMap.put(recessiveKey, recessiveValue);
@@ -306,29 +309,31 @@ final class Configs {
     }
   }
 
-  static final Map<String, Object> coalesceMaps(final Map<String, Object> dest, final Map<String, Object> src) {
-    if (src != null && !src.isEmpty()) {
-      final Set<Entry<String, Object>> srcEntrySet = src.entrySet();
-      if (srcEntrySet != null && !srcEntrySet.isEmpty()) {
-        for (final Entry<String, Object> srcEntry : srcEntrySet) {
-          if (srcEntry != null) {
-            final String srcKey = srcEntry.getKey();
-            final Object srcValue = srcEntry.getValue();
-            final Object destValue = dest.get(srcKey);
-            if (destValue == null) {
-              dest.put(srcKey, srcValue);
-            } else if (destValue instanceof Map && srcValue instanceof Map) {
-              @SuppressWarnings("unchecked")
-              final Map<String, Object> destValueMap = (Map<String, Object>)destValue;
-              @SuppressWarnings("unchecked")
-              final Map<String, Object> srcValueMap = (Map<String, Object>)srcValue;
-              coalesceMaps(destValueMap, srcValueMap); // recursive
+  static final Map<String, Object> coalesceMaps(final Map<String, Object> sourceMap, final Map<String, Object> targetMap) {
+    if (sourceMap != null && !sourceMap.isEmpty()) {
+      final Set<Entry<String, Object>> sourceMapEntrySet = sourceMap.entrySet();
+      if (sourceMapEntrySet != null && !sourceMapEntrySet.isEmpty()) {
+        for (final Entry<String, Object> sourceMapEntry : sourceMapEntrySet) {
+          if (sourceMapEntry != null) {
+            final String sourceMapKey = sourceMapEntry.getKey();
+            final Object sourceMapValue = sourceMapEntry.getValue();
+            if (!targetMap.containsKey(sourceMapKey)) {
+              targetMap.put(sourceMapKey, sourceMapValue);
+            } else if (sourceMapValue instanceof Map) {
+              final Object targetMapValue = targetMap.get(sourceMapKey);
+              if (targetMapValue instanceof Map) {
+                @SuppressWarnings("unchecked")
+                final Map<String, Object> targetMapValueMap = (Map<String, Object>)targetMapValue;
+                @SuppressWarnings("unchecked")
+                final Map<String, Object> sourceMapValueMap = (Map<String, Object>)sourceMapValue;
+                coalesceMaps(sourceMapValueMap, targetMapValueMap); // recursive
+              }
             }
           }
         }
       }
     }
-    return dest;
+    return targetMap;
   }
   
 }

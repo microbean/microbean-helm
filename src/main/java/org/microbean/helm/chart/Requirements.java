@@ -133,8 +133,9 @@ public class Requirements {
   // Ported from requirements.go processImportValues().  TODO: Wildly inefficient.
   private static final Chart processSingleChartImportValues(final Chart c) {
     Objects.requireNonNull(c);
+
     Chart returnValue = null;
-    final Config chartValues = c.getValues();
+
     final Map<String, Object> canonicalValues = Configs.coalesceConfigs(c, null);
     Map<String, Object> b = new HashMap<>();
     final Requirements requirements = fromChartOrBuilder(c);
@@ -143,45 +144,50 @@ public class Requirements {
       if (dependencies != null && !dependencies.isEmpty()) {
         for (final Dependency dependency : dependencies) {
           if (dependency != null) {
+            
             final String dependencyName = dependency.getName();
             if (dependencyName == null) {
               throw new IllegalStateException();
             }
+
             final Collection<?> importValues = dependency.getImportValues();
             if (importValues != null && !importValues.isEmpty()) {
               final Collection<Object> newImportValues = new ArrayList<>();
               for (final Object importValue : importValues) {
-                final Map<String, String> nm = new HashMap<>();
                 final String s;
+                
                 if (importValue instanceof Map) {
                   @SuppressWarnings("unchecked")
-                    final Map<String, String> importValueMap = (Map<String, String>)importValue;
+                  final Map<String, String> importValueMap = (Map<String, String>)importValue;
                   
                   final String importValueChild = importValueMap.get("child");
                   final String importValueParent = importValueMap.get("parent");
-                  nm.put("child", importValueChild);
-                  nm.put("parent", importValueParent);
+
+                  final Map<String, String> newMap = new HashMap<>();
+                  newMap.put("child", importValueChild);
+                  newMap.put("parent", importValueParent);
                   
-                  newImportValues.add(nm);
-                  
-                  s = dependencyName + "." + importValueChild;
-                  Map<String, Object> vv = getMap(canonicalValues, s);
-                  vv = MapTree.newMapChain(importValueParent, vv);
-                  b = Configs.coalesceMaps(canonicalValues, vv);
+                  newImportValues.add(newMap);
+
+                  final Map<String, Object> vv =
+                    MapTree.newMapChain(importValueParent,
+                                        getMap(canonicalValues,
+                                               dependencyName + "." + importValueChild));
+                  b = Configs.coalesceMaps(vv, canonicalValues);
                   // OK
                   
                 } else if (importValue instanceof String) {
                   final String importValueString = (String)importValue;
                   
                   final String importValueChild = "exports." + importValueString;
-                  nm.put("child", importValueChild);
-                  nm.put("parent", ".");
                   
-                  newImportValues.add(nm);
+                  final Map<String, String> newMap = new HashMap<>();
+                  newMap.put("child", importValueChild);
+                  newMap.put("parent", ".");
                   
-                  s = dependencyName + "." + importValueChild;
-                  final Map<String, Object> vm = getMap(canonicalValues, s);
-                  b = Configs.coalesceMaps(b, vm);
+                  newImportValues.add(newMap);
+                  
+                  b = Configs.coalesceMaps(getMap(canonicalValues, dependencyName + "." + importValueChild), b);
                   // OK
                   
                 }
@@ -192,7 +198,7 @@ public class Requirements {
         }
       }
     }
-    b = Configs.coalesceMaps(b, canonicalValues);
+    b = Configs.coalesceMaps(canonicalValues, b);
     final String yaml = new Yaml().dump(b);
     assert yaml != null;
     final Chart.Builder chartBuilder = c.toBuilder();
