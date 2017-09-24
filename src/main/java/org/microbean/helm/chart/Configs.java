@@ -64,15 +64,46 @@ final class Configs {
    * Static methods.
    */
   
-
+ /**
+   * Given a {@link ChartOrBuilder}, flattens its
+   * {@linkplain ChartOrBuilder#getValues() default values} into
+   * a {@link Map}.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>This method calls the {@link #coalesceConfigs(ChartOrBuilder,
+   * ConfigOrBuilder)} with {@code chart} as its first argument and
+   * {@code null} as its second argument and returns its return
+   * value.</p>
+   *
+   * <p>The {@link Map} returned by this method may have nested {@link
+   * Map Map&lt;String, Object&gt;}s as its values.  It is, in other
+   * words, a {@link Map} representation of YAML.</p>
+   *
+   * @param chart the {@link ChartOrBuilder} whose {@linkplain
+   * ChartOrBuilder#getValues() values} will be taken into
+   * consideration; may be {@code null}
+   *
+   * @return a {@link Map} of values that, for example, can be
+   * {@linkplain Yaml#dump(Object) marshalled to YAML} and passed to,
+   * for example, {@link
+   * InstallReleaseRequest.Builder#setValues(Config)}; never {@code
+   * null}
+   *
+   * @see #coalesceConfigs(ChartOrBuilder, ConfigOrBuilder)
+   */
+  static final Map<String, Object> coalesceConfigs(final ChartOrBuilder chart) {
+    return coalesceConfigs(chart, null);
+  }
+  
   /**
-   * Given a set of overriding values in {@link ConfigOrBuilder} form,
-   * and a {@link ChartOrBuilder} whose {@linkplain
-   * ChartOrBuilder#getValues() default values} are being overridden,
-   * flattens both {@link ConfigOrBuilder} instances into a {@link
-   * Map}, such that the overriding values are dominant and the {@link
-   * ChartOrBuilder}'s {@linkplain ChartOrBuilder#getValues() values}
-   * are recessive.
+   * Given an optional set of overriding values in {@link
+   * ConfigOrBuilder} form, and a {@link ChartOrBuilder} whose
+   * {@linkplain ChartOrBuilder#getValues() default values} are being
+   * overridden, flattens both {@link ConfigOrBuilder} instances into
+   * a {@link Map}, such that the overriding values are dominant and
+   * the {@link ChartOrBuilder}'s {@linkplain
+   * ChartOrBuilder#getValues() values} are recessive.
    *
    * <p>This method never returns {@code null}.</p>
    *
@@ -93,21 +124,21 @@ final class Configs {
    * null}
    */
   static final Map<String, Object> coalesceConfigs(final ChartOrBuilder chart, final ConfigOrBuilder config) {
-    Map<String, Object> returnValue;
+    final Map<String, Object> map;
     if (config == null) {
-      returnValue = new HashMap<>();
+      map = null;
     } else {
       final String raw = config.getRaw();
       if (raw == null || raw.isEmpty()) {
-        returnValue = new HashMap<>();
+        map = null;
       } else {
         @SuppressWarnings("unchecked")
         final Map<String, Object> configAsMap = (Map<String, Object>)new Yaml().load(raw);
         assert configAsMap != null;
-        returnValue = coalesce(chart, configAsMap);
+        map = coalesce(chart, configAsMap);
       }
     }
-    returnValue = coalesceDependencies(chart, returnValue);
+    final Map<String, Object> returnValue = coalesceDependencies(chart, map);
     return returnValue;
   }
 
@@ -162,7 +193,7 @@ final class Configs {
   private static final Map<String, Object> coalesceValues(final ChartOrBuilder chart, final Map<String, Object> overridingValues /* v */) {
     Map<String, Object> returnValue = overridingValues;
     if (chart != null && overridingValues != null) {
-      final Config config = chart.getValues();
+      final ConfigOrBuilder config = chart.getValues();
       if (config != null) {
         final String raw = config.getRaw();
         if (raw != null && !raw.isEmpty()) {
@@ -175,16 +206,14 @@ final class Configs {
               for (final Entry<String, Object> chartValuesEntry : chartValuesEntrySet) {
                 if (chartValuesEntry != null) {
                   final String key = chartValuesEntry.getKey();
-                  final Object value = chartValuesEntry.getValue();
                   if (!overridingValues.containsKey(key)) {
-                    overridingValues.put(key, value);
+                    overridingValues.put(key, chartValuesEntry.getValue());
                   } else {
-                    Object x = overridingValues.get(key);
-                    if (x == null) {
-                      overridingValues.remove(key);
-                    } else if (x instanceof Map) {
+                    final Object x = overridingValues.get(key);
+                    if (x instanceof Map) {
                       @SuppressWarnings("unchecked")
                       final Map<String, Object> dest = (Map<String, Object>)x;
+                      final Object value = chartValuesEntry.getValue();
                       if (value instanceof Map) {
                         @SuppressWarnings("unchecked")
                         final Map<String, Object> src = (Map<String, Object>)value;
@@ -204,6 +233,10 @@ final class Configs {
   
   private static final Map<String, Object> coalesce(final ChartOrBuilder chart, Map<String, Object> dest) {
     return coalesceDependencies(chart, coalesceValues(chart, dest));
+  }
+
+  private static final Map<String, Object> coalesceDependencies(final ChartOrBuilder chart) {
+    return coalesceDependencies(chart, null);
   }
   
   private static final Map<String, Object> coalesceDependencies(final ChartOrBuilder chart, Map<String, Object> returnValue) {

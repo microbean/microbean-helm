@@ -137,6 +137,7 @@ public class Requirements {
     Chart returnValue = null;
 
     final Map<String, Object> canonicalValues = Configs.coalesceConfigs(c, null);
+    
     Map<String, Object> b = new HashMap<>();
     final Requirements requirements = fromChartOrBuilder(c);
     if (requirements != null) {
