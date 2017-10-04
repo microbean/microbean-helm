@@ -136,7 +136,7 @@ public class Requirements {
 
     Chart returnValue = null;
 
-    final Map<String, Object> canonicalValues = Configs.coalesceConfigs(c, null);
+    final Map<String, Object> canonicalValues = Configs.coalesceConfigs(c);
     
     Map<String, Object> b = new HashMap<>();
     final Requirements requirements = fromChartOrBuilder(c);
@@ -521,6 +521,11 @@ public class Requirements {
 
   
   // ported relatively slavishly from getAliasDependency()
+  /**
+   * @deprecated Please see {@link
+   * Requirements.Dependency#getAliasSubchart(Collection)} instead.
+   */
+  @Deprecated // maybe not used?
   private static final Chart getAliasSubchart(final Collection<? extends Chart> subcharts, final Dependency aliasChart) {
     Chart returnValue = null;
     if (subcharts != null && !subcharts.isEmpty()) {
@@ -676,7 +681,8 @@ public class Requirements {
       if (metadata == null) {
         return false;
       }
-      
+
+      // Make sure our name matches the metadata name.
       final Object name = this.getName();
       if (name == null) {
         if (metadata.getName() != null) {
@@ -685,25 +691,58 @@ public class Requirements {
       } else if (!name.equals(metadata.getName())) {
         return false;
       }
-      
+
+      // Make sure our version is compatible with the metadata
+      // version.
       final Object version = this.getVersion();
       if (version == null) {
         if (metadata.getVersion() != null) {
           return false;
         }
       } else if (!version.equals(metadata.getVersion())) {
+        // TODO: see https://github.com/kubernetes/helm/commit/0440b54bbff503d4c71e033b2ce7648597c67b05#diff-b886fd4039491a8f529b514db736c0c0R234
         return false;
       }
 
+      // All tests passed.
       return true;
     }
 
+    /**
+     * Checks the supplied {@link Collection} of {@link Chart}s to see
+     * if there is a {@link Chart} in it that is {@linkplain
+     * #identifies(MetadataOrBuilder) identified} by this {@link
+     * Dependency}, and, if so, if this {@link Dependency} {@linkplain
+     * #getAlias() has an alias}, additionally renames the {@link
+     * Chart} in question before returning it.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * <p>If this {@link Dependency} does not {@linkplain #getAlias()
+     * have an alias} then the {@linkplain
+     * #identifies(MetadataOrBuilder) identified} {@link Chart} is
+     * simply returned.</p>
+     *
+     * @param subcharts a {@link Collection} of {@link Chart}s; may be
+     * {@code null} in which case {@code null} will be returned
+     *
+     * @return a {@link Chart} that this {@link Dependency}
+     * {@linkplain #identifies(MetadataOrBuilder) identifies},
+     * possibly renamed with this {@link Dependency}'s {@linkplain
+     * #getAlias() alias}, or {@code null}
+     *
+     * @see #identifies(MetadataOrBuilder)
+     *
+     * @see #getAlias()
+     */
     public Chart getAliasSubchart(final Collection<? extends Chart> subcharts) {
       Chart returnValue = null;
       if (subcharts != null && !subcharts.isEmpty()) {
         for (Chart subchart : subcharts) {
           if (this.identifies(subchart)) {
             assert subchart != null;
+            // OK, our name and version match the chart's name and
+            // version.
             final String alias = this.getAlias();
             if (alias != null && !alias.isEmpty()) {
               assert subchart.hasMetadata();
@@ -711,6 +750,7 @@ public class Requirements {
               assert subchartMetadata != null;
               final Metadata.Builder subchartMetadataBuilder = subchartMetadata.toBuilder();
               assert subchartMetadataBuilder != null;
+              // Rename the chart to have our alias as its new name.
               subchartMetadataBuilder.setName(alias);
               subchartMetadata = subchartMetadataBuilder.build();
               final Chart.Builder subchartBuilder = subchart.toBuilder();
@@ -729,23 +769,29 @@ public class Requirements {
 
     // Ported slavishly from ProcessRequirementsTags
     final void processTags(final Map<String, Object> values) {
-      final Map<String, Object> tags = getMap(values, "tags");
+
+      // Look in values for a key named "tags" and pull out the Map
+      // indexed under it.  In the Go code, "tags" here is known as "vt".
+      final Map<?, ?> tags = getMap(values, "tags");
+
       final Collection<? extends String> dependencyTags = this.getTags();
       if (dependencyTags != null && !dependencyTags.isEmpty()) {
         boolean hasTrue = false;
         boolean hasFalse = false;
         for (final String dependencyTag : dependencyTags) {
-          final Object tagValue = values.get(dependencyTag);
+          final Object tagValue = tags.get(dependencyTag);
           if (Boolean.TRUE.equals(tagValue)) {
             hasTrue = true;
           } else if (Boolean.FALSE.equals(tagValue)) {
             hasFalse = true;
+          } else {
+            // Not a Boolean at all; just skip it
           }
         }
         
-        // Note that this block looks different from the analogous block
-        // in processConditions().  It is this way in the Go code as
-        // well.
+        // Note that this block looks different from the analogous
+        // block in processConditions() below.  It is this way in the
+        // Go code as well.
         if (hasFalse) {
           if (!hasTrue) {
             this.setEnabled(false);

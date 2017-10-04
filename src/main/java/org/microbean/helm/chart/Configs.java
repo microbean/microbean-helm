@@ -277,7 +277,7 @@ final class Configs {
     return returnValue;
   }
 
-  private static final void coalesceGlobals(final Map<String, Object> dominantMap, final Map<String, Object> recessiveMap) {
+  private static final void coalesceGlobals(final Map<String, Object> dominantMap, final Map<?, ?> recessiveMap) {
     if (dominantMap != null) {
 
       // Get whatever is indexed under the "global" key in the
@@ -304,19 +304,19 @@ final class Configs {
         // recessiveMap.  We hope it's a Map.  If it isn't or it's
         // empty, we do nothing.
         final Object recessiveGlobals = recessiveMap.get("global");
-        final Map<String, Object> recessiveGlobalsMap;
+        final Map<? extends String, ?> recessiveGlobalsMap;
         if (recessiveGlobals instanceof Map) {
           @SuppressWarnings("unchecked")
-          final Map<String, Object> temp = (Map<String, Object>)recessiveGlobals;
+          final Map<? extends String, ?> temp = (Map<? extends String, ?>)recessiveGlobals;
           recessiveGlobalsMap = temp;
         } else {
           recessiveGlobalsMap = null;
         }
 
         if (recessiveGlobalsMap != null && !recessiveGlobalsMap.isEmpty()) {
-          final Set<Entry<String, Object>> recessiveEntrySet = recessiveGlobalsMap.entrySet();
+          final Set<? extends Entry<? extends String, ?>> recessiveEntrySet = recessiveGlobalsMap.entrySet();
           if (recessiveEntrySet != null && !recessiveEntrySet.isEmpty()) {
-            for (final Entry<String, Object> recessiveEntry : recessiveEntrySet) {
+            for (final Entry<? extends String, ?> recessiveEntry : recessiveEntrySet) {
               if (recessiveEntry != null) {
                 
                 final String recessiveKey = recessiveEntry.getKey();
@@ -342,11 +342,15 @@ final class Configs {
     }
   }
 
-  static final Map<String, Object> coalesceMaps(final Map<String, Object> sourceMap, final Map<String, Object> targetMap) {
+  // Ported from
+  // https://github.com/kubernetes/helm/blob/v2.6.1/pkg/chartutil/values.go#L310-L332
+  // but reversing the order of the arguments.
+  // targetMap values override sourceMap values.
+  static final Map<String, Object> coalesceMaps(final Map<? extends String, ?> sourceMap, final Map<String, Object> targetMap) {
     if (sourceMap != null && !sourceMap.isEmpty()) {
-      final Set<Entry<String, Object>> sourceMapEntrySet = sourceMap.entrySet();
+      final Set<? extends Entry<? extends String, ?>> sourceMapEntrySet = sourceMap.entrySet();
       if (sourceMapEntrySet != null && !sourceMapEntrySet.isEmpty()) {
-        for (final Entry<String, Object> sourceMapEntry : sourceMapEntrySet) {
+        for (final Entry<? extends String, ?> sourceMapEntry : sourceMapEntrySet) {
           if (sourceMapEntry != null) {
             final String sourceMapKey = sourceMapEntry.getKey();
             final Object sourceMapValue = sourceMapEntry.getValue();
@@ -358,7 +362,7 @@ final class Configs {
                 @SuppressWarnings("unchecked")
                 final Map<String, Object> targetMapValueMap = (Map<String, Object>)targetMapValue;
                 @SuppressWarnings("unchecked")
-                final Map<String, Object> sourceMapValueMap = (Map<String, Object>)sourceMapValue;
+                final Map<? extends String, ?> sourceMapValueMap = (Map<? extends String, ?>)sourceMapValue;
                 coalesceMaps(sourceMapValueMap, targetMapValueMap); // recursive
               }
             }

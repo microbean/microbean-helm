@@ -160,6 +160,9 @@ final class MapTree {
    *
    * <p>This method may return {@code null}.</p>
    *
+   * <p>This method deliberately&mdash;unsafely&mdash;casts the result
+   * to a <code>Map&lt;String, Object&gt;</code>.</p>
+   *
    * @param path a period ("{@code .}")-separated path of {@link
    * String}s that will serve as keys in a {@link Map}; must not be
    * {@code null}

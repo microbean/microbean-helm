@@ -73,12 +73,16 @@ public class TestMapTree {
     assertNull(returnValue);
     assertSame(secondLevelMap, map.get("a"));
     assertEquals(1, map.size());
-    map = (Map<String, Object>)map.get("a");
+    @SuppressWarnings("unchecked")
+    final Map<String, Object> temp = (Map<String, Object>)map.get("a");
+    map = temp;
     assertNotNull(map);
     assertTrue(map.get("b") instanceof Map);
     assertFalse(map.containsValue("delete me"));
     assertEquals(2, map.size());
-    map = (Map<String, Object>)map.get("b");
+    @SuppressWarnings("unchecked")
+    final Map<String, Object> temp2 = (Map<String, Object>)map.get("b");
+    map = temp2;
     assertNotNull(map);
     assertEquals(Integer.valueOf(3), map.get("c"));
   }
