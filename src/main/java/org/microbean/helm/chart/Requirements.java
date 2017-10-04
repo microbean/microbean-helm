@@ -136,7 +136,7 @@ public class Requirements {
 
     Chart returnValue = null;
 
-    final Map<String, Object> canonicalValues = Configs.coalesceConfigs(c);
+    final Map<String, Object> canonicalValues = Configs.toDefaultValuesMap(c);
     
     Map<String, Object> b = new HashMap<>();
     final Requirements requirements = fromChartOrBuilder(c);
@@ -413,7 +413,7 @@ public class Requirements {
         // new canonical Config that will eventually be sent to
         // Tiller.  This means that some of the values will be
         // redundant copies of each other.
-        final Map<String, Object> chartValuesMap = Configs.coalesceConfigs(chartBuilder, config);
+        final Map<String, Object> chartValuesMap = Configs.toValuesMap(chartBuilder, config);
         assert chartValuesMap != null;
         final String configYaml = Configs.toYAML(chartValuesMap); // madness
         assert configYaml != null;

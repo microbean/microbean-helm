@@ -19,6 +19,7 @@ package org.microbean.helm.chart;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import hapi.chart.ChartOuterClass.Chart;
@@ -71,7 +72,7 @@ final class Configs {
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * <p>This method calls the {@link #coalesceConfigs(ChartOrBuilder,
+   * <p>This method calls the {@link #toValuesMap(ChartOrBuilder,
    * ConfigOrBuilder)} with {@code chart} as its first argument and
    * {@code null} as its second argument and returns its return
    * value.</p>
@@ -90,10 +91,10 @@ final class Configs {
    * InstallReleaseRequest.Builder#setValues(Config)}; never {@code
    * null}
    *
-   * @see #coalesceConfigs(ChartOrBuilder, ConfigOrBuilder)
+   * @see #toValuesMap(ChartOrBuilder, ConfigOrBuilder)
    */
-  static final Map<String, Object> coalesceConfigs(final ChartOrBuilder chart) {
-    return coalesceConfigs(chart, null);
+  static final Map<String, Object> toDefaultValuesMap(final ChartOrBuilder chart) {
+    return toValuesMap(chart, null);
   }
   
   /**
@@ -123,7 +124,7 @@ final class Configs {
    * InstallReleaseRequest.Builder#setValues(Config)}; never {@code
    * null}
    */
-  static final Map<String, Object> coalesceConfigs(final ChartOrBuilder chart, final ConfigOrBuilder config) {
+  static final Map<String, Object> toValuesMap(final ChartOrBuilder chart, final ConfigOrBuilder config) {
     final Map<String, Object> map;
     if (config == null) {
       map = null;
@@ -188,87 +189,120 @@ final class Configs {
   
 
   /**
-   * 
+   * Gets the supplied {@link ChartOrBuilder}'s {@link
+   * ChartOrBuilder#getValues() ConfigOrBuilder} representing its
+   * default values, grabs its {@linkplain ConfigOrBuilder#getRaw()
+   * YAML representation}, marshals it into a {@link Map} using the
+   * {@link Yaml#load(String)} method, and then passes that {@link
+   * Map} as the first parameter&mdash;and the {@code targetMap} as
+   * the second parameter&mdash;to the {@link #coalesceMaps(Map, Map)}
+   * method and returns its result.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * @param chart the {@link ChartOrBuilder} whose default values
+   * should be harvested; may be {@code null}
+   *
+   * @param targetMap the {@link Map} of typically user-supplied
+   * values that will be (possibly) modified and returned (if
+   * non-{@code null})
+   *
+   * @return {@code targetMap}, with possibly changed contents, if it
+   * is non-{@code null}, or a new {@link Map}
+   *
+   * @see #coalesceMaps(Map, Map)
+   *
+   * @see ChartOrBuilder#getValues()
+   *
+   * @see ConfigOrBuilder#getRaw()
+   *
+   * @see Yaml#load(String)
    */
-  private static final Map<String, Object> coalesceValues(final ChartOrBuilder chart, final Map<String, Object> overridingValues /* v */) {
-    Map<String, Object> returnValue = overridingValues;
-    if (chart != null && overridingValues != null) {
+  private static final Map<String, Object> computeEffectiveValues(final ChartOrBuilder chart, Map<String, Object> targetMap /* v */) {
+    if (targetMap == null) {
+      targetMap = new HashMap<>();
+    }
+    if (chart != null) {
       final ConfigOrBuilder config = chart.getValues();
       if (config != null) {
         final String raw = config.getRaw();
         if (raw != null && !raw.isEmpty()) {
-          // ReadValues
-          @SuppressWarnings("unchecked")
-          final Map<String, Object> chartValues = (Map<String, Object>)new Yaml().load(raw); // nv
-          if (chartValues != null && !chartValues.isEmpty()) {
-            final Set<Entry<String, Object>> chartValuesEntrySet = chartValues.entrySet();
-            if (chartValuesEntrySet != null && !chartValuesEntrySet.isEmpty()) {
-              for (final Entry<String, Object> chartValuesEntry : chartValuesEntrySet) {
-                if (chartValuesEntry != null) {
-                  final String key = chartValuesEntry.getKey();
-                  if (!overridingValues.containsKey(key)) {
-                    overridingValues.put(key, chartValuesEntry.getValue());
-                  } else {
-                    final Object x = overridingValues.get(key);
-                    if (x instanceof Map) {
-                      @SuppressWarnings("unchecked")
-                      final Map<String, Object> dest = (Map<String, Object>)x;
-                      final Object value = chartValuesEntry.getValue();
-                      if (value instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        final Map<String, Object> src = (Map<String, Object>)value;
-                        coalesceMaps(src, dest);
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+          @SuppressWarnings("unchecked")            
+          final Map<String, Object> sourceMap = (Map<String, Object>)new Yaml().load(raw); // nv
+          assert sourceMap != null;
+          targetMap = coalesceMaps(sourceMap, targetMap);
         }
       }
     }
-    return returnValue;
+    return targetMap;
   }
-  
-  private static final Map<String, Object> coalesce(final ChartOrBuilder chart, Map<String, Object> dest) {
-    return coalesceDependencies(chart, coalesceValues(chart, dest));
+
+  /**
+   * First gets the "right" values to use by blending the supplied
+   * {@link Map} of typically user-supplied values with the
+   * {@linkplain ChartOrBuilder#getValues() default values present in
+   * the supplied <code>ChartOrBuilder</code>}, and then calls {@link
+   * #coalesceDependencies(ChartOrBuilder, Map)} on the results.
+   *
+   * <p>This method first calls {@link #computeEffectiveValues(ChartOrBuilder,
+   * Map)}, producing a {@link Map} that combines user-specified and
+   * default values, and then passes the supplied {@code chart} and
+   * the values {@link Map} to the {@link
+   * #coalesceDependencies(ChartOrBuilder, Map)} method and returns
+   * its result.
+   *
+   * @param chart a {@link ChartOrBuilder}
+   *
+   * @param suppliedValues the {@link Map} that will ultimately be modified and returned
+   *
+   * @return {@code suppliedValues}
+   *
+   * @see #coalesceDependencies(ChartOrBuilder, Map)
+   *
+   * @see #computeEffectiveValues(ChartOrBuilder, Map)
+   */
+  private static final Map<String, Object> coalesce(final ChartOrBuilder chart, Map<String, Object> suppliedValues) {
+    return coalesceDependencies(chart, computeEffectiveValues(chart, suppliedValues));
   }
 
   private static final Map<String, Object> coalesceDependencies(final ChartOrBuilder chart) {
-    return coalesceDependencies(chart, null);
+    return coalesceDependencies(chart, computeEffectiveValues(chart, new HashMap<>()));
   }
   
   private static final Map<String, Object> coalesceDependencies(final ChartOrBuilder chart, Map<String, Object> returnValue) {
+    if (chart != null) {
+      returnValue = coalesceDependencies(chart.getDependenciesList(), returnValue);
+    }
+    return returnValue;
+  }
+
+  private static final Map<String, Object> coalesceDependencies(final Iterable<? extends ChartOrBuilder> subcharts, Map<String, Object> returnValue) {
     if (returnValue == null) {
       returnValue = new HashMap<>();
     }
-    if (chart != null) {
-      final Iterable<? extends ChartOrBuilder> subcharts = chart.getDependenciesList();
-      if (subcharts != null) {
-        for (final ChartOrBuilder subchart : subcharts) {
-          if (subchart != null) {
-            final Metadata subchartMetadata = subchart.getMetadata();
-            if (subchartMetadata != null) {
-              final String subchartName = subchartMetadata.getName();
-              if (subchartName != null) {
-
-                final Map<String, Object> subchartValuesMap;
-                final Object x = returnValue.get(subchartName);
-                if (x == null) {
-                  subchartValuesMap = new HashMap<>();
-                  returnValue.put(subchartName, subchartValuesMap);
-                } else if (x instanceof Map) {
-                  @SuppressWarnings("unchecked")
-                  final Map<String, Object> temp = (Map<String, Object>)x;
-                  subchartValuesMap = temp;
-                } else {
-                  throw new IllegalArgumentException("returnValue.get(" + subchartName + "): not a map: " + x);
-                }
-                
-                coalesceGlobals(subchartValuesMap, returnValue);
-                returnValue.put(subchartName, coalesce(subchart, subchartValuesMap));
+    if (subcharts != null) {
+      for (final ChartOrBuilder subchart : subcharts) {
+        if (subchart != null) {
+          final Metadata subchartMetadata = subchart.getMetadata();
+          if (subchartMetadata != null) {
+            final String subchartName = subchartMetadata.getName();
+            if (subchartName != null) {
+              
+              final Map<String, Object> subchartValuesMap;
+              final Object subchartValuesObject = returnValue.get(subchartName);
+              if (subchartValuesObject == null) {
+                subchartValuesMap = new HashMap<>();
+                returnValue.put(subchartName, subchartValuesMap);
+              } else if (subchartValuesObject instanceof Map) {
+                @SuppressWarnings("unchecked")
+                final Map<String, Object> temp = (Map<String, Object>)subchartValuesObject;
+                subchartValuesMap = temp;
+              } else {
+                throw new IllegalArgumentException("returnValue.get(" + subchartName + "): not a map: " + subchartValuesObject);
               }
+              
+              coalesceGlobals(subchartValuesMap, returnValue);
+              returnValue.put(subchartName, coalesce(subchart, subchartValuesMap));
             }
           }
         }
@@ -346,8 +380,44 @@ final class Configs {
   // https://github.com/kubernetes/helm/blob/v2.6.1/pkg/chartutil/values.go#L310-L332
   // but reversing the order of the arguments.
   // targetMap values override sourceMap values.
+
+
+  /**
+   * Combines {@code sourceMap} and {@code targetMap} together
+   * recursively and returns the result such that values in {@code
+   * targetMap} will override values in {@code sourceMap}.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>This method returns {@code targetMap} (not a copy).</p>
+   *
+   * <p>This method may modify {@code targetMap}'s contents if {@code
+   * sourceMap} contains entries that {@code targetMap} does not
+   * have.</p>
+   *
+   * <p>If any given entry in {@code sourceMap} is a {@link Map}
+   * itself, and if {@code targetMap} also contains a {@link Map}
+   * under the same key, then those {@link Map}s are supplied
+   * recursively to this method as {@code sourceMap} and {@code
+   * targetMap} respectively.</p>
+   *
+   * @param sourceMap the {@link Map} that will contribute entries to
+   * the {@code targetMap} only if they are not already contained;
+   * must not be {@code null}
+   *
+   * @param targetMap the {@link Map} that will contain all the
+   * results of this logical operation; must not be {@code null}
+   *
+   * @return {@code targetMap}, not a copy, that will normally be
+   * changed to incorporate the results of this operation
+   *
+   * @exception NullPointerException if either {@code sourceMap} or
+   * {@code targetMap} is {@code null}
+   */
   static final Map<String, Object> coalesceMaps(final Map<? extends String, ?> sourceMap, final Map<String, Object> targetMap) {
-    if (sourceMap != null && !sourceMap.isEmpty()) {
+    Objects.requireNonNull(sourceMap);
+    Objects.requireNonNull(targetMap);
+    if (!sourceMap.isEmpty()) {
       final Set<? extends Entry<? extends String, ?>> sourceMapEntrySet = sourceMap.entrySet();
       if (sourceMapEntrySet != null && !sourceMapEntrySet.isEmpty()) {
         for (final Entry<? extends String, ?> sourceMapEntry : sourceMapEntrySet) {
@@ -363,7 +433,11 @@ final class Configs {
                 final Map<String, Object> targetMapValueMap = (Map<String, Object>)targetMapValue;
                 @SuppressWarnings("unchecked")
                 final Map<? extends String, ?> sourceMapValueMap = (Map<? extends String, ?>)sourceMapValue;
-                coalesceMaps(sourceMapValueMap, targetMapValueMap); // recursive
+
+                // Recursive call; alters targetMap's contents in
+                // place
+                coalesceMaps(sourceMapValueMap, targetMapValueMap);
+
               }
             }
           }
