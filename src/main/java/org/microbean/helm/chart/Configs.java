@@ -276,6 +276,42 @@ final class Configs {
     return returnValue;
   }
 
+  /**
+   * One part of the general flattening of the values to be used
+   * during a chart operation, this method adds an entry, one per
+   * subchart, to the supplied {@code Map}, under that subchart's
+   * name, containing its (flattened in turn) set of values.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>If the supplied {@link Map} already contains an entry under a
+   * subchart's name, then its value must be {@code
+   * null}&mdash;indicating that it does not yet have an entry for
+   * this subchart&mdash;or a {@link Map} (or an {@link
+   * IllegalArgumentException} will be thrown).</p>
+   *
+   * <p>Normally you would pass the return value of {@link
+   * #toValuesMap(Map, Map)} as the second argument to this
+   * method.</p>
+   *
+   * @param subcharts an {@link Iterable} of {@link ChartOrBuilder}
+   * instances, each element of which represents a subchart in a
+   * larger Helm chart; may be {@code null}
+   *
+   * @param returnValue a {@link Map} of values that will be treated
+   * as primary, or overriding; may be {@code null} in which case a
+   * new {@link Map} will be used instead
+   *
+   * @return {@code returnValue}, containing whatever it contained
+   * before together with the flattened default values from the
+   * supplied subcharts; never {@code null}
+   *
+   * @see #coalesceGlobals(Map, Map)
+   *
+   * @see #coalesce(ChartOrBuilder, Map)
+   *
+   * @see #toValuesMap(Map, Map)
+   */
   private static final Map<String, Object> coalesceDependencies(final Iterable<? extends ChartOrBuilder> subcharts, Map<String, Object> returnValue) {
     if (returnValue == null) {
       returnValue = new HashMap<>();
@@ -289,20 +325,46 @@ final class Configs {
             if (subchartName != null) {
               
               final Map<String, Object> subchartValuesMap;
+
+              // See if the user-supplied values have a key under
+              // which values destined for a given subchart live.
+              // E.g. you might see redis.frob = "boo"; in that case
+              // we are hoping that the value indexed under "redis" is
+              // a Map, one of whose keys would be "frob" (whose value
+              // would be "boo").
               final Object subchartValuesObject = returnValue.get(subchartName);
               if (subchartValuesObject == null) {
+                // We didn't find anything under "redis".  So go ahead
+                // and put in an empty mutable Map under that key to
+                // indicate that there are no dependent values for it
+                // yet but there might be (this method ends up
+                // indirectly calling itself recursively)
                 subchartValuesMap = new HashMap<>();
                 returnValue.put(subchartName, subchartValuesMap);
+                
               } else if (subchartValuesObject instanceof Map) {
                 @SuppressWarnings("unchecked")
                 final Map<String, Object> temp = (Map<String, Object>)subchartValuesObject;
                 subchartValuesMap = temp;
+                
               } else {
                 throw new IllegalArgumentException("returnValue.get(" + subchartName + "): not a map: " + subchartValuesObject);
               }
-              
+
+              // Now that we've found, e.g., a Map indexed under
+              // "redis", make sure our "flattened" map "receiver" has
+              // access to global values...
               coalesceGlobals(subchartValuesMap, returnValue);
-              returnValue.put(subchartName, coalesce(subchart, subchartValuesMap));
+
+              // ...then coalesce again (which calls this very method
+              // recursively, but doesn't overwrite anything in
+              // subchartValuesMap.  So this whole thing flattens all
+              // the subchart default values and their globals into
+              // one map.
+              final Map<String, Object> temp = coalesce(subchart, subchartValuesMap);
+              assert temp == subchartValuesMap;
+              
+              returnValue.put(subchartName, temp);
             }
           }
         }
