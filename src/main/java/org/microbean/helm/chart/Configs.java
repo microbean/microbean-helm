@@ -354,7 +354,7 @@ final class Configs {
               // Now that we've found, e.g., a Map indexed under
               // "redis", make sure our "flattened" map "receiver" has
               // access to global values...
-              coalesceGlobals(subchartValuesMap, returnValue);
+              coalesceGlobals(returnValue, subchartValuesMap);
 
               // ...then coalesce again (which calls this very method
               // recursively, but doesn't overwrite anything in
@@ -373,63 +373,85 @@ final class Configs {
     return returnValue;
   }
 
-  private static final void coalesceGlobals(final Map<String, Object> dominantMap, final Map<?, ?> recessiveMap) {
-    if (dominantMap != null) {
+  // Ported from
+  // https://github.com/kubernetes/helm/blob/v2.6.2/pkg/chartutil/values.go#L206-L254,
+  // but reversing the order of the arguments.
+  /**
+   * 
+   */
+  private static final void coalesceGlobals(final Map<?, ?> sourceMap, final Map<String, Object> targetMap) {
+    if (targetMap != null) {
 
       // Get whatever is indexed under the "global" key in the
-      // dominantMap.  We hope it's a Map.  If there's nothing there,
+      // targetMap.  We hope it's a Map.  If there's nothing there,
       // we'll stuff a new Map in under that key.  If whatever is
       // there is non-null but not a Map (like, say, an Integer or
       // something), we do nothing.
-      final Object dominantGlobals = dominantMap.get("global");
-      final Map<String, Object> dominantGlobalsMap;
-      if (dominantGlobals == null) {
-        dominantGlobalsMap = new HashMap<>();
-        dominantMap.put("global", dominantGlobalsMap);
-      } else if (dominantGlobals instanceof Map) {
+      final Object targetGlobals = targetMap.get("global");
+      final Map<String, Object> targetGlobalsMap;
+      if (targetGlobals == null) {
+        targetGlobalsMap = new HashMap<>();
+        targetMap.put("global", targetGlobalsMap);
+      } else if (targetGlobals instanceof Map) {
         @SuppressWarnings("unchecked")
-        final Map<String, Object> temp = (Map<String, Object>)dominantGlobals;
-        dominantGlobalsMap = temp;
+        final Map<String, Object> temp = (Map<String, Object>)targetGlobals;
+        targetGlobalsMap = temp;
       } else {
-        dominantGlobalsMap = null;
+        targetGlobalsMap = null;
       }
       
-      if (dominantGlobalsMap != null) {
+      if (targetGlobalsMap != null) {
 
         // Get whatever is indexed under the "global" key in the
-        // recessiveMap.  We hope it's a Map.  If it isn't or it's
+        // sourceMap.  We hope it's a Map.  If it isn't or it's
         // empty, we do nothing.
-        final Object recessiveGlobals = recessiveMap.get("global");
-        final Map<? extends String, ?> recessiveGlobalsMap;
-        if (recessiveGlobals instanceof Map) {
+        final Object defaultGlobals = sourceMap.get("global");
+        final Map<? extends String, ?> defaultGlobalsMap;
+        if (defaultGlobals instanceof Map) {
           @SuppressWarnings("unchecked")
-          final Map<? extends String, ?> temp = (Map<? extends String, ?>)recessiveGlobals;
-          recessiveGlobalsMap = temp;
+          final Map<? extends String, ?> temp = (Map<? extends String, ?>)defaultGlobals;
+          defaultGlobalsMap = temp;
         } else {
-          recessiveGlobalsMap = null;
+          defaultGlobalsMap = null;
         }
 
-        if (recessiveGlobalsMap != null && !recessiveGlobalsMap.isEmpty()) {
-          final Set<? extends Entry<? extends String, ?>> recessiveEntrySet = recessiveGlobalsMap.entrySet();
-          if (recessiveEntrySet != null && !recessiveEntrySet.isEmpty()) {
-            for (final Entry<? extends String, ?> recessiveEntry : recessiveEntrySet) {
-              if (recessiveEntry != null) {
+        if (defaultGlobalsMap != null && !defaultGlobalsMap.isEmpty()) {
+          final Set<? extends Entry<? extends String, ?>> defaultGlobalsEntrySet = defaultGlobalsMap.entrySet();
+          if (defaultGlobalsEntrySet != null && !defaultGlobalsEntrySet.isEmpty()) {
+            for (final Entry<? extends String, ?> defaultGlobalsEntry : defaultGlobalsEntrySet) {
+              if (defaultGlobalsEntry != null) {
+
+                // For every default (source) value...
                 
-                final String recessiveKey = recessiveEntry.getKey();
-                Object recessiveValue = recessiveEntry.getValue();
-                if (recessiveValue instanceof Map) {
+                final String defaultKey = defaultGlobalsEntry.getKey();
+                Object defaultValue = defaultGlobalsEntry.getValue();
+                if (defaultValue instanceof Map) {
                   @SuppressWarnings("unchecked")
-                  final Map<String, Object> recessiveValueMap = new HashMap<>((Map<String, Object>)recessiveValue);
-                  recessiveValue = recessiveValueMap;
-                  final Object dominantAnalog = dominantGlobalsMap.get(recessiveKey);
-                  if (dominantAnalog instanceof Map) {
+                  final Map<String, Object> defaultValueMap = new HashMap<>((Map<String, Object>)defaultValue);
+                  
+                  // ...if it's a Map, see if the target also has a
+                  // Map under the same key.
+                  
+                  final Object targetAnalog = targetGlobalsMap.get(defaultKey);
+                  if (targetAnalog instanceof Map) {
                     @SuppressWarnings("unchecked")
-                    final Map<String, Object> dominantAnalogMap = (Map<String, Object>)dominantAnalog;
-                    coalesceMaps(dominantAnalogMap, recessiveValueMap);
+                    final Map<String, Object> targetAnalogMap = (Map<String, Object>)targetAnalog;
+
+                    // If the target has a Map under the same key,
+                    // coalesce the two maps, using defaultValueMap as
+                    // the primary map, and the target Map as the
+                    // source of defaults.  The Go code says:
+                    //
+                    //   Basically, we reverse order of coalesce here
+                    //   to merge top-down.
+                    //
+                    // Bear in mind in the Java code here our argument
+                    // order is reversed too.
+
+                    coalesceMaps(targetAnalogMap, defaultValueMap);
                   }
                 }
-                dominantGlobalsMap.put(recessiveKey, recessiveValue);
-                
+                targetGlobalsMap.put(defaultKey, defaultValue);
               }
             }
           }
@@ -439,11 +461,9 @@ final class Configs {
   }
 
   // Ported from
-  // https://github.com/kubernetes/helm/blob/v2.6.1/pkg/chartutil/values.go#L310-L332
+  // https://github.com/kubernetes/helm/blob/v2.6.2/pkg/chartutil/values.go#L310-L332
   // but reversing the order of the arguments.
   // targetMap values override sourceMap values.
-
-
   /**
    * Combines {@code sourceMap} and {@code targetMap} together
    * recursively and returns the result such that values in {@code
