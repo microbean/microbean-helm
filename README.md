@@ -13,8 +13,11 @@ to do these operations.
 # Status
 
 The microbean-helm project is currently in a **pre-alpha** state.  It
-should be find with basic chart operations, provided that the charts
+should be fine with basic chart operations, provided that the charts
 involved do not make heavy use of `requirements.yaml`.
+
+**Version 2 and later of this project, when finally released, will
+_not_ be backwards compatible with earlier versions.**
 
 # Versioning
 
