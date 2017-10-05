@@ -94,7 +94,7 @@ final class Configs {
    * @see #toValuesMap(ChartOrBuilder, ConfigOrBuilder)
    */
   static final Map<String, Object> toDefaultValuesMap(final ChartOrBuilder chart) {
-    return toValuesMap(chart, null);
+    return toValuesMap(chart, (ConfigOrBuilder)null);
   }
   
   /**
@@ -125,21 +125,23 @@ final class Configs {
    * null}
    */
   static final Map<String, Object> toValuesMap(final ChartOrBuilder chart, final ConfigOrBuilder config) {
-    final Map<String, Object> map;
+    final Map<String, Object> configAsMap;
     if (config == null) {
-      map = null;
+      configAsMap = null;
     } else {
       final String raw = config.getRaw();
       if (raw == null || raw.isEmpty()) {
-        map = null;
+        configAsMap = null;
       } else {
         @SuppressWarnings("unchecked")
-        final Map<String, Object> configAsMap = (Map<String, Object>)new Yaml().load(raw);
-        assert configAsMap != null;
-        map = coalesce(chart, configAsMap);
+        final Map<String, Object> temp = (Map<String, Object>)new Yaml().load(raw);
+        configAsMap = temp;
       }
     }
+    final Map<String, Object> map = toValuesMap(chart, configAsMap);
+    assert map == configAsMap;
     final Map<String, Object> returnValue = coalesceDependencies(chart, map);
+    assert returnValue == configAsMap;
     return returnValue;
   }
 
@@ -261,7 +263,8 @@ final class Configs {
    *
    * @see #computeEffectiveValues(ChartOrBuilder, Map)
    */
-  private static final Map<String, Object> coalesce(final ChartOrBuilder chart, Map<String, Object> suppliedValues) {
+  @Deprecated
+  private static final Map<String, Object> toValuesMap(final ChartOrBuilder chart, Map<String, Object> suppliedValues) {
     return coalesceDependencies(chart, computeEffectiveValues(chart, suppliedValues));
   }
 
@@ -308,7 +311,7 @@ final class Configs {
    *
    * @see #coalesceGlobals(Map, Map)
    *
-   * @see #coalesce(ChartOrBuilder, Map)
+   * @see #toValuesMap(ChartOrBuilder, Map)
    *
    * @see #toValuesMap(Map, Map)
    */
@@ -356,12 +359,12 @@ final class Configs {
               // access to global values...
               Values.coalesceGlobals(returnValue, subchartValuesMap);
 
-              // ...then coalesce again (which calls this very method
-              // recursively, but doesn't overwrite anything in
-              // subchartValuesMap.  So this whole thing flattens all
-              // the subchart default values and their globals into
-              // one map.
-              final Map<String, Object> temp = coalesce(subchart, subchartValuesMap);
+              // ...then call toValuesMap() on it (which calls
+              // this very method recursively, but doesn't overwrite
+              // anything in subchartValuesMap.  So this whole thing
+              // flattens all the subchart default values and their
+              // globals into one map.
+              final Map<String, Object> temp = toValuesMap(subchart, subchartValuesMap);
               assert temp == subchartValuesMap;
               
               returnValue.put(subchartName, temp);
