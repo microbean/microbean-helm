@@ -76,7 +76,7 @@ public class TestDirectoryChartLoader {
     assertEquals("0.6.6", metadata.getVersion());
     final List<Chart> dependencies = chart.getDependenciesList();
     assertNotNull(dependencies);
-    assertEquals(1, dependencies.size());
+    assertEquals(dependencies.toString(), 1, dependencies.size());
   }
 
 }

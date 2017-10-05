@@ -139,9 +139,8 @@ final class Configs {
       }
     }
     final Map<String, Object> map = toValuesMap(chart, configAsMap);
-    assert map == configAsMap;
+    assert map != null;
     final Map<String, Object> returnValue = coalesceDependencies(chart, map);
-    assert returnValue == configAsMap;
     return returnValue;
   }
 
@@ -187,7 +186,6 @@ final class Configs {
   /*
    * Private static methods.
    */
-
   
 
   /**
@@ -201,6 +199,9 @@ final class Configs {
    * method and returns its result.
    *
    * <p>This method never returns {@code null}.</p>
+   *
+   * <p>This method does not consider subcharts or global values in
+   * any way.</p>
    *
    * @param chart the {@link ChartOrBuilder} whose default values
    * should be harvested; may be {@code null}
@@ -220,20 +221,30 @@ final class Configs {
    *
    * @see Yaml#load(String)
    */
-  private static final Map<String, Object> computeEffectiveValues(final ChartOrBuilder chart, Map<String, Object> targetMap /* v */) {
+  private static final Map<String, Object> computeEffectiveValues(final ChartOrBuilder chart, Map<String, Object> targetMap) {
     if (targetMap == null) {
       targetMap = new HashMap<>();
     }
     if (chart != null) {
       final ConfigOrBuilder config = chart.getValues();
       if (config != null) {
-        final String raw = config.getRaw();
-        if (raw != null && !raw.isEmpty()) {
-          @SuppressWarnings("unchecked")            
-          final Map<String, Object> sourceMap = (Map<String, Object>)new Yaml().load(raw); // nv
-          assert sourceMap != null;
-          targetMap = Values.coalesceMaps(sourceMap, targetMap);
-        }
+        targetMap = computeEffectiveValues(config, targetMap);
+      }
+    }
+    return targetMap;
+  }
+
+  private static final Map<String, Object> computeEffectiveValues(final ConfigOrBuilder config, Map<String, Object> targetMap) {
+    if (targetMap == null) {
+      targetMap = new HashMap<>();
+    }
+    if (config != null) {
+      final String raw = config.getRaw();
+      if (raw != null && !raw.isEmpty()) {
+        @SuppressWarnings("unchecked")            
+        final Map<String, Object> sourceMap = (Map<String, Object>)new Yaml().load(raw);
+        assert sourceMap != null;
+        targetMap = Values.coalesceMaps(sourceMap, targetMap);
       }
     }
     return targetMap;
@@ -263,7 +274,6 @@ final class Configs {
    *
    * @see #computeEffectiveValues(ChartOrBuilder, Map)
    */
-  @Deprecated
   private static final Map<String, Object> toValuesMap(final ChartOrBuilder chart, Map<String, Object> suppliedValues) {
     return coalesceDependencies(chart, computeEffectiveValues(chart, suppliedValues));
   }
@@ -280,8 +290,8 @@ final class Configs {
   }
 
   /**
-   * One part of the general flattening of the values to be used
-   * during a chart operation, this method adds an entry, one per
+   * One specific part of the general flattening of the values to be
+   * used during a chart operation, this method adds an entry, one per
    * subchart, to the supplied {@code Map}, under that subchart's
    * name, containing its (flattened in turn) set of values.
    *
@@ -294,12 +304,14 @@ final class Configs {
    * IllegalArgumentException} will be thrown).</p>
    *
    * <p>Normally you would pass the return value of {@link
-   * #toValuesMap(Map, Map)} as the second argument to this
-   * method.</p>
+   * #toValuesMap(Map, Map)} as the second argument to this method.
+   * That method establishes a firm base of typically user-supplied
+   * values that should trump any other values discovered along the
+   * way.</p>
    *
    * @param subcharts an {@link Iterable} of {@link ChartOrBuilder}
-   * instances, each element of which represents a subchart in a
-   * larger Helm chart; may be {@code null}
+   * instances, each element of which represents a <em>subchart</em>
+   * in a larger Helm chart; may be {@code null}
    *
    * @param returnValue a {@link Map} of values that will be treated
    * as primary, or overriding; may be {@code null} in which case a

@@ -332,6 +332,7 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
             this.installAny(builder, stream, fileName);
           }
         } else {
+          assert !subchartFile;
           // Not a subchart file or a template
           this.installAny(builder, stream, fileName);
         }
@@ -419,17 +420,15 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
         // foobar/charts/wordpress/charts/mysql
         Chart.Builder builder = chartBuilders.get(path);
         if (builder == null) {
-          builder = createSubchartBuilder(path);
+          builder = createSubchartBuilder(returnValue, path);
           assert builder != null;
           chartBuilders.put(path, builder);
-          if (returnValue != builder) {
-            returnValue.addDependencies(builder);
-          }
         }
         assert builder != null;
         returnValue = builder;
       }
     }
+    assert returnValue != null;
     return returnValue;
   }
 
@@ -458,11 +457,12 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
     return returnValue;
   }
 
-  private static final Chart.Builder createSubchartBuilder(final String chartPath) {
+  private static final Chart.Builder createSubchartBuilder(final Chart.Builder parentBuilder, final String chartPath) {
+    Objects.requireNonNull(parentBuilder);
     Chart.Builder returnValue = null;
     final String chartName = getChartName(chartPath);
     if (chartName != null) {
-      returnValue = Chart.newBuilder();
+      returnValue = parentBuilder.addDependenciesBuilder();
       assert returnValue != null;
       final Metadata.Builder builder = returnValue.getMetadataBuilder();
       assert builder != null;

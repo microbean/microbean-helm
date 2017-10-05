@@ -18,14 +18,7 @@ package org.microbean.helm;
 
 import java.io.IOException;
 
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -40,19 +33,7 @@ import hapi.services.tiller.ReleaseServiceGrpc;
 import hapi.services.tiller.Tiller.GetHistoryRequest;
 import hapi.services.tiller.Tiller.GetHistoryResponse;
 
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodList;
-
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.LocalPortForward;
-import io.fabric8.kubernetes.client.PortForward;
-
-import io.fabric8.kubernetes.client.dsl.internal.PortForwarder;
-import io.fabric8.kubernetes.client.dsl.internal.PortForwarderWebsocket;
-
-import io.fabric8.kubernetes.client.Watch;
-import io.fabric8.kubernetes.client.Watcher;
 
 import org.junit.Test;
 
