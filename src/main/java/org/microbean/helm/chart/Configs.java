@@ -144,34 +144,6 @@ final class Configs {
     return returnValue;
   }
 
-  static final Config toConfig(final String yaml) {
-    final Config returnValue;
-    if (yaml == null || yaml.isEmpty()) {
-      returnValue = null;
-    } else {
-      final Config.Builder builder = Config.newBuilder();
-      assert builder != null;
-      builder.setRaw(yaml);
-      returnValue = builder.build();
-    }
-    return returnValue;
-  }
-
-  static final String toYAML(final Config config) {
-    final String returnValue;
-    if (config == null) {
-      returnValue = "";
-    } else {
-      final String rawValue = config.getRaw();
-      if (rawValue == null) {
-        returnValue = "";
-      } else {
-        returnValue = rawValue;
-      }
-    }
-    return returnValue;
-  }
-  
   static final String toYAML(final Map<String, Object> map) {
     final String returnValue;
     if (map == null || map.isEmpty()) {

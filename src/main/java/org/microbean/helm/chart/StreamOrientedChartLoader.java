@@ -236,16 +236,18 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
     Objects.requireNonNull(chartBuilders);
     Objects.requireNonNull(path);
     Objects.requireNonNull(stream);
+    
     final Chart.Builder builder = getChartBuilder(chartBuilders, path);
     if (builder == null) {
       throw new IllegalStateException();
     }
-    final Template template;
+    
+    final Object templateBuilder;
     final boolean subchartFile;
     String fileName = getTemplateFileName(path);
     if (fileName == null) {
       // Not a template file, not even in a subchart.
-      template = null;      
+      templateBuilder = null;      
       fileName = getSubchartFileName(path);
       if (fileName == null) {
         // Not a subchart file or a template file so add it to the
@@ -257,10 +259,10 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
       }
     } else {
       subchartFile = false;
-      template = this.createTemplate(stream, fileName);
+      templateBuilder = this.createTemplateBuilder(builder, stream, fileName);
     }
     assert fileName != null;
-    if (template == null) {
+    if (templateBuilder == null) {
       switch (fileName) {
       case "Chart.yaml":
         this.installMetadata(builder, stream);
@@ -338,8 +340,6 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
         }
         break;
       }
-    } else {
-      builder.addTemplates(template);
     }
   }
   
@@ -580,11 +580,10 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
     if (maintainers != null) {
       for (final Map<?, ?> maintainer : maintainers) {
         if (maintainer != null) {
-          final Maintainer.Builder maintainerBuilder = Maintainer.newBuilder();
+          final Maintainer.Builder maintainerBuilder = metadataBuilder.addMaintainersBuilder();
           assert maintainerBuilder != null;
           maintainerBuilder.setName((String)maintainer.get("name"));
           maintainerBuilder.setEmail((String)maintainer.get("email"));
-          metadataBuilder.addMaintainers(maintainerBuilder);
         }
       }
     }
@@ -651,8 +650,18 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
    * @exception IOException if there was a problem reading from the
    * supplied {@link InputStream}
    *
+   * @see
+   * #createTemplateBuilder(hapi.chart.ChartOuterClass.Chart.Builder,
+   * InputStream, String)
+   *
    * @see hapi.chart.TemplateOuterClass.Template.Builder
+   *
+   * @deprecated This method is no longer called and is slated for
+   * removal.  Please see {@link
+   * #createTemplateBuilder(hapi.chart.ChartOuterClass.Chart.Builder,
+   * InputStream, String)} instead.
    */
+  @Deprecated
   protected Template createTemplate(final InputStream stream, final String name) throws IOException {
     Objects.requireNonNull(stream);
     Objects.requireNonNull(name);
@@ -667,6 +676,61 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
     returnValue = builder.build();
     assert returnValue != null;
     return returnValue;
+  }
+
+  /**
+   * {@linkplain
+   * hapi.chart.ChartOuterClass.Chart.Builder#addTemplatesBuilder()
+   * Creates a new} {@link
+   * hapi.chart.TemplateOuterClass.Template.Builder} {@linkplain
+   * hapi.chart.TemplateOuterClass.Template.Builder#setData(ByteString)
+   * from the contents of the supplied <code>InputStream</code>},
+   * {@linkplain
+   * hapi.chart.TemplateOuterClass.Template.Builder#setName(String)
+   * with the supplied <code>name</code>}, and returns it.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * @param chartBuilder a {@link
+   * hapi.chart.ChartOuterClass.Chart.Builder} whose {@link
+   * hapi.chart.ChartOuterClass.Chart.Builder#addTemplatesBuilder()}
+   * method will be called to create the new {@link
+   * hapi.chart.TemplateOuterClass.Template.Builder} instance; must
+   * not be {@code null}
+   *
+   * @param stream an {@link InputStream} containing <a
+   * href="https://docs.helm.sh/developing_charts/#template-files">valid
+   * template contents</a> as defined by the <a
+   * href="https://docs.helm.sh/developing_charts/#template-files">chart
+   * specification</a>; must not be {@code null}
+   *
+   * @param name the name for the new {@link Template} that will
+   * ultimately reside within the chart; must not be {@code null}
+   *
+   * @return a new {@link
+   * hapi.chart.TemplateOuterClass.Template.Builder}; never {@code
+   * null}
+   *
+   * @exception NullPointerException if {@code chartBuilder}, {@code
+   * stream} or {@code name} is {@code null}
+   *
+   * @exception IOException if there was a problem reading from the
+   * supplied {@link InputStream}
+   *
+   * @see hapi.chart.TemplateOuterClass.Template.Builder
+   */
+  protected Template.Builder createTemplateBuilder(final Chart.Builder chartBuilder, final InputStream stream, final String name) throws IOException {
+    Objects.requireNonNull(chartBuilder);
+    Objects.requireNonNull(stream);
+    Objects.requireNonNull(name);
+    final Template.Builder builder = chartBuilder.addTemplatesBuilder();
+    assert builder != null;
+    builder.setName(name);
+    final ByteString data = ByteString.readFrom(stream);
+    assert data != null;
+    assert data.isValidUtf8();
+    builder.setData(data);
+    return builder;
   }
 
   /**
