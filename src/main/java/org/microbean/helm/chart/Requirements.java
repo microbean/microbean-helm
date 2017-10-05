@@ -174,7 +174,7 @@ public class Requirements {
                     MapTree.newMapChain(importValueParent,
                                         getMap(canonicalValues,
                                                dependencyName + "." + importValueChild));
-                  b = Configs.coalesceMaps(vv, canonicalValues);
+                  b = Values.coalesceMaps(vv, canonicalValues);
                   // OK
                   
                 } else if (importValue instanceof String) {
@@ -188,7 +188,7 @@ public class Requirements {
                   
                   newImportValues.add(newMap);
                   
-                  b = Configs.coalesceMaps(getMap(canonicalValues, dependencyName + "." + importValueChild), b);
+                  b = Values.coalesceMaps(getMap(canonicalValues, dependencyName + "." + importValueChild), b);
                   // OK
                   
                 }
@@ -199,7 +199,7 @@ public class Requirements {
         }
       }
     }
-    b = Configs.coalesceMaps(canonicalValues, b);
+    b = Values.coalesceMaps(canonicalValues, b);
     final String yaml = new Yaml().dump(b);
     assert yaml != null;
     final Chart.Builder chartBuilder = c.toBuilder();

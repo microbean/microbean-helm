@@ -26,9 +26,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-public class TestConfigs {
+public class TestValues {
 
-  public TestConfigs() {
+  public TestValues() {
     super();
   }
 
@@ -38,7 +38,7 @@ public class TestConfigs {
     source.put("key", "sourceValue");
     final Map<String, Object> target = new HashMap<>();
     target.put("key", "targetValue");
-    final Map<String, Object> returnValue = Configs.coalesceMaps(source, target);
+    final Map<String, Object> returnValue = Values.coalesceMaps(source, target);
     assertNotNull(returnValue);
     assertSame(returnValue, target);
     assertEquals(1, returnValue.size());
@@ -53,7 +53,7 @@ public class TestConfigs {
     final Map<String, Object> target = new HashMap<>();
     target.put("sharedKey", "targetValue");
     target.put("uniqueTargetKey", "targetValue");
-    final Map<String, Object> returnValue = Configs.coalesceMaps(source, target);
+    final Map<String, Object> returnValue = Values.coalesceMaps(source, target);
     assertSame(target, returnValue);
     assertEquals(3, returnValue.size());
     assertEquals("targetValue", returnValue.get("sharedKey"));
@@ -75,7 +75,7 @@ public class TestConfigs {
     targetMapValue.put("sharedCoalescedKey", "targetValue");
     target.put("sharedKey", targetMapValue);
 
-    final Map<String, Object> returnValue = Configs.coalesceMaps(source, target);
+    final Map<String, Object> returnValue = Values.coalesceMaps(source, target);
     assertSame(target, returnValue);
     final Object rawValue = returnValue.get("sharedKey");
     assertTrue(rawValue instanceof Map);
@@ -88,7 +88,7 @@ public class TestConfigs {
   
   @Test(expected = NullPointerException.class)
   public void testCoalesceMapsEnsuringNullSourceMapCausesNullPointerException() {
-    Configs.coalesceMaps(null, null);
+    Values.coalesceMaps(null, null);
   }
   
 }

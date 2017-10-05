@@ -230,7 +230,7 @@ final class Configs {
           @SuppressWarnings("unchecked")            
           final Map<String, Object> sourceMap = (Map<String, Object>)new Yaml().load(raw); // nv
           assert sourceMap != null;
-          targetMap = coalesceMaps(sourceMap, targetMap);
+          targetMap = Values.coalesceMaps(sourceMap, targetMap);
         }
       }
     }
@@ -354,7 +354,7 @@ final class Configs {
               // Now that we've found, e.g., a Map indexed under
               // "redis", make sure our "flattened" map "receiver" has
               // access to global values...
-              coalesceGlobals(returnValue, subchartValuesMap);
+              Values.coalesceGlobals(returnValue, subchartValuesMap);
 
               // ...then coalesce again (which calls this very method
               // recursively, but doesn't overwrite anything in
@@ -371,162 +371,6 @@ final class Configs {
       }
     }
     return returnValue;
-  }
-
-  // Ported from
-  // https://github.com/kubernetes/helm/blob/v2.6.2/pkg/chartutil/values.go#L206-L254,
-  // but reversing the order of the arguments.
-  /**
-   * 
-   */
-  private static final void coalesceGlobals(final Map<?, ?> sourceMap, final Map<String, Object> targetMap) {
-    if (targetMap != null) {
-
-      // Get whatever is indexed under the "global" key in the
-      // targetMap.  We hope it's a Map.  If there's nothing there,
-      // we'll stuff a new Map in under that key.  If whatever is
-      // there is non-null but not a Map (like, say, an Integer or
-      // something), we do nothing.
-      final Object targetGlobals = targetMap.get("global");
-      final Map<String, Object> targetGlobalsMap;
-      if (targetGlobals == null) {
-        targetGlobalsMap = new HashMap<>();
-        targetMap.put("global", targetGlobalsMap);
-      } else if (targetGlobals instanceof Map) {
-        @SuppressWarnings("unchecked")
-        final Map<String, Object> temp = (Map<String, Object>)targetGlobals;
-        targetGlobalsMap = temp;
-      } else {
-        targetGlobalsMap = null;
-      }
-      
-      if (targetGlobalsMap != null) {
-
-        // Get whatever is indexed under the "global" key in the
-        // sourceMap.  We hope it's a Map.  If it isn't or it's
-        // empty, we do nothing.
-        final Object defaultGlobals = sourceMap.get("global");
-        final Map<? extends String, ?> defaultGlobalsMap;
-        if (defaultGlobals instanceof Map) {
-          @SuppressWarnings("unchecked")
-          final Map<? extends String, ?> temp = (Map<? extends String, ?>)defaultGlobals;
-          defaultGlobalsMap = temp;
-        } else {
-          defaultGlobalsMap = null;
-        }
-
-        if (defaultGlobalsMap != null && !defaultGlobalsMap.isEmpty()) {
-          final Set<? extends Entry<? extends String, ?>> defaultGlobalsEntrySet = defaultGlobalsMap.entrySet();
-          if (defaultGlobalsEntrySet != null && !defaultGlobalsEntrySet.isEmpty()) {
-            for (final Entry<? extends String, ?> defaultGlobalsEntry : defaultGlobalsEntrySet) {
-              if (defaultGlobalsEntry != null) {
-
-                // For every default (source) value...
-                
-                final String defaultKey = defaultGlobalsEntry.getKey();
-                Object defaultValue = defaultGlobalsEntry.getValue();
-                if (defaultValue instanceof Map) {
-                  @SuppressWarnings("unchecked")
-                  final Map<String, Object> defaultValueMap = new HashMap<>((Map<String, Object>)defaultValue);
-                  
-                  // ...if it's a Map, see if the target also has a
-                  // Map under the same key.
-                  
-                  final Object targetAnalog = targetGlobalsMap.get(defaultKey);
-                  if (targetAnalog instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    final Map<String, Object> targetAnalogMap = (Map<String, Object>)targetAnalog;
-
-                    // If the target has a Map under the same key,
-                    // coalesce the two maps, using defaultValueMap as
-                    // the primary map, and the target Map as the
-                    // source of defaults.  The Go code says:
-                    //
-                    //   Basically, we reverse order of coalesce here
-                    //   to merge top-down.
-                    //
-                    // Bear in mind in the Java code here our argument
-                    // order is reversed too.
-
-                    coalesceMaps(targetAnalogMap, defaultValueMap);
-                  }
-                }
-                targetGlobalsMap.put(defaultKey, defaultValue);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Ported from
-  // https://github.com/kubernetes/helm/blob/v2.6.2/pkg/chartutil/values.go#L310-L332
-  // but reversing the order of the arguments.
-  // targetMap values override sourceMap values.
-  /**
-   * Combines {@code sourceMap} and {@code targetMap} together
-   * recursively and returns the result such that values in {@code
-   * targetMap} will override values in {@code sourceMap}.
-   *
-   * <p>This method never returns {@code null}.</p>
-   *
-   * <p>This method returns {@code targetMap} (not a copy).</p>
-   *
-   * <p>This method may modify {@code targetMap}'s contents if {@code
-   * sourceMap} contains entries that {@code targetMap} does not
-   * have.</p>
-   *
-   * <p>If any given entry in {@code sourceMap} is a {@link Map}
-   * itself, and if {@code targetMap} also contains a {@link Map}
-   * under the same key, then those {@link Map}s are supplied
-   * recursively to this method as {@code sourceMap} and {@code
-   * targetMap} respectively.</p>
-   *
-   * @param sourceMap the {@link Map} that will contribute entries to
-   * the {@code targetMap} only if they are not already contained;
-   * must not be {@code null}
-   *
-   * @param targetMap the {@link Map} that will contain all the
-   * results of this logical operation; must not be {@code null}
-   *
-   * @return {@code targetMap}, not a copy, that will normally be
-   * changed to incorporate the results of this operation
-   *
-   * @exception NullPointerException if either {@code sourceMap} or
-   * {@code targetMap} is {@code null}
-   */
-  static final Map<String, Object> coalesceMaps(final Map<? extends String, ?> sourceMap, final Map<String, Object> targetMap) {
-    Objects.requireNonNull(sourceMap);
-    Objects.requireNonNull(targetMap);
-    if (!sourceMap.isEmpty()) {
-      final Set<? extends Entry<? extends String, ?>> sourceMapEntrySet = sourceMap.entrySet();
-      if (sourceMapEntrySet != null && !sourceMapEntrySet.isEmpty()) {
-        for (final Entry<? extends String, ?> sourceMapEntry : sourceMapEntrySet) {
-          if (sourceMapEntry != null) {
-            final String sourceMapKey = sourceMapEntry.getKey();
-            final Object sourceMapValue = sourceMapEntry.getValue();
-            if (!targetMap.containsKey(sourceMapKey)) {
-              targetMap.put(sourceMapKey, sourceMapValue);
-            } else if (sourceMapValue instanceof Map) {
-              final Object targetMapValue = targetMap.get(sourceMapKey);
-              if (targetMapValue instanceof Map) {
-                @SuppressWarnings("unchecked")
-                final Map<String, Object> targetMapValueMap = (Map<String, Object>)targetMapValue;
-                @SuppressWarnings("unchecked")
-                final Map<? extends String, ?> sourceMapValueMap = (Map<? extends String, ?>)sourceMapValue;
-
-                // Recursive call; alters targetMap's contents in
-                // place
-                coalesceMaps(sourceMapValueMap, targetMapValueMap);
-
-              }
-            }
-          }
-        }
-      }
-    }
-    return targetMap;
   }
   
 }
