@@ -73,7 +73,7 @@ public class TestTapeArchiveChartLoader {
 
   @Test
   public void testLoad() throws IOException {
-    final Chart chart = new TapeArchiveChartLoader().load(this.stream);
+    final Chart chart = new TapeArchiveChartLoader().load(this.stream).build();
     assertNotNull(chart);
     final Metadata metadata = chart.getMetadata();
     assertNotNull(metadata);

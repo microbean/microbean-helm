@@ -39,7 +39,11 @@ import hapi.chart.ChartOuterClass.Chart;
  * @see #load(Object)
  *
  * @see Chart
+ *
+ * @deprecated This interface is deprecated in favor of the {@link
+ * AbstractChartLoader} class and may be removed.
  */
+@Deprecated
 public interface ChartLoader<T> extends AutoCloseable {
 
   /**

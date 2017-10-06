@@ -68,7 +68,7 @@ public class TestDirectoryChartLoader {
   
   @Test
   public void testLoad() throws IOException {
-    final Chart chart = new DirectoryChartLoader().load(this.validChartPath);
+    final Chart chart = new DirectoryChartLoader().load(this.validChartPath).build();
     assertNotNull(chart);
     final Metadata metadata = chart.getMetadata();
     assertNotNull(metadata);

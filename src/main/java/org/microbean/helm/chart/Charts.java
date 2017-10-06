@@ -409,15 +409,16 @@ public final class Charts {
     throws IOException {
     Objects.requireNonNull(tiller);
     Objects.requireNonNull(chartUrl);
-    Chart chart = null;
-    try (final ChartLoader<URL> loader = new URLChartLoader()) {
-      chart = loader.load(chartUrl);
+    
+    Chart.Builder chartBuilder = null;
+    try (final AbstractChartLoader<URL> loader = new URLChartLoader()) {
+      chartBuilder = loader.load(chartUrl);
     }
-    if (chart == null) {
+    if (chartBuilder == null) {
       throw new IllegalStateException("new URLChartLoader().load(chartUrl) == null; chartUrl: " + chartUrl);
     }
-    Chart.Builder chartBuilder = chart.toBuilder();
     assert chartBuilder != null;
+    
     final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
     assert requestBuilder != null;
     requestBuilder.setDisableHooks(disableHooks);
@@ -440,10 +441,9 @@ public final class Charts {
       assert rawBytes != null;
       configBuilder.setRawBytes(rawBytes);
     }
-    final Config config = configBuilder.build();
 
     // In the Go code this is ProcessRequirementsEnabled.
-    chartBuilder = Requirements.apply(chartBuilder, config);
+    chartBuilder = Requirements.apply(chartBuilder, configBuilder);
 
     final ChartOrBuilder chartOrBuilder = Requirements.processImportValues(chartBuilder);
     assert chartOrBuilder != null;
@@ -454,7 +454,7 @@ public final class Charts {
       requestBuilder.setChart((Chart)chartOrBuilder);
     }
     
-    requestBuilder.setValues(config);
+    requestBuilder.setValues(configBuilder);
     requestBuilder.setWait(wait);
 
     final InstallReleaseRequest request = requestBuilder.build();

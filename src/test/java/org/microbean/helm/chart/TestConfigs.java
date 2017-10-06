@@ -36,7 +36,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class TestConfigs {
 
-  private ChartLoader<URL> chartLoader;
+  private AbstractChartLoader<URL> chartLoader;
   
   private Chart chart;
  
@@ -49,7 +49,7 @@ public class TestConfigs {
     final URL chartLocation = Thread.currentThread().getContextClassLoader().getResource("TestConfigs/subpop");
     assertNotNull(chartLocation);
     this.chartLoader = new URLChartLoader();
-    this.chart = this.chartLoader.load(chartLocation);
+    this.chart = this.chartLoader.load(chartLocation).build();
     assertNotNull(this.chart);
   }
 

@@ -50,7 +50,7 @@ import org.kamranzafar.jtar.TarInputStream;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * A partial {@link ChartLoader} implementation that is capable of
+ * A partial {@link AbstractChartLoader} implementation that is capable of
  * loading a Helm-compatible chart from any source that is {@linkplain
  * #toNamedInputStreamEntries(Object) convertible into an
  * <code>Iterable</code> of <code>InputStream</code>s indexed by their
@@ -64,7 +64,7 @@ import org.yaml.snakeyaml.Yaml;
  *
  * @see #toNamedInputStreamEntries(Object)
  */
-public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
+public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T> {
 
 
   /*
@@ -158,9 +158,10 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
    *
    * <p>This method never returns {@code null}.
    *
-   * <p>This method calls the {@link #load(Iterable)} method with the
-   * return value of the {@link #toNamedInputStreamEntries(Object)}
-   * method.</p>
+   * <p>This method calls the {@link
+   * #load(haip.chart.ChartOuterClass.Chart.Builder, Iterable)} method
+   * with the return value of the {@link
+   * #toNamedInputStreamEntries(Object)} method.</p>
    *
    * @param source the source object from which to load a new {@link
    * Chart}; must not be {@code null}
@@ -169,20 +170,21 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
    *
    * @exception NullPointerException if {@code source} is {@code null}
    *
-   * @exception IllegalStateException if the {@link #load(Iterable)}
-   * method returns {@code null}
+   * @exception IllegalStateException if the {@link
+   * #load(hapi.chart.ChartOuterClass.Chart.Builder, Iterable)} method
+   * returns {@code null}
    *
    * @exception IOException if a problem is encountered while creating
    * the {@link Chart} to return
    *
    * @see #toNamedInputStreamEntries(Object)
    *
-   * @see #load(Iterable)
+   * @see #load(hapi.chart.ChartOuterClass.Chart.Builder, Iterable)
    */
   @Override
-  public Chart load(final T source) throws IOException {
+  public Chart.Builder load(final Chart.Builder parent, final T source) throws IOException {
     Objects.requireNonNull(source);
-    final Chart returnValue = this.load(toNamedInputStreamEntries(source));
+    final Chart.Builder returnValue = this.load(parent, toNamedInputStreamEntries(source));
     if (returnValue == null) {
       throw new IllegalStateException("load(toNamedInputStreamEntries(source)) == null; source: " + source);
     }
@@ -214,10 +216,14 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
    *
    * @see #load(Object)
    */
-  public Chart load(final Iterable<? extends Entry<? extends String, ? extends InputStream>> entrySet) throws IOException {
+  public Chart.Builder load(final Chart.Builder parent, final Iterable<? extends Entry<? extends String, ? extends InputStream>> entrySet) throws IOException {
     Objects.requireNonNull(entrySet);
-    Chart returnValue = null;
-    final Chart.Builder rootBuilder = Chart.newBuilder();
+    final Chart.Builder rootBuilder;
+    if (parent == null) {
+      rootBuilder = Chart.newBuilder();
+    } else {
+      rootBuilder = parent;
+    }
     assert rootBuilder != null;
     final NavigableMap<String, Chart.Builder> chartBuilders = new TreeMap<>(new ChartPathComparator());
     // XXX TODO FIXME: do we really want to say the root is null?
@@ -228,8 +234,7 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
         this.addFile(chartBuilders, entry.getKey(), entry.getValue());
       }
     }
-    returnValue = rootBuilder.build();
-    return returnValue;
+    return rootBuilder;
   }
   
   private final void addFile(final NavigableMap<String, Chart.Builder> chartBuilders, final String path, final InputStream stream) throws IOException {
@@ -320,14 +325,14 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
             // Not: wordpress/charts/foo
             // Not: wordpress/charts/bar/foo.tgz
             // Not: wordpress/charts/_bar/foo.tgz
-            Chart subchart = null;
+            Chart.Builder subchartBuilder = null;
             try (final TarInputStream tarInputStream = new TarInputStream(new GZIPInputStream(new NonClosingInputStream(stream)))) {
-              subchart = new TapeArchiveChartLoader().load(tarInputStream);
+              subchartBuilder = new TapeArchiveChartLoader().load(builder, tarInputStream);
             }
-            if (subchart == null) {
-              throw new IllegalStateException("new TapeArchiveChartLoader().load(tarInputStream) == null; path: " + path);
+            if (subchartBuilder == null) {
+              throw new IllegalStateException("load(builder, tarInputStream) == null; path: " + path);
             }
-            builder.addDependencies(subchart);
+            // builder.addDependencies(subchart);
           } else {
             // Not a .prov file under charts, nor a .tgz file, just a
             // regular subchart file.
@@ -663,19 +668,7 @@ public abstract class StreamOrientedChartLoader<T> implements ChartLoader<T> {
    */
   @Deprecated
   protected Template createTemplate(final InputStream stream, final String name) throws IOException {
-    Objects.requireNonNull(stream);
-    Objects.requireNonNull(name);
-    Template returnValue = null;
-    final Template.Builder builder = Template.newBuilder();
-    assert builder != null;
-    builder.setName(name);
-    final ByteString data = ByteString.readFrom(stream);
-    assert data != null;
-    assert data.isValidUtf8();
-    builder.setData(data);
-    returnValue = builder.build();
-    assert returnValue != null;
-    return returnValue;
+    return this.createTemplateBuilder(Chart.newBuilder(), stream, name).build();
   }
 
   /**

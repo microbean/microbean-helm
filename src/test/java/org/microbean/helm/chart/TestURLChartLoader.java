@@ -63,7 +63,7 @@ public class TestURLChartLoader {
 
   @Test
   public void testLoad() throws IOException {
-    final Chart chart = new URLChartLoader().load(this.remoteUrl);
+    final Chart chart = new URLChartLoader().load(this.remoteUrl).build();
     assertNotNull(chart);
     final Metadata metadata = chart.getMetadata();
     assertNotNull(metadata);
