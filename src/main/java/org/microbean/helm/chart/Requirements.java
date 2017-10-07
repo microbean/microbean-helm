@@ -325,7 +325,7 @@ public class Requirements {
       final Collection<? extends Dependency> requirementsDependencies = requirements.getDependencies();
       if (requirementsDependencies != null && !requirementsDependencies.isEmpty()) {
         
-        final Collection<? extends Chart.Builder> existingSubcharts = chartBuilder.getDependenciesBuilderList();
+        final List<? extends Chart.Builder> existingSubcharts = chartBuilder.getDependenciesBuilderList();
         if (existingSubcharts != null && !existingSubcharts.isEmpty()) { 
 
           for (final Chart.Builder subchart : existingSubcharts) {
@@ -373,99 +373,20 @@ public class Requirements {
 
         // Now our Dependencies' enablements have been possibly altered further.
         
-        // OK, now we've semantically stated that certain Charts, that
-        // we've already "added back" to the incoming Chart, really
-        // shouldn't have been added in the first place--i.e. they're
-        // disabled.  By definition, these will be drawn from the set
-        // of those mentioned in requirements.yaml, not from the set
-        // of those not mentioned in requirements.yaml.  So now we
-        // need to go back through the list and remove those we
-        // shouldn't have added in the first place.
-        
-        final Set<String> subchartNamesToRemove = new HashSet<>();
-        
-        for (final Dependency requirement : requirementsDependencies) {
-          if (requirement != null && !requirement.isEnabled()) {
-            // Remember that the requirement's name may have been
-            // changed (see above) to the value of its alias.
-            subchartNamesToRemove.add(requirement.getName());
-          }
-        }
-        
-        // Now we have a set of Dependency names representing
-        // subcharts that are to be removed.
-        
-        // Clear the pre-existing list.  (So why did we add to the list earlier?!)
-        // In the Go code, this is represented by the following code:
-        //
-        //   cd := []*chart.Chart{}
-        //   copy(cd, c.Dependencies[:0]
-        //
-        // This makes cd be a brand new slice of an empty array.  Then
-        // later the code uses cd as the full contents of the
-        // dependencies.  So this is equivalent to clearing out the
-        // dependencies and then re-adding them.
-        chartBuilder.clearDependencies();
-        
-        // Add only enabled ones.
-
-        // TODO: wait, if we cleared the dependencies, then this will
-        // return nothing!
-        Iterable<? extends Chart> chartDependencies = chartBuilder.getDependenciesList();
-        if (chartDependencies != null) {
-          for (final Chart subchart : chartDependencies) {
-            if (subchart != null) {
-              if (subchart.hasMetadata()) {
-                final Metadata metadata = subchart.getMetadata();
-                assert metadata != null;
-                final String subchartName = metadata.getName();
-                if (subchartNamesToRemove.contains(subchartName)) {
-                  continue;
-                }
-              }
-              chartBuilder.addDependencies(subchart);
+        final int numberOfSubcharts = existingSubcharts.size();
+        ITERATION:
+        for (int i = 0; i < numberOfSubcharts; i++) {
+          final Chart.Builder subchart = existingSubcharts.get(i);
+          for (final Dependency dependency : requirementsDependencies) {
+            if (dependency != null && !dependency.isEnabled() && dependency.selects(subchart)) {
+              chartBuilder.removeDependencies(i);
+              continue ITERATION;
             }
           }
+
+          // If we get here, this is an enabled subchart
+          apply(subchart, configBuilder); // <-- RECURSIVE CALL
         }
-
-        // TODO: may be premature?
-        // chart = chartBuilder.build();          
-        // assert chart != null;
-
-        // Now we have a chart with the proper subcharts in it (only
-        // enabled ones are included).
-        
-        final Collection<Chart> newSubcharts = new ArrayList<>();
-        chartDependencies = chartBuilder.getDependenciesList();
-        if (chartDependencies != null) {
-          for (Chart subchart : chartDependencies) {
-            if (subchart != null) {
-              // Recursively apply all of this logic to the (by
-              // definition enabled) subchart with the canonical value
-              // set.  configBuilder here is basically the parent's
-              // effective values.
-              final Chart.Builder subchartBuilder = apply(subchart.toBuilder(), configBuilder); // <-- RECURSIVE CALL
-              assert subchartBuilder != null;
-              subchart = subchartBuilder.build();
-              if (subchart != null) {
-                newSubcharts.add(subchart);
-              }
-            }
-          }
-          // TODO: not needed if we're working with chartBuilders everywhere
-          // chartBuilder = chart.toBuilder();
-          // assert chartBuilder != null;
-
-          // Wipe out the list *again* and replace it with the new,
-          // canonical copy.
-
-          // TODO: not needed if we're working with chartBuilders
-          // chartBuilder.clearDependencies();
-          // chartBuilder.addAllDependencies(newSubcharts);
-          // TODO: remove
-          // final Chart chart = chartBuilder.build();
-        }
-        returnValue = chartBuilder;
         
       }
     }
