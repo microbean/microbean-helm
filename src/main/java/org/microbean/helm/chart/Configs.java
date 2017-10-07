@@ -247,17 +247,25 @@ final class Configs {
    * @see #computeEffectiveValues(ChartOrBuilder, Map)
    */
   private static final Map<String, Object> toValuesMap(final ChartOrBuilder chart, Map<String, Object> suppliedValues) {
-    return coalesceDependencies(chart, computeEffectiveValues(chart, suppliedValues));
+    final Map<String, Object> effectiveValues = computeEffectiveValues(chart, suppliedValues);
+    assert suppliedValues == null || effectiveValues == suppliedValues;
+    assert effectiveValues != null;
+    final Map<String, Object> returnValue = coalesceDependencies(chart, effectiveValues);
+    assert returnValue == effectiveValues;
+    return returnValue;
   }
 
   private static final Map<String, Object> coalesceDependencies(final ChartOrBuilder chart) {
-    return coalesceDependencies(chart, computeEffectiveValues(chart, new HashMap<>()));
+    final Map<String, Object> effectiveValues = computeEffectiveValues(chart, new HashMap<>());
+    assert effectiveValues != null;
+    return coalesceDependencies(chart, effectiveValues);
   }
   
   private static final Map<String, Object> coalesceDependencies(final ChartOrBuilder chart, Map<String, Object> returnValue) {
     if (chart != null) {
       returnValue = coalesceDependencies(chart.getDependenciesList(), returnValue);
-    }
+      assert returnValue != null;
+    }    
     return returnValue;
   }
 

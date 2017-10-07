@@ -16,6 +16,10 @@
  */
 package org.microbean.helm.chart;
 
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.beans.SimpleBeanInfo;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +32,12 @@ import java.util.Objects;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.github.zafarkhaja.semver.Parser;
+import com.github.zafarkhaja.semver.Version;
+
+import com.github.zafarkhaja.semver.expr.Expression;
+import com.github.zafarkhaja.semver.expr.ExpressionParser;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -42,6 +52,8 @@ import hapi.chart.MetadataOuterClass.MetadataOrBuilder;
 import org.yaml.snakeyaml.Yaml;
 
 import org.yaml.snakeyaml.constructor.Constructor;
+
+import org.yaml.snakeyaml.introspector.PropertyUtils;
 
 /*
  * TODO: tests tests tests
@@ -58,7 +70,7 @@ public class Requirements {
   private static final Constructor requirementsConstructor = new Constructor(Requirements.class);
   
   private Map<String, Dependency> dependenciesByName;
-  
+
   public Requirements() {
     super();
   }
@@ -227,7 +239,7 @@ public class Requirements {
     
   }
 
-  // Ported slavishly from ProcessRequirementsConditions
+  // Ported from ProcessRequirementsConditions
   final void processConditions(final Map<String, Object> values) {
     final Collection<Dependency> dependencies = this.getDependencies();
     if (dependencies != null && !dependencies.isEmpty()) {
@@ -240,13 +252,13 @@ public class Requirements {
   }
 
   // Ported from PathValue() in chartutil/values.go; bears a striking resemblance to Table()
-  private static final Object pathValue(final Map<String, Object> map, final String path) {
-    Objects.requireNonNull(path);
+  private static final Object pathValue(final Map<String, Object> map, final String dotSeparatedPath) {
+    Objects.requireNonNull(dotSeparatedPath);
     final Object returnValue;
     if (map == null || map.isEmpty()) {
       returnValue = null;
     } else {
-      returnValue = new MapTree(map).get(path, Object.class);
+      returnValue = new MapTree(map).get(dotSeparatedPath, Object.class);
     }
     return returnValue;
   }
@@ -303,144 +315,79 @@ public class Requirements {
    * code is a slavish port of the equivalent Go code and can be
    * compressed and cleaned up extensively.
    */
-  public static final Chart.Builder apply(Chart.Builder chartBuilder, ConfigOrBuilder config) {
+  public static final Chart.Builder apply(Chart.Builder chartBuilder, ConfigOrBuilder userSuppliedValues) {
     Objects.requireNonNull(chartBuilder);
     Chart.Builder returnValue = chartBuilder;
+
     final Requirements requirements = fromChartOrBuilder(chartBuilder);
     if (requirements != null && !requirements.isEmpty()) {
       
-      final Collection<Dependency> requirementsDependencies = requirements.getDependencies();
+      final Collection<? extends Dependency> requirementsDependencies = requirements.getDependencies();
       if (requirementsDependencies != null && !requirementsDependencies.isEmpty()) {
-
-        // First, check the Chart's existing subcharts.  A
-        // requirements.yaml file shouldn't eliminate any subcharts
-        // that are already in there!
         
-        final Collection<? extends Chart> existingSubcharts = chartBuilder.getDependenciesList();
-        if (existingSubcharts != null && !existingSubcharts.isEmpty()) {
+        final Collection<? extends Chart.Builder> existingSubcharts = chartBuilder.getDependenciesBuilderList();
+        if (existingSubcharts != null && !existingSubcharts.isEmpty()) { 
 
-          // TODO: need to test this rigorously; this apply() method
-          // essentially replaces all subcharts in the existing chart
-          // builder.  The Go code doesn't have the concept of
-          // builders, so we're trying to do what it does, but using
-          // builders.  I think we have to start by wiping the main
-          // builder clean.
-          chartBuilder.clearDependencies();
-
-          // TODO: hmm, does clearing the subcharts also clear
-          // existingSubcharts?  Hope not!
-          assert !existingSubcharts.isEmpty();
-
-          // OK, there are now no dependencies in the chart; we're
-          // rebuilding them from scratch.
-          
-          for (final Chart existingSubchart : existingSubcharts) {
-            if (existingSubchart != null) {
-              boolean mentionedInRequirementsYaml = false;
-
-              // For every subchart, does requirements.yaml mention
-              // it?  If requirements.yaml *doesn't* mention it, then
-              // add it to the chart (recall that we've cleared out
-              // the subcharts it had).
-              
+          for (final Chart.Builder subchart : existingSubcharts) {
+            if (subchart != null) {
               for (final Dependency dependency : requirementsDependencies) {
-                if (dependency != null && dependency.identifies(existingSubchart)) {
-                  mentionedInRequirementsYaml = true;
-                  break;
+                if (dependency != null) {
+                  dependency.adjustName(subchart);
+                  dependency.setNameToAlias();
+                  dependency.setEnabled(true);
                 }
               }
-              
-              if (!mentionedInRequirementsYaml) {
-                
-                // For the given subchart, we ran through all the
-                // entries in requirements.yaml and didn't find a
-                // matching entry.
-                
-                // TODO: almost certainly a more efficient way to do this
-                final Chart.Builder subchartBuilder = chartBuilder.addDependenciesBuilder();
-                assert subchartBuilder != null;
-                subchartBuilder.mergeFrom(existingSubchart);
-              }
             }
           }
         }
-
-        // The block above seems bizarre to me and I think is the
-        // source of an actual Helm bug related to blowing away
-        // subcharts in certain cases.
         
-        // OK, now process the requirements.yaml for real.
-        
-        for (final Dependency requirement : requirementsDependencies) {
-          if (requirement != null) {
-
-            // Now for each Requirements Dependency (for each
-            // requirement), see if there's a corresponding subchart.
-            // It might have been renamed by the getAliasSubchart()
-            // method.
-
-            // if chartDependency := getAliasDependency(c.Dependencies, req); chartDependency != nil {
-            //   chartDependencies = append(chartDependencies, chartDependency)
-            // }
-            final Chart aliasSubchart = requirement.getAliasSubchart(existingSubcharts);
-            if (aliasSubchart != null) {
-              final Chart.Builder subchartBuilder = chartBuilder.addDependenciesBuilder();
-              assert subchartBuilder != null;
-              subchartBuilder.mergeFrom(aliasSubchart);
-            }
-
-            // Then, mysteriously, apparently we doctor the
-            // Requirements' associated Dependency, and if it has an
-            // alias, then we set its name to its alias.  I don't know
-            // why.
-            //
-            // if req.Alias != "" {
-            //   req.Name = req.Alias
-            // }
-            final String alias = requirement.getAlias();
-            if (alias != null && !alias.isEmpty()) {
-              requirement.setName(alias);
-            }
-            
-          }
-        }
-
-        // The Go code now proactively goes through all the
-        // Dependencies in the Requirements struct and sets their
-        // Enabled property to true.
-        requirements.enableAll();
-
         // Next, combine the user-supplied values with the incoming
         // Chart's values according to precedence rules, to yield a
         // new canonical Config that will eventually be sent to
-        // Tiller.  This means that some of the values will be
-        // redundant copies of each other.
-        final Map<String, Object> chartValuesMap = Configs.toValuesMap(chartBuilder, config);
+        // Tiller.
+        //
+        // The problem here is that on the first call of this apply()
+        // method, the userSuppliedValues will truly be user-supplied
+        // values...so we have to go through this madness to get them
+        // "into" the chart.  But as you will see several lines below,
+        // there is a recursive call made to this method, but this
+        // time with the actual chartBuilder's associated
+        // Config.Builder.  So from that point forward, 
+        
+        final Map<String, Object> chartValuesMap = Configs.toValuesMap(chartBuilder, userSuppliedValues);
         assert chartValuesMap != null;
-        final String configYaml = Configs.toYAML(chartValuesMap); // madness
-        assert configYaml != null;
+        final String userSuppliedValuesYaml = Configs.toYAML(chartValuesMap); // madness
+        assert userSuppliedValuesYaml != null;
         final Config.Builder configBuilder = chartBuilder.getValuesBuilder();
         assert configBuilder != null;  
-        configBuilder.setRaw(configYaml);
+        configBuilder.setRaw(userSuppliedValuesYaml);
 
         // Now disable certain Dependencies, that we just enabled.
         // This might be because the canonical value set contains tags
-        // designating them for disablement.
+        // designating them for disablement.  We couldn't disable them
+        // earlier because we didn't have values.
         requirements.processTags(chartValuesMap);
 
         // Do the same thing, but work with conditions instead of tags.
         requirements.processConditions(chartValuesMap);
 
+        // Now our Dependencies' enablements have been possibly altered further.
+        
         // OK, now we've semantically stated that certain Charts, that
         // we've already "added back" to the incoming Chart, really
         // shouldn't have been added in the first place--i.e. they're
-        // disabled.  So now we need to go back through the list and
-        // remove those we shouldn't have added in the first place.
+        // disabled.  By definition, these will be drawn from the set
+        // of those mentioned in requirements.yaml, not from the set
+        // of those not mentioned in requirements.yaml.  So now we
+        // need to go back through the list and remove those we
+        // shouldn't have added in the first place.
         
         final Set<String> subchartNamesToRemove = new HashSet<>();
         
         for (final Dependency requirement : requirementsDependencies) {
           if (requirement != null && !requirement.isEnabled()) {
+            // Remember that the requirement's name may have been
+            // changed (see above) to the value of its alias.
             subchartNamesToRemove.add(requirement.getName());
           }
         }
@@ -460,7 +407,10 @@ public class Requirements {
         // dependencies and then re-adding them.
         chartBuilder.clearDependencies();
         
-        // Add only enabled ones
+        // Add only enabled ones.
+
+        // TODO: wait, if we cleared the dependencies, then this will
+        // return nothing!
         Iterable<? extends Chart> chartDependencies = chartBuilder.getDependenciesList();
         if (chartDependencies != null) {
           for (final Chart subchart : chartDependencies) {
@@ -492,7 +442,8 @@ public class Requirements {
             if (subchart != null) {
               // Recursively apply all of this logic to the (by
               // definition enabled) subchart with the canonical value
-              // set.
+              // set.  configBuilder here is basically the parent's
+              // effective values.
               final Chart.Builder subchartBuilder = apply(subchart.toBuilder(), configBuilder); // <-- RECURSIVE CALL
               assert subchartBuilder != null;
               subchart = subchartBuilder.build();
@@ -524,10 +475,11 @@ public class Requirements {
   
   // ported relatively slavishly from getAliasDependency()
   /**
-   * @deprecated Please see {@link
-   * Requirements.Dependency#getAliasSubchart(Collection)} instead.
+   * @deprecated This method is not used and is slated for removla.
+   * Please see {@link
+   * Requirements.Dependency#getFirstIdentifiedSubchart(Collection)} instead.
    */
-  @Deprecated // maybe not used?
+  @Deprecated // Not used.
   private static final Chart getAliasSubchart(final Collection<? extends Chart> subcharts, final Dependency aliasChart) {
     Chart returnValue = null;
     if (subcharts != null && !subcharts.isEmpty()) {
@@ -575,13 +527,35 @@ public class Requirements {
     return returnValue;
   }
 
-
   /*
    * Inner and nested classes.
    */
 
+  public static final class DependencyBeanInfo extends SimpleBeanInfo {
+
+    private final Collection<? extends PropertyDescriptor> propertyDescriptors;
+    
+    public DependencyBeanInfo() throws IntrospectionException {
+      super();
+      final Collection<PropertyDescriptor> propertyDescriptors = new ArrayList<>();
+      propertyDescriptors.add(new PropertyDescriptor("name", Dependency.class));
+      propertyDescriptors.add(new PropertyDescriptor("version", Dependency.class));
+      propertyDescriptors.add(new PropertyDescriptor("repository", Dependency.class));
+      propertyDescriptors.add(new PropertyDescriptor("condition", Dependency.class));
+      propertyDescriptors.add(new PropertyDescriptor("tags", Dependency.class));
+      propertyDescriptors.add(new PropertyDescriptor("import-values", Dependency.class, "getImportValues", "setImportValues"));
+      propertyDescriptors.add(new PropertyDescriptor("alias", Dependency.class));
+      this.propertyDescriptors = propertyDescriptors;
+    }
+
+    @Override
+    public final PropertyDescriptor[] getPropertyDescriptors() {
+      return this.propertyDescriptors.toArray(new PropertyDescriptor[this.propertyDescriptors.size()]);
+    }
+    
+  }
   
-  public static class Dependency {
+  public static final class Dependency {
 
     private String name;
 
@@ -605,6 +579,7 @@ public class Requirements {
     
     public Dependency() {
       super();
+      this.setEnabled(true);
     }
 
     public String getName() {
@@ -671,49 +646,57 @@ public class Requirements {
       this.alias = alias;
     }
 
-    public boolean identifies(final ChartOrBuilder chart) {
+    public boolean selects(final ChartOrBuilder chart) {
       if (chart == null) {
         return false;
       }
 
-      return this.identifies(chart.getMetadata());
+      return this.selects(chart.getMetadata());
     }
     
-    public final boolean identifies(final MetadataOrBuilder metadata) {
+    public final boolean selects(final MetadataOrBuilder metadata) {
+      final boolean returnValue;
       if (metadata == null) {
-        return false;
+        returnValue = this.selects(null, null);
+      } else {
+        returnValue = this.selects(metadata.getName(), metadata.getVersion());
       }
+      return returnValue;
+    }
 
-      // Make sure our name matches the metadata name.
-      final Object name = this.getName();
-      if (name == null) {
-        if (metadata.getName() != null) {
+    public final boolean selects(final String name, final String versionString) {
+      final Object myName = this.getName();
+      if (myName == null) {
+        if (name != null) {
           return false;
         }
-      } else if (!name.equals(metadata.getName())) {
+      } else if (!myName.equals(name)) {
         return false;
       }
 
-      // Make sure our version is compatible with the metadata
-      // version.
-      final Object version = this.getVersion();
-      if (version == null) {
-        if (metadata.getVersion() != null) {
+      final String myVersion = this.getVersion();
+      if (myVersion == null) {
+        if (versionString != null) {
           return false;
         }
-      } else if (!version.equals(metadata.getVersion())) {
-        // TODO: see https://github.com/kubernetes/helm/commit/0440b54bbff503d4c71e033b2ce7648597c67b05#diff-b886fd4039491a8f529b514db736c0c0R234
-        return false;
+      } else {
+        final Version version = Version.valueOf(myVersion);
+        assert version != null;
+        final Parser<Expression> parser = ExpressionParser.newInstance();
+        assert parser != null;
+        final Expression semVerConstraint = parser.parse(versionString);
+        assert semVerConstraint != null;
+        if (!version.satisfies(semVerConstraint)) {
+          return false;
+        }
       }
-
-      // All tests passed.
       return true;
     }
 
     /**
      * Checks the supplied {@link Collection} of {@link Chart}s to see
      * if there is a {@link Chart} in it that is {@linkplain
-     * #identifies(MetadataOrBuilder) identified} by this {@link
+     * #selects(MetadataOrBuilder) identified} by this {@link
      * Dependency}, and, if so, if this {@link Dependency} {@linkplain
      * #getAlias() has an alias}, additionally renames the {@link
      * Chart} in question before returning it.
@@ -722,45 +705,41 @@ public class Requirements {
      *
      * <p>If this {@link Dependency} does not {@linkplain #getAlias()
      * have an alias} then the {@linkplain
-     * #identifies(MetadataOrBuilder) identified} {@link Chart} is
+     * #selects(MetadataOrBuilder) identified} {@link Chart} is
      * simply returned.</p>
      *
      * @param subcharts a {@link Collection} of {@link Chart}s; may be
      * {@code null} in which case {@code null} will be returned
      *
      * @return a {@link Chart} that this {@link Dependency}
-     * {@linkplain #identifies(MetadataOrBuilder) identifies},
+     * {@linkplain #selects(MetadataOrBuilder) selects},
      * possibly renamed with this {@link Dependency}'s {@linkplain
      * #getAlias() alias}, or {@code null}
      *
-     * @see #identifies(MetadataOrBuilder)
+     * @see #selects(MetadataOrBuilder)
      *
      * @see #getAlias()
+     *
+     * @deprecated Please use {@link
+     * #getFirstIdentifiedSubchart(Collection)} instead.  This method is
+     * slated for removal.
      */
-    public Chart getAliasSubchart(final Collection<? extends Chart> subcharts) {
-      Chart returnValue = null;
+    @Deprecated
+    public Chart.Builder getAliasSubchart(final Collection<? extends Chart.Builder> subcharts) {
+      return this.getFirstIdentifiedSubchart(subcharts);
+    }
+
+    /**
+     * @deprecated Slated for removal.
+     */
+    @Deprecated
+    public final Chart.Builder getFirstIdentifiedSubchart(final Collection<? extends Chart.Builder> subcharts) {
+      Chart.Builder returnValue = null;
       if (subcharts != null && !subcharts.isEmpty()) {
-        for (Chart subchart : subcharts) {
-          if (this.identifies(subchart)) {
+        for (Chart.Builder subchart : subcharts) {
+          if (this.selects(subchart)) {
             assert subchart != null;
-            // OK, our name and version match the chart's name and
-            // version.
-            final String alias = this.getAlias();
-            if (alias != null && !alias.isEmpty()) {
-              assert subchart.hasMetadata();
-              Metadata subchartMetadata = subchart.getMetadata();
-              assert subchartMetadata != null;
-              final Metadata.Builder subchartMetadataBuilder = subchartMetadata.toBuilder();
-              assert subchartMetadataBuilder != null;
-              // Rename the chart to have our alias as its new name.
-              subchartMetadataBuilder.setName(alias);
-              subchartMetadata = subchartMetadataBuilder.build();
-              final Chart.Builder subchartBuilder = subchart.toBuilder();
-              assert subchartBuilder != null;
-              subchartBuilder.setMetadata(subchartMetadata);
-              subchart = subchartBuilder.build();
-              assert subchart != null;
-            }
+            adjustName(subchart);
             returnValue = subchart;
             break;
           }
@@ -769,37 +748,57 @@ public class Requirements {
       return returnValue;
     }
 
-    // Ported slavishly from ProcessRequirementsTags
-    final void processTags(final Map<String, Object> values) {
-
-      // Look in values for a key named "tags" and pull out the Map
-      // indexed under it.  In the Go code, "tags" here is known as "vt".
-      final Map<?, ?> tags = getMap(values, "tags");
-
-      final Collection<? extends String> dependencyTags = this.getTags();
-      if (dependencyTags != null && !dependencyTags.isEmpty()) {
-        boolean hasTrue = false;
-        boolean hasFalse = false;
-        for (final String dependencyTag : dependencyTags) {
-          final Object tagValue = tags.get(dependencyTag);
-          if (Boolean.TRUE.equals(tagValue)) {
-            hasTrue = true;
-          } else if (Boolean.FALSE.equals(tagValue)) {
-            hasFalse = true;
-          } else {
-            // Not a Boolean at all; just skip it
-          }
+    public final void adjustName(final Chart.Builder subchart) {
+      if (subchart != null && this.selects(subchart)) {
+        final String alias = this.getAlias();
+        if (alias != null && !alias.isEmpty() && subchart.hasMetadata()) {
+          final Metadata.Builder subchartMetadataBuilder = subchart.getMetadataBuilder();
+          assert subchartMetadataBuilder != null;
+          // Rename the chart to have our alias as its new name.
+          subchartMetadataBuilder.setName(alias);
         }
-        
-        // Note that this block looks different from the analogous
-        // block in processConditions() below.  It is this way in the
-        // Go code as well.
-        if (hasFalse) {
-          if (!hasTrue) {
-            this.setEnabled(false);
+      }
+    }
+
+    final void setNameToAlias() {
+      final String alias = this.getAlias();
+      if (alias != null && !alias.isEmpty()) {
+        this.setName(alias);
+      }
+    }
+
+    // Ported from ProcessRequirementsTags
+    final void processTags(final Map<String, Object> values) {
+      if (values != null) {
+        final Object tagsObject = values.get("tags");
+        if (tagsObject instanceof Map) {
+          final Map<?, ?> tags = (Map<?, ?>)tagsObject;
+          final Collection<? extends String> myTags = this.getTags();
+          if (myTags != null && !myTags.isEmpty()) {
+            boolean explicitlyTrue = false;
+            boolean explicitlyFalse = false;
+            for (final String myTag : myTags) {
+              final Object tagValue = tags.get(myTag);
+              if (Boolean.TRUE.equals(tagValue)) {
+                explicitlyTrue = true;
+              } else if (Boolean.FALSE.equals(tagValue)) {
+                explicitlyFalse = true;
+              } else {
+                // Not a Boolean at all; just skip it
+              }
+            }
+            
+            // Note that this block looks different from the analogous
+            // block in processConditions() below.  It is this way in the
+            // Go code as well.
+            if (explicitlyFalse) {
+              if (!explicitlyTrue) {
+                this.setEnabled(false);
+              }
+            } else {
+              this.setEnabled(explicitlyTrue);
+            }
           }
-        } else {
-          this.setEnabled(hasTrue);
         }
       }
     }
@@ -828,7 +827,8 @@ public class Requirements {
       }
       
       // Note that this block looks different from the analogous block
-      // in processTags().  It is this way in the Go code as well.
+      // in processTags() above.  It is this way in the Go code as
+      // well.
       if (hasFalse) {
         if (!hasTrue) {
           this.setEnabled(false);

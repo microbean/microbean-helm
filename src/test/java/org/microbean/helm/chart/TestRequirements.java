@@ -24,7 +24,22 @@ import java.net.URL;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
+import hapi.chart.ChartOuterClass.Chart;
+import hapi.chart.ChartOuterClass.ChartOrBuilder;
+import hapi.chart.ConfigOuterClass.Config;
+import hapi.chart.ConfigOuterClass.ConfigOrBuilder;
+import hapi.chart.MetadataOuterClass.MetadataOrBuilder;
+
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import org.microbean.helm.chart.Requirements.Dependency;
@@ -36,14 +51,36 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class TestRequirements {
 
+  private Chart.Builder chartBuilder;
+
+  private AbstractChartLoader<URL> chartLoader;
+  
   public TestRequirements() {
     super();
   }
 
+  @Before
+  public void setUp() throws IOException {
+    final URL chartLocation = Thread.currentThread().getContextClassLoader().getResource("TestConfigs/subpop");
+    assertNotNull(chartLocation);
+    this.chartLoader = new URLChartLoader();
+    this.chartBuilder = this.chartLoader.load(chartLocation);
+    assertNotNull(this.chartBuilder);
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    if (this.chartLoader != null) {
+      this.chartLoader.close();
+    }
+  }
+
+  
   @Test
   public void testYamlUnmarshalling() throws IOException {
     final URL requirementsYaml = Thread.currentThread().getContextClassLoader().getResource("TestRequirements/requirements.yaml");
@@ -81,6 +118,55 @@ public class TestRequirements {
 
       assertFalse(iterator.hasNext());
     }
+  }
+
+  @Test
+  public void testRequirementsTagsNonValue() {
+    final Config.Builder configBuilder = Config.newBuilder();
+    assertNotNull(configBuilder);
+    configBuilder.setRaw("tags:\n  nothinguseful: false\n\n");
+    final SortedSet<String> expectations = new TreeSet<>();
+    expectations.add("parentchart");
+    expectations.add("subchart1");
+    expectations.add("subcharta");
+    expectations.add("subchartb");
+    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+  }
+  
+  private static final void verifyRequirementsEnabled(final Chart.Builder chartBuilder, final ConfigOrBuilder config, final SortedSet<? extends String> expectations) {
+    assertNotNull(chartBuilder);
+    assertNotNull(config);
+    assertNotNull(expectations);
+
+    assertSame(chartBuilder, Requirements.apply(chartBuilder, config));
+
+    assertEquals(expectations, getChartNames(chartBuilder));
+  }
+
+  private static final SortedSet<? extends String> getChartNames(final ChartOrBuilder rootChart) {
+    assertNotNull(rootChart);
+
+    SortedSet<String> returnValue = new TreeSet<>();
+    
+    final List<ChartOrBuilder> charts = new LinkedList<>();
+    charts.add(rootChart);
+    
+    while (!charts.isEmpty()) {
+      ChartOrBuilder chart = charts.remove(0);
+      assertNotNull(chart);
+      final MetadataOrBuilder metadata = chart.getMetadataOrBuilder();
+      if (metadata != null) {
+        final String name = metadata.getName();
+        if (name != null && !name.isEmpty()) {
+          returnValue.add(name);
+        }
+      }
+      final Collection<? extends ChartOrBuilder> subcharts = chart.getDependenciesOrBuilderList();
+      if (subcharts != null && !subcharts.isEmpty()) {
+        charts.addAll(subcharts);
+      }
+    }
+    return returnValue;
   }
   
 }
