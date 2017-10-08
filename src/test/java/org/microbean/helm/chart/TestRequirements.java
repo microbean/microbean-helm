@@ -142,6 +142,43 @@ public class TestRequirements {
     expectations.add("parentchart");
     verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
   }
+
+  @Test
+  public void testRequirementsTagsEnabledL1() {
+    final Config.Builder configBuilder = Config.newBuilder();
+    assertNotNull(configBuilder);
+    configBuilder.setRaw("tags:\n  front-end: false\n\n  back-end: true\n");
+    final SortedSet<String> expectations = new TreeSet<>();    
+    expectations.add("parentchart");
+    expectations.add("subchart2");
+    expectations.add("subchartb");
+    expectations.add("subchartc");
+    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+  }
+
+  @Test
+  public void testRequirementsTagsDisabledL2() {
+    final Config.Builder configBuilder = Config.newBuilder();
+    assertNotNull(configBuilder);
+    configBuilder.setRaw("tags:\n  subcharta: false\n\n  subchartb: false\n");
+    final SortedSet<String> expectations = new TreeSet<>();
+    expectations.add("parentchart");
+    expectations.add("subchart1");
+    expectations.add("subcharta");
+    expectations.add("subchartb");
+    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+  }
+
+  @Test
+  public void testRequirementsTagsDisabledL1Mixed() {
+    final Config.Builder configBuilder = Config.newBuilder();
+    assertNotNull(configBuilder);
+    configBuilder.setRaw("tags:\n  front-end: false\n\n  subchart1: true\n\n  back-end: false\n");
+    final SortedSet<String> expectations = new TreeSet<>();
+    expectations.add("parentchart");
+    expectations.add("subchart1");
+    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+  }
   
   private static final void verifyRequirementsEnabled(final Chart.Builder chartBuilder, final ConfigOrBuilder config, final SortedSet<? extends String> expectations) {
     assertNotNull(chartBuilder);

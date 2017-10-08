@@ -328,65 +328,64 @@ public class Requirements {
         final List<? extends Chart.Builder> existingSubcharts = chartBuilder.getDependenciesBuilderList();
         if (existingSubcharts != null && !existingSubcharts.isEmpty()) { 
 
-          for (final Chart.Builder subchart : existingSubcharts) {
-            if (subchart != null) {
-              for (final Dependency dependency : requirementsDependencies) {
-                if (dependency != null) {
+          for (final Dependency dependency : requirementsDependencies) {
+            if (dependency != null) {
+              for (final Chart.Builder subchart : existingSubcharts) {
+                if (subchart != null) {
                   dependency.adjustName(subchart);
-                  dependency.setNameToAlias();
-                  dependency.setEnabled(true);
                 }
               }
-            }
-          }
-        }
-        
-        // Next, combine the user-supplied values with the incoming
-        // Chart's values according to precedence rules, to yield a
-        // new canonical Config that will eventually be sent to
-        // Tiller.
-        //
-        // The problem here is that on the first call of this apply()
-        // method, the userSuppliedValues will truly be user-supplied
-        // values...so we have to go through this madness to get them
-        // "into" the chart.  But as you will see several lines below,
-        // there is a recursive call made to this method, but this
-        // time with the actual chartBuilder's associated
-        // Config.Builder.  So from that point forward, 
-        
-        final Map<String, Object> chartValuesMap = Configs.toValuesMap(chartBuilder, userSuppliedValues);
-        assert chartValuesMap != null;
-        final String userSuppliedValuesYaml = Configs.toYAML(chartValuesMap); // madness
-        assert userSuppliedValuesYaml != null;
-        final Config.Builder configBuilder = chartBuilder.getValuesBuilder();
-        assert configBuilder != null;  
-        configBuilder.setRaw(userSuppliedValuesYaml);
-
-        // Now disable certain Dependencies, that we just enabled.
-        // This might be because the canonical value set contains tags
-        // designating them for disablement.  We couldn't disable them
-        // earlier because we didn't have values.
-        requirements.processTags(chartValuesMap);
-
-        // Do the same thing, but work with conditions instead of tags.
-        requirements.processConditions(chartValuesMap);
-
-        // Now our Dependencies' enablements have been possibly altered further.
-        
-        ITERATION:
-        for (int i = 0; i < chartBuilder.getDependenciesCount(); i++) {
-          final Chart.Builder subchart = chartBuilder.getDependenciesBuilder(i);
-          for (final Dependency dependency : requirementsDependencies) {
-            if (dependency != null && !dependency.isEnabled() && dependency.selects(subchart)) {
-              chartBuilder.removeDependencies(i--);
-              continue ITERATION;
+              dependency.setNameToAlias();
+              dependency.setEnabled(true);
             }
           }
 
-          // If we get here, this is an enabled subchart
-          apply(subchart, configBuilder); // <-- RECURSIVE CALL
+          // Combine the supplied values with the chart's default
+          // values in the form of a Map.
+          final Map<String, Object> chartValuesMap = Configs.toValuesMap(chartBuilder, userSuppliedValues);
+          assert chartValuesMap != null;
+
+          // Turn that Map into YAML, because YAML is the only format
+          // we have for altering a Config object (see
+          // Config#setRaw(String)).
+          final String userSuppliedValuesYaml = Configs.toYAML(chartValuesMap);
+          assert userSuppliedValuesYaml != null;
+
+          // Get the parent chart's Config.Builder and change its
+          // default values to be the (combined, all-inclusive)
+          // user-supplied values instead.
+          final Config.Builder configBuilder = chartBuilder.getValuesBuilder();
+          assert configBuilder != null;  
+          configBuilder.setRaw(userSuppliedValuesYaml);
+          
+          // Now disable certain Dependencies.  This might be because
+          // the canonical value set contains tags designating them
+          // for disablement.  We couldn't disable them earlier
+          // because we didn't have values.
+          requirements.processTags(chartValuesMap);
+          
+          // Do the same thing, but work with conditions instead of tags.
+          requirements.processConditions(chartValuesMap);
+
+          // Very carefully remove subcharts that have been disabled.
+          // Note the recursive call contained below.
+          ITERATION:
+          for (int i = 0; i < chartBuilder.getDependenciesCount(); i++) {
+            final Chart.Builder subchart = chartBuilder.getDependenciesBuilder(i);
+            for (final Dependency dependency : requirementsDependencies) {
+              if (dependency != null && !dependency.isEnabled() && dependency.selects(subchart)) {
+                chartBuilder.removeDependencies(i--);
+                continue ITERATION;
+              }
+            }
+            
+            // If we get here, this is an enabled subchart.  TODO:
+            // should every subchart get the same set of values?  Need
+            // to check the .go code to make absolutely sure here.
+            Requirements.apply(subchart, configBuilder); // <-- RECURSIVE CALL
+          }
+          
         }
-        
       }
     }
     return returnValue;
@@ -395,7 +394,7 @@ public class Requirements {
   
   // ported relatively slavishly from getAliasDependency()
   /**
-   * @deprecated This method is not used and is slated for removla.
+   * @deprecated This method is not used and is slated for removal.
    * Please see {@link
    * Requirements.Dependency#getFirstIdentifiedSubchart(Collection)} instead.
    */
