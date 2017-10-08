@@ -373,13 +373,12 @@ public class Requirements {
 
         // Now our Dependencies' enablements have been possibly altered further.
         
-        final int numberOfSubcharts = existingSubcharts.size();
         ITERATION:
-        for (int i = 0; i < numberOfSubcharts; i++) {
-          final Chart.Builder subchart = existingSubcharts.get(i);
+        for (int i = 0; i < chartBuilder.getDependenciesCount(); i++) {
+          final Chart.Builder subchart = chartBuilder.getDependenciesBuilder(i);
           for (final Dependency dependency : requirementsDependencies) {
             if (dependency != null && !dependency.isEnabled() && dependency.selects(subchart)) {
-              chartBuilder.removeDependencies(i);
+              chartBuilder.removeDependencies(i--);
               continue ITERATION;
             }
           }
@@ -757,6 +756,24 @@ public class Requirements {
       } else if (hasTrue) {
         this.setEnabled(true);
       }
+    }
+
+    @Override
+    public String toString() {
+      final StringBuilder sb = new StringBuilder();
+      final Object name = this.getName();
+      if (name == null) {
+        sb.append("Unnamed");
+      } else {
+        sb.append(name);
+      }
+      final String alias = this.getAlias();
+      if (alias != null && !alias.isEmpty()) {
+        sb.append(" (").append(alias).append(")");
+      }
+      sb.append(" ");
+      sb.append(this.getVersion());
+      return sb.toString();
     }
 
   }

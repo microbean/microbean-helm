@@ -132,6 +132,16 @@ public class TestRequirements {
     expectations.add("subchartb");
     verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
   }
+
+  @Test
+  public void testRequirementsTagsDisabledL1() {
+    final Config.Builder configBuilder = Config.newBuilder();
+    assertNotNull(configBuilder);
+    configBuilder.setRaw("tags:\n  front-end: false\n\n");
+    final SortedSet<String> expectations = new TreeSet<>();
+    expectations.add("parentchart");
+    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+  }
   
   private static final void verifyRequirementsEnabled(final Chart.Builder chartBuilder, final ConfigOrBuilder config, final SortedSet<? extends String> expectations) {
     assertNotNull(chartBuilder);
