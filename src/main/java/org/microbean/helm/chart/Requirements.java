@@ -16,6 +16,7 @@
  */
 package org.microbean.helm.chart;
 
+import java.beans.ConstructorProperties;
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.beans.SimpleBeanInfo;
@@ -460,81 +461,80 @@ public class Requirements {
     private Collection<Object> importValues;
     
     private String alias;
-    
+
     public Dependency() {
       super();
       this.setEnabled(true);
     }
 
-    public String getName() {
+    public final String getName() {
       return this.name;
     }
 
-    public void setName(final String name) {
+    public final void setName(final String name) {
       this.name = name;
     }
 
-    public String getVersion() {
+    public final String getVersion() {
       return this.version;
     }
 
-    public void setVersion(final String version) {
+    public final void setVersion(final String version) {
       this.version = version;
     }
 
-    public String getRepository() {
+    public final String getRepository() {
       return this.repository;
     }
 
-    public void setRepository(final String repository) {
+    public final void setRepository(final String repository) {
       this.repository = repository;
     }
 
-    public String getCondition() {
+    public final String getCondition() {
       return this.condition;
     }
 
-    public void setCondition(final String condition) {
+    public final void setCondition(final String condition) {
       this.condition = condition;
     }
 
-    public Collection<String> getTags() {
+    public final Collection<String> getTags() {
       return this.tags;
     }
 
-    public void setTags(final Collection<String> tags) {
+    public final void setTags(final Collection<String> tags) {
       this.tags = tags;
     }
 
-    public boolean isEnabled() {
+    public final boolean isEnabled() {
       return this.enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
+    public final void setEnabled(final boolean enabled) {
       this.enabled = enabled;
     }
 
-    public Collection<Object> getImportValues() {
+    public final Collection<Object> getImportValues() {
       return this.importValues;
     }
 
-    public void setImportValues(final Collection<Object> importValues) {
+    public final void setImportValues(final Collection<Object> importValues) {
       this.importValues = importValues;
     }
     
-    public String getAlias() {
+    public final String getAlias() {
       return this.alias;
     }
 
-    public void setAlias(final String alias) {
+    public final void setAlias(final String alias) {
       this.alias = alias;
     }
 
-    public boolean selects(final ChartOrBuilder chart) {
+    public final boolean selects(final ChartOrBuilder chart) {
       if (chart == null) {
         return false;
       }
-
       return this.selects(chart.getMetadata());
     }
     
@@ -577,62 +577,7 @@ public class Requirements {
       return true;
     }
 
-    /**
-     * Checks the supplied {@link Collection} of {@link Chart}s to see
-     * if there is a {@link Chart} in it that is {@linkplain
-     * #selects(MetadataOrBuilder) identified} by this {@link
-     * Dependency}, and, if so, if this {@link Dependency} {@linkplain
-     * #getAlias() has an alias}, additionally renames the {@link
-     * Chart} in question before returning it.
-     *
-     * <p>This method may return {@code null}.</p>
-     *
-     * <p>If this {@link Dependency} does not {@linkplain #getAlias()
-     * have an alias} then the {@linkplain
-     * #selects(MetadataOrBuilder) identified} {@link Chart} is
-     * simply returned.</p>
-     *
-     * @param subcharts a {@link Collection} of {@link Chart}s; may be
-     * {@code null} in which case {@code null} will be returned
-     *
-     * @return a {@link Chart} that this {@link Dependency}
-     * {@linkplain #selects(MetadataOrBuilder) selects},
-     * possibly renamed with this {@link Dependency}'s {@linkplain
-     * #getAlias() alias}, or {@code null}
-     *
-     * @see #selects(MetadataOrBuilder)
-     *
-     * @see #getAlias()
-     *
-     * @deprecated Please use {@link
-     * #getFirstIdentifiedSubchart(Collection)} instead.  This method is
-     * slated for removal.
-     */
-    @Deprecated
-    public Chart.Builder getAliasSubchart(final Collection<? extends Chart.Builder> subcharts) {
-      return this.getFirstIdentifiedSubchart(subcharts);
-    }
-
-    /**
-     * @deprecated Slated for removal.
-     */
-    @Deprecated
-    public final Chart.Builder getFirstIdentifiedSubchart(final Collection<? extends Chart.Builder> subcharts) {
-      Chart.Builder returnValue = null;
-      if (subcharts != null && !subcharts.isEmpty()) {
-        for (Chart.Builder subchart : subcharts) {
-          if (this.selects(subchart)) {
-            assert subchart != null;
-            adjustName(subchart);
-            returnValue = subchart;
-            break;
-          }
-        }
-      }
-      return returnValue;
-    }
-
-    public final void adjustName(final Chart.Builder subchart) {
+    final void adjustName(final Chart.Builder subchart) {
       if (subchart != null && this.selects(subchart)) {
         final String alias = this.getAlias();
         if (alias != null && !alias.isEmpty() && subchart.hasMetadata()) {
@@ -715,7 +660,6 @@ public class Requirements {
         // Note that this block looks different from the analogous block
         // in processTags() above.  It is this way in the Go code as
         // well.
-        
         if (explicitlyFalse) {
           if (!explicitlyTrue) {
             this.setEnabled(false);
@@ -727,7 +671,7 @@ public class Requirements {
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
       final StringBuilder sb = new StringBuilder();
       final Object name = this.getName();
       if (name == null) {
