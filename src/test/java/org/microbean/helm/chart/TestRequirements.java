@@ -23,11 +23,14 @@ import java.io.InputStream;
 import java.net.URL;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -53,6 +56,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class TestRequirements {
 
@@ -66,7 +70,7 @@ public class TestRequirements {
 
   @Before
   public void setUp() throws IOException {
-    final URL chartLocation = Thread.currentThread().getContextClassLoader().getResource("TestConfigs/subpop");
+    final URL chartLocation = Thread.currentThread().getContextClassLoader().getResource("TestRequirements/subpop");
     assertNotNull(chartLocation);
     this.chartLoader = new URLChartLoader();
     this.chartBuilder = this.chartLoader.load(chartLocation);
@@ -122,131 +126,153 @@ public class TestRequirements {
 
   @Test
   public void testRequirementsTagsNonValue() {
-    final Config.Builder configBuilder = Config.newBuilder();
-    assertNotNull(configBuilder);
-    configBuilder.setRaw("tags:\n  nothinguseful: false\n\n");
-    final SortedSet<String> expectations = new TreeSet<>();
-    expectations.add("parentchart");
-    expectations.add("subchart1");
-    expectations.add("subcharta");
-    expectations.add("subchartb");
-    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+    this.verifyRequirementsEnabled("tags:\n  nothinguseful: false\n\n", "parentchart", "subchart1", "subcharta", "subchartb");
   }
 
   @Test
   public void testRequirementsTagsDisabledL1() {
-    final Config.Builder configBuilder = Config.newBuilder();
-    assertNotNull(configBuilder);
-    configBuilder.setRaw("tags:\n  front-end: false\n\n");
-    final SortedSet<String> expectations = new TreeSet<>();
-    expectations.add("parentchart");
-    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+    this.verifyRequirementsEnabled("tags:\n  front-end: false\n\n", "parentchart");
   }
 
   @Test
   public void testRequirementsTagsEnabledL1() {
-    final Config.Builder configBuilder = Config.newBuilder();
-    assertNotNull(configBuilder);
-    configBuilder.setRaw("tags:\n  front-end: false\n\n  back-end: true\n");
-    final SortedSet<String> expectations = new TreeSet<>();    
-    expectations.add("parentchart");
-    expectations.add("subchart2");
-    expectations.add("subchartb");
-    expectations.add("subchartc");
-    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+    this.verifyRequirementsEnabled("tags:\n  front-end: false\n\n  back-end: true\n", "parentchart", "subchart2", "subchartb", "subchartc");
   }
 
   @Test
   public void testRequirementsTagsDisabledL2() {
-    final Config.Builder configBuilder = Config.newBuilder();
-    assertNotNull(configBuilder);
-    configBuilder.setRaw("tags:\n  subcharta: false\n\n  subchartb: false\n");
-    final SortedSet<String> expectations = new TreeSet<>();
-    expectations.add("parentchart");
-    expectations.add("subchart1");
-    expectations.add("subcharta");
-    expectations.add("subchartb");
-    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+    this.verifyRequirementsEnabled("tags:\n  subcharta: false\n\n  subchartb: false\n", "parentchart", "subchart1", "subcharta", "subchartb");
   }
 
   @Test
   public void testRequirementsTagsDisabledL1Mixed() {
-    final Config.Builder configBuilder = Config.newBuilder();
-    assertNotNull(configBuilder);
-    configBuilder.setRaw("tags:\n  front-end: false\n\n  subchart1: true\n\n  back-end: false\n");
-    final SortedSet<String> expectations = new TreeSet<>();
-    expectations.add("parentchart");
-    expectations.add("subchart1");
-    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+    this.verifyRequirementsEnabled("tags:\n  front-end: false\n\n  subchart1: true\n\n  back-end: false\n", "parentchart", "subchart1");
   }
 
   @Test
   public void testRequirementsConditionsNonValue() {
-    final Config.Builder configBuilder = Config.newBuilder();
-    assertNotNull(configBuilder);
-    configBuilder.setRaw("subchart1:\n  nothinguseful: false\n\n");
-    final SortedSet<String> expectations = new TreeSet<>();
-    expectations.add("parentchart");
-    expectations.add("subchart1");
-    expectations.add("subcharta");
-    expectations.add("subchartb");
-    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+    this.verifyRequirementsEnabled("subchart1:\n  nothinguseful: false\n\n", "parentchart", "subchart1", "subcharta", "subchartb");
   }
 
   @Test
   public void testRequirementsConditionsEnabledL1Both() {
-    final Config.Builder configBuilder = Config.newBuilder();
-    assertNotNull(configBuilder);
-    configBuilder.setRaw("subchart1:\n  enabled: true\nsubchart2:\n  enabled: true\n");
-    final SortedSet<String> expectations = new TreeSet<>();
-    expectations.add("parentchart");
-    expectations.add("subchart1");
-    expectations.add("subchart2");
-    expectations.add("subcharta");
-    expectations.add("subchartb");
-    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+    this.verifyRequirementsEnabled("subchart1:\n  enabled: true\nsubchart2:\n  enabled: true\n", "parentchart", "subchart1", "subchart2", "subcharta", "subchartb");
   }
 
   @Test
   public void testRequirementsConditionsDisabledL1Both() {
-    final Config.Builder configBuilder = Config.newBuilder();
-    assertNotNull(configBuilder);
-    configBuilder.setRaw("subchart1:\n  enabled: false\nsubchart2:\n  enabled: false\n");
-    final SortedSet<String> expectations = new TreeSet<>();
-    expectations.add("parentchart");
-    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+    this.verifyRequirementsEnabled("subchart1:\n  enabled: false\nsubchart2:\n  enabled: false\n", "parentchart");
   }
 
   @Test
   public void testRequirementsConditionsSecond() {
+    this.verifyRequirementsEnabled("subchart1:\n  subcharta:\n    enabled: false\n", "parentchart", "subchart1", "subchartb");
+  }
+
+  @Test
+  public void testRequirementsConditionsDisabledL2() {
+    this.verifyRequirementsEnabled("subchartc:\n  enabled: false\ntags:\n  back-end: true\n", "parentchart", "subchart1", "subchart2", "subcharta", "subchartb", "subchartb");
+  }
+
+  @Test
+  public void testRequirementsConditionsCombinedDisabledL1() {
+    this.verifyRequirementsEnabled("subchart1:\n  enabled: false\ntags:\n  front-end: true\n", "parentchart");
+  }
+
+  private final void verifyRequirementsEnabled(final String tags, final String... expectedChartNames) {
+    assertNotNull(tags);
+    assertNotNull(expectedChartNames);
     final Config.Builder configBuilder = Config.newBuilder();
     assertNotNull(configBuilder);
-    // conditions a child using the second condition path of child's condition
-    configBuilder.setRaw("subchart1:\n  subcharta:\n    enabled: false\n");
+    configBuilder.setRaw(tags);
     final SortedSet<String> expectations = new TreeSet<>();
-    expectations.add("parentchart");
-    expectations.add("subchart1");
-    expectations.add("subchartb");
-    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+    for (final String expectation : expectedChartNames) {
+      assertNotNull(expectation);
+      expectations.add(expectation);
+    }
+    verifyRequirementsEnabled(configBuilder, expectations);
+  }
+
+  @Test
+  public void testProcessImportValues() {
+    final Map<String, String> expectations = new HashMap<>();
+    
+    expectations.put("imported-chart1.SC1bool", "true");
+    expectations.put("imported-chart1.SC1float", "3.14");
+    expectations.put("imported-chart1.SC1int", "100");
+    expectations.put("imported-chart1.SC1string", "dollywood");
+    expectations.put("imported-chart1.SC1extra1", "11");
+    expectations.put("imported-chart1.SPextra1", "helm rocks");
+    expectations.put("imported-chart1.SC1extra1", "11");
+    
+    expectations.put("imported-chartA.SCAbool", "false");
+    expectations.put("imported-chartA.SCAfloat", "3.1");
+    expectations.put("imported-chartA.SCAint", "55");
+    expectations.put("imported-chartA.SCAstring", "jabba");
+    expectations.put("imported-chartA.SPextra3", "1.337");
+    expectations.put("imported-chartA.SC1extra2", "1.337");
+    expectations.put("imported-chartA.SCAnested1.SCAnested2", "true");
+    
+    expectations.put("imported-chartA-B.SCAbool", "false");
+    expectations.put("imported-chartA-B.SCAfloat", "3.1");
+    expectations.put("imported-chartA-B.SCAint", "55");
+    expectations.put("imported-chartA-B.SCAstring", "jabba");
+    
+    expectations.put("imported-chartA-B.SCBbool", "true");
+    expectations.put("imported-chartA-B.SCBfloat", "7.77");
+    expectations.put("imported-chartA-B.SCBint", "33");
+    expectations.put("imported-chartA-B.SCBstring", "boba");
+    expectations.put("imported-chartA-B.SPextra5", "k8s");
+    expectations.put("imported-chartA-B.SC1extra5", "tiller");
+    
+    expectations.put("overridden-chart1.SC1bool", "false");
+    expectations.put("overridden-chart1.SC1float", "3.141592");
+    expectations.put("overridden-chart1.SC1int", "99");
+    expectations.put("overridden-chart1.SC1string", "pollywog");
+    expectations.put("overridden-chart1.SPextra2", "42");
+    
+    expectations.put("overridden-chartA.SCAbool", "true");
+    expectations.put("overridden-chartA.SCAfloat", "41.3");
+    expectations.put("overridden-chartA.SCAint", "808");
+    expectations.put("overridden-chartA.SCAstring", "jaberwocky");
+    expectations.put("overridden-chartA.SPextra4", "true");
+    
+    expectations.put("overridden-chartA-B.SCAbool", "true");
+    expectations.put("overridden-chartA-B.SCAfloat", "41.3");
+    expectations.put("overridden-chartA-B.SCAint", "808");
+    expectations.put("overridden-chartA-B.SCAstring", "jaberwocky");
+    expectations.put("overridden-chartA-B.SCBbool", "false");
+    expectations.put("overridden-chartA-B.SCBfloat", "1.99");
+    expectations.put("overridden-chartA-B.SCBint", "77");
+    expectations.put("overridden-chartA-B.SCBstring", "jango");
+    expectations.put("overridden-chartA-B.SPextra6", "111");
+    expectations.put("overridden-chartA-B.SCAextra1", "23");
+    expectations.put("overridden-chartA-B.SCBextra1", "13");
+    expectations.put("overridden-chartA-B.SC1extra6", "77");
+    
+    expectations.put("SCBexported1B", "1965");
+    expectations.put("SC1extra7", "true");
+    expectations.put("SCBexported2A", "blaster");
+    expectations.put("global.SC1exported2.all.SC1exported3", "SC1expstr");
+
+    this.verifyRequirementsImportValues(expectations);    
   }
   
-  private static final void verifyRequirementsEnabled(final Chart.Builder chartBuilder, final ConfigOrBuilder config, final SortedSet<? extends String> expectations) {
-    assertNotNull(chartBuilder);
+  private final void verifyRequirementsEnabled(final ConfigOrBuilder config, final SortedSet<? extends String> expectations) {
+    assertNotNull(this.chartBuilder);
     assertNotNull(config);
     assertNotNull(expectations);
 
-    assertSame(chartBuilder, Requirements.apply(chartBuilder, config));
+    assertSame(this.chartBuilder, Requirements.apply(this.chartBuilder, config));
 
-    assertEquals(expectations, getChartNames(chartBuilder));
+    assertEquals(expectations, getChartNames());
   }
 
-  private static final SortedSet<? extends String> getChartNames(final ChartOrBuilder rootChart) {
-    assertNotNull(rootChart);
-
-    SortedSet<String> returnValue = new TreeSet<>();
+  private final SortedSet<? extends String> getChartNames() {
+    final SortedSet<String> returnValue = new TreeSet<>();
     
     final List<ChartOrBuilder> charts = new LinkedList<>();
-    charts.add(rootChart);
+    charts.add(this.chartBuilder);
     
     while (!charts.isEmpty()) {
       ChartOrBuilder chart = charts.remove(0);
@@ -264,6 +290,41 @@ public class TestRequirements {
       }
     }
     return returnValue;
+  }
+
+  private final void verifyRequirementsImportValues(final Map<? extends String, ? extends String> expectations) {
+    this.verifyRequirementsImportValues(null, expectations);
+  }
+  
+  private final void verifyRequirementsImportValues(final ConfigOrBuilder config, final Map<? extends String, ? extends String> expectations) {
+    assertNotNull(this.chartBuilder);
+    final Requirements requirements = Requirements.fromChartOrBuilder(this.chartBuilder);
+    assertNotNull(requirements);
+    assertSame(this.chartBuilder, Requirements.processImportValues(this.chartBuilder));
+    final Map<String, Object> chartDefaultValues = Configs.toDefaultValuesMap(this.chartBuilder);
+    assertNotNull(chartDefaultValues);
+    final MapTree defaultValues = new MapTree(chartDefaultValues);
+    final Set<? extends Entry<? extends String, ? extends String>> expectationsEntrySet = expectations.entrySet();
+    assertNotNull(expectationsEntrySet);
+    for (final Entry<? extends String, ? extends String> expectationsEntry : expectationsEntrySet) {
+      assertNotNull(expectationsEntry);
+      final String path = expectationsEntry.getKey();
+      assertNotNull(path);
+      final Object pathValue = defaultValues.get(path, Object.class);
+      assertNotNull(pathValue);
+      if (path.endsWith("bool")) {
+        assertTrue(pathValue instanceof Boolean);
+      } else if (path.endsWith("string")) {
+        assertTrue(pathValue instanceof String);
+      } else if (path.endsWith("float")) {
+        assertTrue(pathValue instanceof Double); // Java/Go type mismatch
+      } else if (path.endsWith("int")) {
+        assertTrue(pathValue instanceof Integer);
+      }
+      final Object expectedValue = expectationsEntry.getValue();
+      assertNotNull(expectedValue);
+      assertEquals(expectedValue.toString(), pathValue.toString());
+    }
   }
   
 }

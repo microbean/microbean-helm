@@ -483,17 +483,17 @@ public final class Charts {
   }
 
   // Ported slavishly from requirements.go getParents()
-  static final List<ChartOrBuilder> getParents(final ChartOrBuilder c, List<ChartOrBuilder> out) {
+  static final List<Chart.Builder> getParents(final Chart.Builder c, List<Chart.Builder> out) {
     Objects.requireNonNull(c);
     if (out == null) {
-      out = new ArrayList<ChartOrBuilder>();
+      out = new ArrayList<>();
       out.add(c);
     } else if (out.isEmpty()) {
       out.add(c);
     }
-    final Collection<? extends ChartOrBuilder> subcharts = c.getDependenciesOrBuilderList();
+    final Collection<? extends Chart.Builder> subcharts = c.getDependenciesBuilderList();
     if (subcharts != null && !subcharts.isEmpty()) {
-      for (final ChartOrBuilder subchart : subcharts) {
+      for (final Chart.Builder subchart : subcharts) {
         if (subchart != null) {
           final int subSubchartCount = subchart.getDependenciesCount();
           if (subSubchartCount > 0) {

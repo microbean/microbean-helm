@@ -106,7 +106,7 @@ public class TillerInstaller {
   /**
    * The version of Tiller to install.
    */
-  public static final String VERSION = "2.5.0";
+  public static final String VERSION = "2.6.2";
 
   /*
    * Derivative static fields.

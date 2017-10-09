@@ -117,38 +117,25 @@ public class Requirements {
     return dependency;
   }
 
-  private final void enableAll() {
-    final Collection<Dependency> dependencies = this.getDependencies();
-    if (dependencies != null && !dependencies.isEmpty()) {
-      for (final Dependency dependency : dependencies) {
-        if (dependency != null) {
-          dependency.setEnabled(true);
-        }
-      }
-    }
-  }
-
-  static final ChartOrBuilder processImportValues(final ChartOrBuilder c) {
+  static final ChartOrBuilder processImportValues(final Chart.Builder c) {
     Objects.requireNonNull(c);
-    final List<? extends ChartOrBuilder> parentCharts = Charts.getParents(c, null);
+    final List<? extends Chart.Builder> parentCharts = Charts.getParents(c, null);
     if (parentCharts != null && !parentCharts.isEmpty()) {
       Collections.reverse(parentCharts);
-      for (final ChartOrBuilder parentChart : parentCharts) {
+      for (final Chart.Builder parentChart : parentCharts) {
         if (parentChart != null) {
-          //
-          // TODO: resume work
-          //
+          processSingleChartImportValues(parentChart);
         }
       }
     }
-    throw new UnsupportedOperationException("Not yet implemented");
+    return c;
   }
   
-  // Ported from requirements.go processImportValues().  TODO: Wildly inefficient.
-  private static final Chart processSingleChartImportValues(final Chart c) {
+  // Ported from requirements.go processImportValues().
+  private static final Chart.Builder processSingleChartImportValues(final Chart.Builder c) {
     Objects.requireNonNull(c);
 
-    Chart returnValue = null;
+    Chart.Builder returnValue = null;
 
     final Map<String, Object> canonicalValues = Configs.toDefaultValuesMap(c);
     
@@ -167,7 +154,9 @@ public class Requirements {
 
             final Collection<?> importValues = dependency.getImportValues();
             if (importValues != null && !importValues.isEmpty()) {
-              final Collection<Object> newImportValues = new ArrayList<>();
+
+              final Collection<Object> newImportValues = new ArrayList<>(importValues.size());
+
               for (final Object importValue : importValues) {
                 final String s;
                 
@@ -214,14 +203,13 @@ public class Requirements {
       }
     }
     b = Values.coalesceMaps(canonicalValues, b);
+    assert b != null;
     final String yaml = new Yaml().dump(b);
     assert yaml != null;
-    final Chart.Builder chartBuilder = c.toBuilder();
-    assert chartBuilder != null;
-    final Config.Builder configBuilder = chartBuilder.getValuesBuilder();
+    final Config.Builder configBuilder = c.getValuesBuilder();
     assert configBuilder != null;
     configBuilder.setRaw(yaml);
-    returnValue = chartBuilder.build();
+    returnValue = c;
     assert returnValue != null;
     return returnValue;
   }
