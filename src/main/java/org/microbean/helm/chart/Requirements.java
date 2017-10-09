@@ -117,7 +117,7 @@ public class Requirements {
     return dependency;
   }
 
-  static final ChartOrBuilder processImportValues(final Chart.Builder c) {
+  static final Chart.Builder processImportValues(final Chart.Builder c) {
     Objects.requireNonNull(c);
     final List<? extends Chart.Builder> flattenedCharts = Charts.flatten(c);
     if (flattenedCharts != null) {
@@ -240,18 +240,6 @@ public class Requirements {
     }
   }
 
-  // Ported from PathValue() in chartutil/values.go; bears a striking resemblance to Table()
-  private static final Object pathValue(final Map<String, Object> map, final String dotSeparatedPath) {
-    Objects.requireNonNull(dotSeparatedPath);
-    final Object returnValue;
-    if (map == null || map.isEmpty()) {
-      returnValue = null;
-    } else {
-      returnValue = new MapTree(map).get(dotSeparatedPath, Object.class);
-    }
-    return returnValue;
-  }
-
   // ported from Table() in chartutil/values.go
   private static final Map<String, Object> getMap(Map<String, Object> map, final String dotSeparatedPath) {
     final Map<String, Object> returnValue;
@@ -263,34 +251,21 @@ public class Requirements {
     return returnValue;
   }
 
-  // ported from tableLookup() in chartutil/values.go
-  private static final Map<String, Object> getMap(final Map<String, Object> map, final Object key) {
-    Map<String, Object> returnValue = null;
-    if (map != null && !map.isEmpty()) {
-      final Object valueObject = map.get(key);
-      if (valueObject instanceof Map) {
-        @SuppressWarnings("unchecked")
-        final Map<String, Object> temp = (Map<String, Object>)valueObject;
-        returnValue = temp;
-      }
-    }
-    return returnValue;
-  }
-
   // Ported from LoadRequirements() in chartutil/requirements.go
   public static final Requirements fromChartOrBuilder(final ChartOrBuilder chart) {
-    Objects.requireNonNull(chart);
     Requirements returnValue = null;
-    final Collection<? extends Any> files = chart.getFilesList();
-    if (files != null && !files.isEmpty()) {
-      final Yaml yaml = new Yaml(requirementsConstructor);
-      for (final Any file : files) {
-        if (file != null && "requirements.yaml".equals(file.getTypeUrl())) {
-          final ByteString fileContents = file.getValue();
-          if (fileContents != null) {
-            final String yamlString = fileContents.toStringUtf8();
-            if (yamlString != null) {
-              returnValue = (Requirements)yaml.load(yamlString);
+    if (chart != null) {
+      final Collection<? extends Any> files = chart.getFilesList();
+      if (files != null && !files.isEmpty()) {
+        final Yaml yaml = new Yaml(requirementsConstructor);
+        for (final Any file : files) {
+          if (file != null && "requirements.yaml".equals(file.getTypeUrl())) {
+            final ByteString fileContents = file.getValue();
+            if (fileContents != null) {
+              final String yamlString = fileContents.toStringUtf8();
+              if (yamlString != null) {
+                returnValue = (Requirements)yaml.load(yamlString);
+              }
             }
           }
         }
@@ -299,14 +274,12 @@ public class Requirements {
     return returnValue;
   }
 
-  /**
-   * Based on ProcessRequirementsEnabled in requirements.go.  This
-   * code is a slavish port of the equivalent Go code and can be
-   * compressed and cleaned up extensively.
-   */
-  public static final Chart.Builder apply(Chart.Builder chartBuilder, ConfigOrBuilder userSuppliedValues) {
+  public static final Chart.Builder apply(final Chart.Builder chartBuilder, ConfigOrBuilder userSuppliedValues) {
+    return apply(chartBuilder, userSuppliedValues, true);
+  }
+
+  static final Chart.Builder apply(final Chart.Builder chartBuilder, final ConfigOrBuilder userSuppliedValues, final boolean processImportValues) {
     Objects.requireNonNull(chartBuilder);
-    Chart.Builder returnValue = chartBuilder;
 
     final Requirements requirements = fromChartOrBuilder(chartBuilder);
     if (requirements != null && !requirements.isEmpty()) {
@@ -366,11 +339,17 @@ public class Requirements {
             }
             
             // If we get here, this is an enabled subchart.
-            Requirements.apply(subchart, configBuilder); // <-- RECURSIVE CALL
+            Requirements.apply(subchart, configBuilder, false); // <-- RECURSIVE CALL
           }
           
         }
       }
+    }
+    final Chart.Builder returnValue;
+    if (processImportValues) {
+      returnValue = processImportValues(chartBuilder);
+    } else {
+      returnValue = chartBuilder;
     }
     return returnValue;
   }
@@ -709,38 +688,41 @@ public class Requirements {
     }
     
     final void processConditions(final Map<String, Object> values) {
-      boolean explicitlyTrue = false;
-      boolean explicitlyFalse = false;
-      String conditionString = this.getCondition();
-      if (conditionString != null) {
-        conditionString = conditionString.trim();
-        final String[] conditions = commaSplitPattern.split(conditionString);
-        if (conditions != null && conditions.length > 0) {
-          for (final String condition : conditions) {
-            if (condition != null && !condition.isEmpty()) {
-              final Object conditionValue = pathValue(values, condition);
-              if (Boolean.TRUE.equals(conditionValue)) {
-                explicitlyTrue = true;
-              } else if (Boolean.FALSE.equals(conditionValue)) {
-                explicitlyFalse = true;
-              } else if (conditionValue != null) {
-                break;
+      if (values != null && !values.isEmpty()) {
+        final MapTree mapTree = new MapTree(values);
+        boolean explicitlyTrue = false;
+        boolean explicitlyFalse = false;
+        String conditionString = this.getCondition();
+        if (conditionString != null) {
+          conditionString = conditionString.trim();
+          final String[] conditions = commaSplitPattern.split(conditionString);
+          if (conditions != null && conditions.length > 0) {
+            for (final String condition : conditions) {
+              if (condition != null && !condition.isEmpty()) {
+                final Object conditionValue = mapTree.get(condition, Object.class);
+                if (Boolean.TRUE.equals(conditionValue)) {
+                  explicitlyTrue = true;
+                } else if (Boolean.FALSE.equals(conditionValue)) {
+                  explicitlyFalse = true;
+                } else if (conditionValue != null) {
+                  break;
+                }
               }
             }
           }
         }
-      }
-      
-      // Note that this block looks different from the analogous block
-      // in processTags() above.  It is this way in the Go code as
-      // well.
-      
-      if (explicitlyFalse) {
-        if (!explicitlyTrue) {
-          this.setEnabled(false);
+        
+        // Note that this block looks different from the analogous block
+        // in processTags() above.  It is this way in the Go code as
+        // well.
+        
+        if (explicitlyFalse) {
+          if (!explicitlyTrue) {
+            this.setEnabled(false);
+          }
+        } else if (explicitlyTrue) {
+          this.setEnabled(true);
         }
-      } else if (explicitlyTrue) {
-        this.setEnabled(true);
       }
     }
 

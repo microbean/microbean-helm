@@ -33,7 +33,6 @@ import java.util.concurrent.FutureTask;
 import com.google.protobuf.ByteString;
 
 import hapi.chart.ChartOuterClass.Chart;
-import hapi.chart.ChartOuterClass.ChartOrBuilder;
 import hapi.chart.ConfigOuterClass.Config;
 import hapi.chart.MetadataOuterClass.MetadataOrBuilder;
 
@@ -417,7 +416,6 @@ public final class Charts {
     if (chartBuilder == null) {
       throw new IllegalStateException("new URLChartLoader().load(chartUrl) == null; chartUrl: " + chartUrl);
     }
-    assert chartBuilder != null;
     
     final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
     assert requestBuilder != null;
@@ -442,27 +440,21 @@ public final class Charts {
       configBuilder.setRawBytes(rawBytes);
     }
 
-    // In the Go code this is ProcessRequirementsEnabled.
     chartBuilder = Requirements.apply(chartBuilder, configBuilder);
-
-    final ChartOrBuilder chartOrBuilder = Requirements.processImportValues(chartBuilder);
-    assert chartOrBuilder != null;
-    if (chartOrBuilder instanceof Chart.Builder) {
-      requestBuilder.setChart(((Chart.Builder)chartOrBuilder).build());
-    } else {
-      assert chartOrBuilder instanceof Chart;
-      requestBuilder.setChart((Chart)chartOrBuilder);
-    }
+    assert chartBuilder != null;
     
+    requestBuilder.setChart(chartBuilder);
     requestBuilder.setValues(configBuilder);
     requestBuilder.setWait(wait);
 
-    final InstallReleaseRequest request = requestBuilder.build();
-    assert request != null;
-
     final ReleaseServiceFutureStub stub = tiller.getReleaseServiceFutureStub();
     assert stub != null;
+
+    final InstallReleaseRequest request = requestBuilder.build();
+    assert request != null;
+    
     final Future<InstallReleaseResponse> responseFuture = stub.installRelease(request);
+
     final FutureTask<Release> returnValue;
     if (responseFuture == null) {
       returnValue = new FutureTask<>(() -> {}, null);
@@ -478,7 +470,9 @@ public final class Charts {
           return rv;
         });
     }
+    
     returnValue.run();
+    
     return returnValue;
   }
 

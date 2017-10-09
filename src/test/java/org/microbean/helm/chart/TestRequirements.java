@@ -263,7 +263,7 @@ public class TestRequirements {
     assertNotNull(config);
     assertNotNull(expectations);
 
-    assertSame(this.chartBuilder, Requirements.apply(this.chartBuilder, config));
+    assertSame(this.chartBuilder, Requirements.apply(this.chartBuilder, config, false));
 
     assertEquals(expectations, getChartNames());
   }
