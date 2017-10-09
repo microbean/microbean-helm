@@ -482,8 +482,12 @@ public final class Charts {
     return returnValue;
   }
 
+  static final List<Chart.Builder> flatten(final Chart.Builder c) {
+    return flatten(c, null);
+  }
+
   // Ported slavishly from requirements.go getParents()
-  static final List<Chart.Builder> getParents(final Chart.Builder c, List<Chart.Builder> out) {
+  private static final List<Chart.Builder> flatten(final Chart.Builder c, List<Chart.Builder> out) {
     Objects.requireNonNull(c);
     if (out == null) {
       out = new ArrayList<>();
@@ -498,53 +502,12 @@ public final class Charts {
           final int subSubchartCount = subchart.getDependenciesCount();
           if (subSubchartCount > 0) {
             out.add(subchart);
-            out = getParents(subchart, out);
+            out = flatten(subchart, out);
           }
         }
       }
     }
     return out;
-  }
-
-  static final boolean hasDependency(final ChartOrBuilder chart, final String name, final String version) {
-    boolean returnValue = false;
-    if (chart != null) {
-      final Collection<? extends ChartOrBuilder> subcharts = chart.getDependenciesList();
-      if (subcharts != null && !subcharts.isEmpty()) {
-        for (final ChartOrBuilder subchart : subcharts) {
-          if (subchart != null && subchart.hasMetadata()) {
-            final MetadataOrBuilder metadata = subchart.getMetadataOrBuilder();
-            assert metadata != null;
-            final String subchartName = metadata.getName();
-            final String subchartVersion = metadata.getVersion();
-            if (subchartName == null) {
-              if (name == null) {
-                if (subchartVersion == null) {
-                  if (version == null) {
-                    returnValue = true;
-                    break;
-                  }
-                } else if (subchartVersion.equals(version)) {
-                  returnValue = true;
-                  break;
-                }
-              }
-            } else if (subchartName.equals(name)) {
-              if (subchartVersion == null) {
-                if (version == null) {
-                  returnValue = true;
-                  break;
-                }
-              } else if (subchartVersion.equals(version)) {
-                returnValue = true;
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-    return returnValue;
   }
 
 }

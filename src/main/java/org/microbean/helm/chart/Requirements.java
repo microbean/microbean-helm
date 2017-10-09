@@ -119,12 +119,13 @@ public class Requirements {
 
   static final ChartOrBuilder processImportValues(final Chart.Builder c) {
     Objects.requireNonNull(c);
-    final List<? extends Chart.Builder> parentCharts = Charts.getParents(c, null);
-    if (parentCharts != null && !parentCharts.isEmpty()) {
-      Collections.reverse(parentCharts);
-      for (final Chart.Builder parentChart : parentCharts) {
-        if (parentChart != null) {
-          processSingleChartImportValues(parentChart);
+    final List<? extends Chart.Builder> flattenedCharts = Charts.flatten(c);
+    if (flattenedCharts != null) {
+      assert !flattenedCharts.isEmpty();
+      Collections.reverse(flattenedCharts);
+      for (final Chart.Builder chart : flattenedCharts) {
+        if (chart != null) {
+          processSingleChartImportValues(chart);
         }
       }
     }
