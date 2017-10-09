@@ -336,7 +336,7 @@ public class Requirements {
                 }
               }
               dependency.setNameToAlias();
-              dependency.setEnabled(true);
+              assert dependency.isEnabled();
             }
           }
 
@@ -344,19 +344,6 @@ public class Requirements {
           // values in the form of a Map.
           final Map<String, Object> chartValuesMap = Configs.toValuesMap(chartBuilder, userSuppliedValues);
           assert chartValuesMap != null;
-
-          // Turn that Map into YAML, because YAML is the only format
-          // we have for altering a Config object (see
-          // Config#setRaw(String)).
-          final String userSuppliedValuesYaml = Configs.toYAML(chartValuesMap);
-          assert userSuppliedValuesYaml != null;
-
-          // Get the parent chart's Config.Builder and change its
-          // default values to be the (combined, all-inclusive)
-          // user-supplied values instead.
-          final Config.Builder configBuilder = chartBuilder.getValuesBuilder();
-          assert configBuilder != null;  
-          configBuilder.setRaw(userSuppliedValuesYaml);
           
           // Now disable certain Dependencies.  This might be because
           // the canonical value set contains tags designating them
@@ -367,6 +354,16 @@ public class Requirements {
           // Do the same thing, but work with conditions instead of tags.
           requirements.processConditions(chartValuesMap);
 
+          // Turn the values into YAML, because YAML is the only format
+          // we have for setting the contents of a new Config.Builder object (see
+          // Config.Builder#setRaw(String)).  Then make a 
+          final String userSuppliedValuesYaml = Configs.toYAML(chartValuesMap);
+          assert userSuppliedValuesYaml != null;
+
+          final Config.Builder configBuilder = Config.newBuilder();
+          assert configBuilder != null;  
+          configBuilder.setRaw(userSuppliedValuesYaml);
+          
           // Very carefully remove subcharts that have been disabled.
           // Note the recursive call contained below.
           ITERATION:
@@ -379,9 +376,7 @@ public class Requirements {
               }
             }
             
-            // If we get here, this is an enabled subchart.  TODO:
-            // should every subchart get the same set of values?  Need
-            // to check the .go code to make absolutely sure here.
+            // If we get here, this is an enabled subchart.
             Requirements.apply(subchart, configBuilder); // <-- RECURSIVE CALL
           }
           
@@ -446,10 +441,12 @@ public class Requirements {
     return returnValue;
   }
 
+  
   /*
    * Inner and nested classes.
    */
 
+  
   public static final class DependencyBeanInfo extends SimpleBeanInfo {
 
     private final Collection<? extends PropertyDescriptor> propertyDescriptors;
@@ -723,8 +720,8 @@ public class Requirements {
     }
     
     final void processConditions(final Map<String, Object> values) {
-      boolean hasTrue = false;
-      boolean hasFalse = false;
+      boolean explicitlyTrue = false;
+      boolean explicitlyFalse = false;
       String conditionString = this.getCondition();
       if (conditionString != null) {
         conditionString = conditionString.trim();
@@ -734,9 +731,9 @@ public class Requirements {
             if (condition != null && !condition.isEmpty()) {
               final Object conditionValue = pathValue(values, condition);
               if (Boolean.TRUE.equals(conditionValue)) {
-                hasTrue = true;
+                explicitlyTrue = true;
               } else if (Boolean.FALSE.equals(conditionValue)) {
-                hasFalse = false;
+                explicitlyFalse = true;
               } else if (conditionValue != null) {
                 break;
               }
@@ -748,11 +745,12 @@ public class Requirements {
       // Note that this block looks different from the analogous block
       // in processTags() above.  It is this way in the Go code as
       // well.
-      if (hasFalse) {
-        if (!hasTrue) {
+      
+      if (explicitlyFalse) {
+        if (!explicitlyTrue) {
           this.setEnabled(false);
         }
-      } else if (hasTrue) {
+      } else if (explicitlyTrue) {
         this.setEnabled(true);
       }
     }

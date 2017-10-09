@@ -179,6 +179,56 @@ public class TestRequirements {
     expectations.add("subchart1");
     verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
   }
+
+  @Test
+  public void testRequirementsConditionsNonValue() {
+    final Config.Builder configBuilder = Config.newBuilder();
+    assertNotNull(configBuilder);
+    configBuilder.setRaw("subchart1:\n  nothinguseful: false\n\n");
+    final SortedSet<String> expectations = new TreeSet<>();
+    expectations.add("parentchart");
+    expectations.add("subchart1");
+    expectations.add("subcharta");
+    expectations.add("subchartb");
+    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+  }
+
+  @Test
+  public void testRequirementsConditionsEnabledL1Both() {
+    final Config.Builder configBuilder = Config.newBuilder();
+    assertNotNull(configBuilder);
+    configBuilder.setRaw("subchart1:\n  enabled: true\nsubchart2:\n  enabled: true\n");
+    final SortedSet<String> expectations = new TreeSet<>();
+    expectations.add("parentchart");
+    expectations.add("subchart1");
+    expectations.add("subchart2");
+    expectations.add("subcharta");
+    expectations.add("subchartb");
+    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+  }
+
+  @Test
+  public void testRequirementsConditionsDisabledL1Both() {
+    final Config.Builder configBuilder = Config.newBuilder();
+    assertNotNull(configBuilder);
+    configBuilder.setRaw("subchart1:\n  enabled: false\nsubchart2:\n  enabled: false\n");
+    final SortedSet<String> expectations = new TreeSet<>();
+    expectations.add("parentchart");
+    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+  }
+
+  @Test
+  public void testRequirementsConditionsSecond() {
+    final Config.Builder configBuilder = Config.newBuilder();
+    assertNotNull(configBuilder);
+    // conditions a child using the second condition path of child's condition
+    configBuilder.setRaw("subchart1:\n  subcharta:\n    enabled: false\n");
+    final SortedSet<String> expectations = new TreeSet<>();
+    expectations.add("parentchart");
+    expectations.add("subchart1");
+    expectations.add("subchartb");
+    verifyRequirementsEnabled(this.chartBuilder, configBuilder, expectations);
+  }
   
   private static final void verifyRequirementsEnabled(final Chart.Builder chartBuilder, final ConfigOrBuilder config, final SortedSet<? extends String> expectations) {
     assertNotNull(chartBuilder);
