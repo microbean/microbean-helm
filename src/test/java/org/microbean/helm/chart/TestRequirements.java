@@ -90,8 +90,8 @@ public class TestRequirements {
     final URL requirementsYaml = Thread.currentThread().getContextClassLoader().getResource("TestRequirements/requirements.yaml");
     assertNotNull(requirementsYaml);
     try (final InputStream stream = new BufferedInputStream(requirementsYaml.openStream())) {
-      final Yaml yaml = new Yaml(new Constructor(Requirements.class));
-      final Requirements requirements = (Requirements)yaml.load(stream);
+      final Yaml yaml = new Yaml();
+      final Requirements requirements = yaml.loadAs(stream, Requirements.class);
       assertNotNull(requirements);
       final Collection<Dependency> dependencies = requirements.getDependencies();
       assertNotNull(dependencies);

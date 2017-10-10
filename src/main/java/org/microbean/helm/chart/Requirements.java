@@ -16,7 +16,6 @@
  */
 package org.microbean.helm.chart;
 
-import java.beans.ConstructorProperties;
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.beans.SimpleBeanInfo;
@@ -52,10 +51,6 @@ import hapi.chart.MetadataOuterClass.MetadataOrBuilder;
 
 import org.yaml.snakeyaml.Yaml;
 
-import org.yaml.snakeyaml.constructor.Constructor;
-
-import org.yaml.snakeyaml.introspector.PropertyUtils;
-
 /*
  * TODO: tests tests tests
  *
@@ -64,11 +59,9 @@ import org.yaml.snakeyaml.introspector.PropertyUtils;
  * for each subchart?
  */
 
-public class Requirements {
+public final class Requirements {
 
   private static final Pattern commaSplitPattern = Pattern.compile("\\s*,\\s*");
-  
-  private static final Constructor requirementsConstructor = new Constructor(Requirements.class);
   
   private Map<String, Dependency> dependenciesByName;
 
@@ -258,14 +251,14 @@ public class Requirements {
     if (chart != null) {
       final Collection<? extends Any> files = chart.getFilesList();
       if (files != null && !files.isEmpty()) {
-        final Yaml yaml = new Yaml(requirementsConstructor);
+        final Yaml yaml = new Yaml();
         for (final Any file : files) {
           if (file != null && "requirements.yaml".equals(file.getTypeUrl())) {
             final ByteString fileContents = file.getValue();
             if (fileContents != null) {
               final String yamlString = fileContents.toStringUtf8();
               if (yamlString != null) {
-                returnValue = (Requirements)yaml.load(yamlString);
+                returnValue = yaml.loadAs(yamlString, Requirements.class);
               }
             }
           }
@@ -351,61 +344,6 @@ public class Requirements {
       returnValue = processImportValues(chartBuilder);
     } else {
       returnValue = chartBuilder;
-    }
-    return returnValue;
-  }
-
-  
-  // ported relatively slavishly from getAliasDependency()
-  /**
-   * @deprecated This method is not used and is slated for removal.
-   * Please see {@link
-   * Requirements.Dependency#getFirstIdentifiedSubchart(Collection)} instead.
-   */
-  @Deprecated // Not used.
-  private static final Chart getAliasSubchart(final Collection<? extends Chart> subcharts, final Dependency aliasChart) {
-    Chart returnValue = null;
-    if (subcharts != null && !subcharts.isEmpty()) {
-      final String aliasChartName = aliasChart.getName();
-      if (aliasChartName != null) {
-        final String aliasChartVersion = aliasChart.getVersion();
-        for (Chart subchart : subcharts) {
-          if (subchart != null && subchart.hasMetadata()) {
-            Metadata subchartMetadata = subchart.getMetadata();
-            assert subchartMetadata != null;
-            final String subchartName = subchartMetadata.getName();
-            if (aliasChartName.equals(subchartName)) {
-              final String subchartVersion = subchartMetadata.getVersion();
-              if (aliasChartVersion.equals(subchartVersion)) {
-                
-                // Find the first subchart that matches both both the
-                // name and version of the supplied aliasChart.  If it
-                // does, we're going to return it no matter what.  If
-                // the aliasChart also has an alias, then rename the chart.
-
-                final String alias = aliasChart.getAlias();
-                if (alias != null && !alias.isEmpty()) {
-
-                  final Metadata.Builder subchartMetadataBuilder;
-                  subchartMetadataBuilder = subchartMetadata.toBuilder();
-                  assert subchartMetadataBuilder != null;
-                  subchartMetadataBuilder.setName(alias);
-                  subchartMetadata = subchartMetadataBuilder.build();
-                
-                  final Chart.Builder subchartBuilder = subchart.toBuilder();
-                  assert subchartBuilder != null;
-                  subchartBuilder.setMetadata(subchartMetadata);
-                  subchart = subchartBuilder.build();
-                  assert subchart != null;
-                }
-                
-                returnValue = subchart;
-                break;
-              }
-            }
-          }
-        }
-      }
     }
     return returnValue;
   }

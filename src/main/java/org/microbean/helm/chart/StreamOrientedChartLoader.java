@@ -629,49 +629,6 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
   }
 
   /**
-   * Creates a new {@link Template} {@linkplain
-   * hapi.chart.TemplateOuterClass.Template.Builder#setData(ByteString)
-   * from the contents of the supplied <code>InputStream</code>},
-   * {@linkplain
-   * hapi.chart.TemplateOuterClass.Template.Builder#setName(String)
-   * with the supplied <code>name</code>}, and returns it.
-   *
-   * <p>This method never returns {@code null}.</p>
-   *
-   * @param stream an {@link InputStream} containing <a
-   * href="https://docs.helm.sh/developing_charts/#template-files">valid
-   * template contents</a> as defined by the <a
-   * href="https://docs.helm.sh/developing_charts/#template-files">chart
-   * specification</a>; must not be {@code null}
-   *
-   * @param name the name for the new {@link Template} within the
-   * chart; must not be {@code null}
-   *
-   * @return a new {@link Template}; never {@code null}
-   *
-   * @exception NullPointerException if {@code stream} or {@code
-   * name} is {@code null}
-   *
-   * @exception IOException if there was a problem reading from the
-   * supplied {@link InputStream}
-   *
-   * @see
-   * #createTemplateBuilder(hapi.chart.ChartOuterClass.Chart.Builder,
-   * InputStream, String)
-   *
-   * @see hapi.chart.TemplateOuterClass.Template.Builder
-   *
-   * @deprecated This method is no longer called and is slated for
-   * removal.  Please see {@link
-   * #createTemplateBuilder(hapi.chart.ChartOuterClass.Chart.Builder,
-   * InputStream, String)} instead.
-   */
-  @Deprecated
-  protected Template createTemplate(final InputStream stream, final String name) throws IOException {
-    return this.createTemplateBuilder(Chart.newBuilder(), stream, name).build();
-  }
-
-  /**
    * {@linkplain
    * hapi.chart.ChartOuterClass.Chart.Builder#addTemplatesBuilder()
    * Creates a new} {@link
