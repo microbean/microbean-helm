@@ -25,18 +25,12 @@ import java.nio.file.LinkOption; // for javadoc only
 import java.nio.file.Path;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import java.util.stream.Stream;
-
-import java.util.zip.GZIPInputStream;
-
-import com.google.protobuf.Any;
-import com.google.protobuf.ByteString;
 
 import hapi.chart.ChartOuterClass.Chart; // for javadoc only
 

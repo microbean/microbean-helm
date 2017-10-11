@@ -26,15 +26,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import hapi.chart.ChartOuterClass.Chart;
+import hapi.chart.ConfigOuterClass.Config;
 
 import hapi.release.ReleaseOuterClass.Release;
 
+import hapi.services.tiller.Tiller.InstallReleaseRequest;
+
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.Before;
-import org.junit.After;
 
 import org.microbean.helm.Tiller;
 
@@ -71,8 +74,19 @@ public class TestCharts {
   public void testInstall() throws ExecutionException, IOException, InterruptedException {
     assumeFalse(Boolean.getBoolean("skipClusterTests"));
     try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
-         final Tiller tiller = new Tiller(client)) {
-      final Future<Release> releaseFuture = Charts.install(tiller, this.redisUrl);
+         final Tiller tiller = new Tiller(client);
+         final org.microbean.helm.ReleaseManager chartManager = new org.microbean.helm.ReleaseManager(tiller)) {
+      final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
+      assertNotNull(requestBuilder);
+      requestBuilder.setTimeout(300L);
+
+      Chart.Builder chartBuilder = null;
+      try (final AbstractChartLoader<URL> loader = new URLChartLoader()) {
+        chartBuilder = loader.load(this.redisUrl);
+      }
+      assertNotNull(chartBuilder);
+      
+      final Future<Release> releaseFuture = chartManager.install(requestBuilder, chartBuilder);
       assertNotNull(releaseFuture);
       final Release release = releaseFuture.get();
       assertNotNull(release);

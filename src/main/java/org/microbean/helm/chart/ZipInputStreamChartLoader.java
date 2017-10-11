@@ -25,7 +25,6 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;

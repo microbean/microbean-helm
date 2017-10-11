@@ -21,7 +21,5 @@
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
- *
- * @see org.microbean.helm.chart.Charts#install(URL)
  */
 package org.microbean.helm.chart;

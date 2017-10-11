@@ -12,7 +12,7 @@
     <version>4</version>
   </parent>
 
-  <name>MicroBean Helm</name>
+  <name>microBean Helm</name>
   <description>Java bindings for the Helm API</description>
   <inceptionYear>2017</inceptionYear>
   <url>https://microbean.github.io/${project.artifactId}</url>
@@ -35,7 +35,7 @@
          The Maven plugin for working with Google's protocol buffers.
 
        * https://github.com/grpc/grpc-java#download:
-         Documentation for hte grpc-java protoc plugin.
+         Documentation for the grpc-java protoc plugin.
 
   -->
   
@@ -455,6 +455,9 @@
     <plugins>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <doclint>-missing</doclint>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

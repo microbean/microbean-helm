@@ -22,12 +22,10 @@ import java.beans.SimpleBeanInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Objects;
 
 import java.util.regex.Matcher;
@@ -51,91 +49,166 @@ import hapi.chart.MetadataOuterClass.MetadataOrBuilder;
 
 import org.yaml.snakeyaml.Yaml;
 
-/*
- * TODO: tests tests tests
+/**
+ * A specification of a <a
+ * href="https://docs.helm.sh/developing_charts/#chart-dependencies">Helm
+ * chart's dependencies</a>; not normally used directly by end users.
  *
- * If you call toBuilder() on a Chart, and then say, for example,
- * getDependenciesBuilderList(), do you get subchart Chart.Builders
- * for each subchart?
+ * <p>Helm charts support a {@code requirements.yaml} resource, in
+ * YAML format, whose sole member is a {@code dependencies} list.
+ * This class represents that resource.</p>
+ *
+ * <h2>Thread Safety</h2>
+ *
+ * <p>Instances of this class are <strong>not</strong> suitable for
+ * concurrent access by multiple threads.</p>
+ *
+ * @author <a href="https://about.me/lairdnelson/"
+ * target="_parent">Laird Nelson</a>
  */
-
 public final class Requirements {
 
-  private static final Pattern commaSplitPattern = Pattern.compile("\\s*,\\s*");
-  
-  private Map<String, Dependency> dependenciesByName;
 
+  /*
+   * Instance fields.
+   */
+
+
+  /**
+   * The {@link Collection} of {@link Dependency} instances that
+   * comprises this {@link Requirements}.
+   *
+   * <p>This field may be {@code null}.</p>
+   */
+  private Collection<Dependency> dependencies;
+
+
+  /*
+   * Constructors.
+   */
+
+
+  /**
+   * Creates a new {@link Requirements}.
+   */
   public Requirements() {
     super();
   }
 
+
+  /*
+   * Instance methods.
+   */
+  
+
+  /**
+   * Returns {@code true} if this {@link Requirements} has no {@link
+   * Dependency} instances.
+   *
+   * @return {@code true} if this {@link Requirements} is empty;
+   * {@code false} otherwise
+   */
   public final boolean isEmpty() {
-    return this.dependenciesByName == null || this.dependenciesByName.isEmpty();
+    return this.dependencies == null || this.dependencies.isEmpty();
   }
 
-  public Collection<Dependency> getDependencies() {
-    final Collection<Dependency> returnValue;
-    if (this.dependenciesByName == null) {
-      returnValue = null;
-    } else {
-      returnValue = this.dependenciesByName.values();
-    }
-    return returnValue;
+  /**
+   * Returns the {@link Collection} of {@link Dependency} instances
+   * comprising this {@link Requirements}.
+   *
+   * <p>This method may return {@code null}.</p>
+   *
+   * @see #setDependencies(Collection)
+   */
+  public final Collection<Dependency> getDependencies() {
+    return this.dependencies;
   }
 
-  public void setDependencies(final Collection<Dependency> dependencies) {
-    if (dependencies == null) {
-      this.dependenciesByName = null;
-    } else if (dependencies.isEmpty()) {
-      this.dependenciesByName = Collections.emptyMap();
-    } else {
-      this.dependenciesByName = new HashMap<>();
+  /**
+   * Installs the {@link Collection} of {@link Dependency} instances
+   * comprising this {@link Requirements}.
+   *
+   * @param dependencies the {@link Collection} of {@link Dependency}
+   * instances that will comprise this {@link Requirements}; may be
+   * {@code null}; not copied or cloned
+   *
+   * @see #getDependencies()
+   */
+  public final void setDependencies(final Collection<Dependency> dependencies) {
+    this.dependencies = dependencies;
+  }
+
+  private final void applyEnablementRules(final Map<String, Object> values) {
+    this.processTags(values);
+    this.processConditions(values);
+  }
+  
+  private final void processTags(final Map<String, Object> values) {
+    final Collection<Dependency> dependencies = this.getDependencies();
+    if (dependencies != null && !dependencies.isEmpty()) {
       for (final Dependency dependency : dependencies) {
         if (dependency != null) {
-          final String name = dependency.getName();
-          if (name != null) {
-            this.dependenciesByName.put(name, dependency);
-          }
+          dependency.processTags(values);
+        }
+      }
+    }
+    
+  }
+
+  private final void processConditions(final Map<String, Object> values) {
+    final Collection<Dependency> dependencies = this.getDependencies();
+    if (dependencies != null && !dependencies.isEmpty()) {
+      for (final Dependency dependency : dependencies) {
+        if (dependency != null) {
+          dependency.processConditions(values);
         }
       }
     }
   }
+  
 
-  public Dependency getDependency(final String name) {
-    final Dependency dependency;
-    if (this.dependenciesByName == null) {
-      dependency = null;
-    } else {
-      dependency = this.dependenciesByName.get(name);
-    }
-    return dependency;
-  }
+  /*
+   * Static methods.
+   */
 
-  static final Chart.Builder processImportValues(final Chart.Builder c) {
-    Objects.requireNonNull(c);
-    final List<? extends Chart.Builder> flattenedCharts = Charts.flatten(c);
+
+  /**
+   * Applies rules around <a
+   * href="https://docs.helm.sh/developing_charts/#importing-child-values-via-requirements-yaml">importing
+   * subchart values into the parent chart's values</a>.
+   *
+   * @param chartBuilder the {@link Chart.Builder} to work on; must
+   * not be {@code null}
+   *
+   * @exception NullPointerException if {@code chartBuilder} is {@code
+   * null}
+   */
+  static final Chart.Builder processImportValues(final Chart.Builder chartBuilder) {
+    Objects.requireNonNull(chartBuilder);
+    final List<? extends Chart.Builder> flattenedCharts = Charts.flatten(chartBuilder);
     if (flattenedCharts != null) {
       assert !flattenedCharts.isEmpty();
-      Collections.reverse(flattenedCharts);
-      for (final Chart.Builder chart : flattenedCharts) {
-        if (chart != null) {
-          processSingleChartImportValues(chart);
-        }
+      final ListIterator<? extends Chart.Builder> listIterator = flattenedCharts.listIterator(flattenedCharts.size());
+      assert listIterator != null;
+      while (listIterator.hasPrevious()) {
+        final Chart.Builder chart = listIterator.previous();
+        assert chart != null;
+        processSingleChartImportValues(chart);
       }
     }
-    return c;
+    return chartBuilder;
   }
   
   // Ported from requirements.go processImportValues().
-  private static final Chart.Builder processSingleChartImportValues(final Chart.Builder c) {
-    Objects.requireNonNull(c);
+  private static final Chart.Builder processSingleChartImportValues(final Chart.Builder chartBuilder) {
+    Objects.requireNonNull(chartBuilder);
 
     Chart.Builder returnValue = null;
 
-    final Map<String, Object> canonicalValues = Configs.toDefaultValuesMap(c);
+    final Map<String, Object> canonicalValues = Configs.toDefaultValuesMap(chartBuilder);
     
-    Map<String, Object> b = new HashMap<>();
-    final Requirements requirements = fromChartOrBuilder(c);
+    Map<String, Object> combinedValues = new HashMap<>();
+    final Requirements requirements = fromChartOrBuilder(chartBuilder);
     if (requirements != null) {
       final Collection<Dependency> dependencies = requirements.getDependencies();
       if (dependencies != null && !dependencies.isEmpty()) {
@@ -150,6 +223,9 @@ public final class Requirements {
             final Collection<?> importValues = dependency.getImportValues();
             if (importValues != null && !importValues.isEmpty()) {
 
+              // Not clear why we build this and install it later; it
+              // is never used.  See requirements.go's
+              // processImportValues().
               final Collection<Object> newImportValues = new ArrayList<>(importValues.size());
 
               for (final Object importValue : importValues) {
@@ -162,6 +238,8 @@ public final class Requirements {
                   final String importValueChild = importValueMap.get("child");
                   final String importValueParent = importValueMap.get("parent");
 
+                  // Not clear to me why we build this and then
+                  // install it; it's never used in the .go code.
                   final Map<String, String> newMap = new HashMap<>();
                   newMap.put("child", importValueChild);
                   newMap.put("parent", importValueParent);
@@ -172,68 +250,47 @@ public final class Requirements {
                     MapTree.newMapChain(importValueParent,
                                         getMap(canonicalValues,
                                                dependencyName + "." + importValueChild));
-                  b = Values.coalesceMaps(vv, canonicalValues);
+                  combinedValues = Values.coalesceMaps(vv, canonicalValues);
                   // OK
                   
                 } else if (importValue instanceof String) {
                   final String importValueString = (String)importValue;
                   
                   final String importValueChild = "exports." + importValueString;
-                  
+
+                  // Not clear to me why we build this and then
+                  // install it; it's never used in the .go code.
                   final Map<String, String> newMap = new HashMap<>();
                   newMap.put("child", importValueChild);
                   newMap.put("parent", ".");
                   
                   newImportValues.add(newMap);
                   
-                  b = Values.coalesceMaps(getMap(canonicalValues, dependencyName + "." + importValueChild), b);
+                  combinedValues = Values.coalesceMaps(getMap(canonicalValues, dependencyName + "." + importValueChild), combinedValues);
                   // OK
                   
                 }
               }
+              // The .go code alters the dependency's importValues;
+              // I'm not sure why, but we follow suit.
               dependency.setImportValues(newImportValues);            
             }
           }
         }
       }
     }
-    b = Values.coalesceMaps(canonicalValues, b);
-    assert b != null;
-    final String yaml = new Yaml().dump(b);
+    combinedValues = Values.coalesceMaps(canonicalValues, combinedValues);
+    assert combinedValues != null;
+    final String yaml = new Yaml().dump(combinedValues);
     assert yaml != null;
-    final Config.Builder configBuilder = c.getValuesBuilder();
+    final Config.Builder configBuilder = chartBuilder.getValuesBuilder();
     assert configBuilder != null;
     configBuilder.setRaw(yaml);
-    returnValue = c;
+    returnValue = chartBuilder;
     assert returnValue != null;
     return returnValue;
   }
   
-  // Ported slavishly from ProcessRequirementsTags
-  final void processTags(final Map<String, Object> values) {
-    final Collection<Dependency> dependencies = this.getDependencies();
-    if (dependencies != null && !dependencies.isEmpty()) {
-      for (final Dependency dependency : dependencies) {
-        if (dependency != null) {
-          dependency.processTags(values);
-        }
-      }
-    }
-    
-  }
-
-  // Ported from ProcessRequirementsConditions
-  final void processConditions(final Map<String, Object> values) {
-    final Collection<Dependency> dependencies = this.getDependencies();
-    if (dependencies != null && !dependencies.isEmpty()) {
-      for (final Dependency dependency : dependencies) {
-        if (dependency != null) {
-          dependency.processConditions(values);
-        }
-      }
-    }
-  }
-
   // ported from Table() in chartutil/values.go
   private static final Map<String, Object> getMap(Map<String, Object> map, final String dotSeparatedPath) {
     final Map<String, Object> returnValue;
@@ -246,6 +303,21 @@ public final class Requirements {
   }
 
   // Ported from LoadRequirements() in chartutil/requirements.go
+  /**
+   * Creates a new {@link Requirements} from a top-level {@code
+   * requirements.yaml} {@linkplain Any resource} present in the
+   * supplied {@link ChartOrBuilder} and returns it.
+   *
+   * <p>This method may return {@code null} if the supplied {@link
+   * ChartOrBuilder} is itself {@code null} or doesn't have a {@code
+   * requirements.yaml} {@linkplain Any resource}.</p>
+   *
+   * @param chart the {@link ChartOrBuilder} housing a {@code
+   * requirement.yaml} {@linkplain Any resource}; may be {@code null}
+   * in which case {@code null} will be returned
+   *
+   * @return a new {@link Requirements} or {@code null}
+   */
   public static final Requirements fromChartOrBuilder(final ChartOrBuilder chart) {
     Requirements returnValue = null;
     if (chart != null) {
@@ -259,6 +331,7 @@ public final class Requirements {
               final String yamlString = fileContents.toStringUtf8();
               if (yamlString != null) {
                 returnValue = yaml.loadAs(yamlString, Requirements.class);
+                assert returnValue != null;
               }
             }
           }
@@ -268,10 +341,53 @@ public final class Requirements {
     return returnValue;
   }
 
+  /**
+   * Applies a <a
+   * href="https://docs.helm.sh/developing_charts/#alias-field-in-requirements-yaml">variety
+   * of rules concerning subchart aliasing and enablement</a> to the
+   * contents of the supplied {@code Chart.Builder}.
+   *
+   * <p>This method never returns {@code null}
+   *
+   * @param chartBuilder the {@link Chart.Builder} whose subcharts may
+   * be affected; must not be {@code null}
+   *
+   * @param userSuppliedValues a {@link ConfigOrBuilder} representing
+   * overriding values; may be {@code null}
+   *
+   * @return the supplied {@code chartBuilder} for convenience; never
+   * {@code null}
+   *
+   * @exception NullPointerException if {@code chartBuilder} is {@code
+   * null}
+   */
   public static final Chart.Builder apply(final Chart.Builder chartBuilder, ConfigOrBuilder userSuppliedValues) {
     return apply(chartBuilder, userSuppliedValues, true);
   }
 
+  /**
+   * Applies a <a
+   * href="https://docs.helm.sh/developing_charts/#alias-field-in-requirements-yaml">variety
+   * of rules concerning subchart aliasing and enablement</a> to the
+   * contents of the supplied {@code Chart.Builder}.
+   *
+   * <p>This method never returns {@code null}
+   *
+   * @param chartBuilder the {@link Chart.Builder} whose subcharts may
+   * be affected; must not be {@code null}
+   *
+   * @param userSuppliedValues a {@link ConfigOrBuilder} representing
+   * overriding values; may be {@code null}
+   *
+   * @param processImportValues whether rules concerning subchart
+   * value importation should be processed or not
+   *
+   * @return the supplied {@code chartBuilder} for convenience; never
+   * {@code null}
+   *
+   * @exception NullPointerException if {@code chartBuilder} is {@code
+   * null}
+   */
   static final Chart.Builder apply(final Chart.Builder chartBuilder, final ConfigOrBuilder userSuppliedValues, final boolean processImportValues) {
     Objects.requireNonNull(chartBuilder);
 
@@ -302,18 +418,20 @@ public final class Requirements {
           assert chartValuesMap != null;
           
           // Now disable certain Dependencies.  This might be because
-          // the canonical value set contains tags designating them
-          // for disablement.  We couldn't disable them earlier
-          // because we didn't have values.
-          requirements.processTags(chartValuesMap);
-          
-          // Do the same thing, but work with conditions instead of tags.
-          requirements.processConditions(chartValuesMap);
+          // the canonical value set contains tags or conditions
+          // designating them for disablement.  We couldn't disable
+          // them earlier because we didn't have values.
+          requirements.applyEnablementRules(chartValuesMap);
 
           // Turn the values into YAML, because YAML is the only format
           // we have for setting the contents of a new Config.Builder object (see
-          // Config.Builder#setRaw(String)).  Then make a 
-          final String userSuppliedValuesYaml = Configs.toYAML(chartValuesMap);
+          // Config.Builder#setRaw(String)).
+          final String userSuppliedValuesYaml;
+          if (chartValuesMap.isEmpty()) {
+            userSuppliedValuesYaml = "";
+          } else {
+            userSuppliedValuesYaml = new Yaml().dump(chartValuesMap);
+          }
           assert userSuppliedValuesYaml != null;
 
           final Config.Builder configBuilder = Config.newBuilder();
@@ -333,7 +451,7 @@ public final class Requirements {
             }
             
             // If we get here, this is an enabled subchart.
-            Requirements.apply(subchart, configBuilder, false); // <-- RECURSIVE CALL
+            Requirements.apply(subchart, configBuilder, false /* don't run processImportValues() */); // <-- RECURSIVE CALL
           }
           
         }
@@ -354,10 +472,49 @@ public final class Requirements {
    */
 
   
+  /**
+   * A {@link SimpleBeanInfo} describing the Java Bean properties for
+   * the {@link Dependency} class; not normally used directly by end
+   * users.
+   *
+   * @author <a href="https://about.me/lairdnelson/"
+   * target="_parent">Laird Nelson</a>
+   *
+   * @see SimpleBeanInfo
+   */
   public static final class DependencyBeanInfo extends SimpleBeanInfo {
 
+
+    /*
+     * Instance methods.
+     */
+
+
+    /**
+     * The {@link Collection} of {@link PropertyDescriptor}s whose
+     * contents will be returned by the {@link
+     * #getPropertyDescriptors()} method.
+     *
+     * <p>This field is never {@code null}.</p>
+     *
+     * @see #getPropertyDescriptors() 
+     */
     private final Collection<? extends PropertyDescriptor> propertyDescriptors;
-    
+
+
+    /*
+     * Constructors.
+     */
+
+
+    /**
+     * Creates a new {@link DependencyBeanInfo}.
+     *
+     * @exception IntrospectionException if there was a problem
+     * creating a {@link PropertyDescriptor}
+     *
+     * @see #getPropertyDescriptors()
+     */
     public DependencyBeanInfo() throws IntrospectionException {
       super();
       final Collection<PropertyDescriptor> propertyDescriptors = new ArrayList<>();
@@ -371,104 +528,452 @@ public final class Requirements {
       this.propertyDescriptors = propertyDescriptors;
     }
 
+
+    /*
+     * Instance methods.
+     */
+
+
+    /**
+     * Returns an array of {@link PropertyDescriptor}s describing the
+     * {@link Dependency} class.
+     *
+     * <p>This method never returns {@code null}.</p>
+     *
+     * @return a non-{@code null}, non-empty array of {@link
+     * PropertyDescriptor}s
+     */
     @Override
     public final PropertyDescriptor[] getPropertyDescriptors() {
       return this.propertyDescriptors.toArray(new PropertyDescriptor[this.propertyDescriptors.size()]);
     }
     
   }
-  
+
+  /**
+   * A description of a subchart that should be present in a parent
+   * Helm chart; not normally used directly by end users.
+   *
+   * @author <a href="https://about.me/lairdnelson"
+   * target="_parent">Laird Nelson</a>
+   *
+   * @see Requirements
+   */
   public static final class Dependency {
 
-    private String name;
 
-    private String version;
+    /*
+     * Static fields.
+     */
+    
+    
+    /**
+     * An unanchored {@link Pattern} matching a sequence of zero or more
+     * whitespace characters, followed by a comma, followed by zero or
+     * more whitespace characters.
+     *
+     * <p>This field is never {@code null}.</p>
+     *
+     * <p>This field is used during {@link #processConditions(Map)}
+     * method execution.</p>
+     */
+    private static final Pattern commaSplitPattern = Pattern.compile("\\s*,\\s*");
+    
 
-    private String repository; // apending "index.yaml" to this should result in a URL that can be used to fetch the repository index
+    /*
+     * Instance fields.
+     */
+
 
     /**
-     * A YAML path that resolves to a boolean value, used for enabling
-     * or disabling subcharts.
+     * The name of the subchart being represented by this {@link
+     * Requirements.Dependency}.
+     *
+     * <p>This field may be {@code null}.</p>
+     *
+     * @see #getName()
+     *
+     * @see #setName(String)
+     */
+    private String name;
+
+    /**
+     * The version of the subchart being represented by this {@link
+     * Requirements.Dependency}.
+     *
+     * <p>This field may be {@code null}.</p>
+     *
+     * @see #getVersion()
+     *
+     * @see #setVersion(String)
+     */
+    private String version;
+
+    /**
+     * A {@link String} representation of a URI which, when {@code
+     * index.yaml} is appended to it, results in a URI designating a
+     * Helm chart repository index.
+     *
+     * <p>This field may be {@code null}.</p>
+     *
+     * @see #getRepository()
+     *
+     * @see #setRepository(String)
+     */
+    private String repository;
+
+    /**
+     * A period-separated path that, when evaluated against a {@link
+     * Map} of {@link Map}s representing user-supplied or default
+     * values, will hopefully result in a value that can, in turn, be
+     * evaluated as a truth-value to aid in the enabling and disabling
+     * of subcharts.
+     *
+     * <p>This field may be {@code null}.</p>
+     *
+     * <p>This field may actually hold several such paths separated by
+     * commas.  This is an artifact of the design of Helm's {@code
+     * requirements.yaml} file.</p>
+     *
+     * @see #getCondition()
+     *
+     * @see #setCondition(String)
      */
     private String condition;
 
+    /**
+     * A {@link Collection} of tags that can be used to enable or
+     * disable subcharts.
+     *
+     * <p>This field may be {@code null}.
+     *
+     * @see #getTags()
+     *
+     * @see #setTags(Collection)
+     */
     private Collection<String> tags;
 
+    /**
+     * Whether the subchart that this {@link Requirements.Dependency}
+     * identifies is to be considered enabled.
+     *
+     * <p>This field is set to {@code true} by default.</p>
+     *
+     * @see #isEnabled()
+     *
+     * @see #setEnabled(boolean)
+     */
     private boolean enabled;
 
+    /**
+     * A {@link Collection} representing the contents of a {@code
+     * requirements.yaml}'s <a
+     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format">{@code
+     * import-values} section</a>.
+     *
+     * <p>This field may be {@code null}.</p>
+     *
+     * @see #getImportValues()
+     *
+     * @see #setImportValues(Collection)
+     */
     private Collection<Object> importValues;
-    
+
+    /**
+     * The alias to use for the subchart identified by this {@link
+     * Requirements.Dependency}.
+     *
+     * <p>This field may be {@code null}.</p>
+     *
+     * @see #getAlias()
+     *
+     * @see #setAlias(String)
+     */
     private String alias;
 
+
+    /*
+     * Constructors.
+     */
+
+
+    /**
+     * Creates a new {@link Dependency}.
+     */
     public Dependency() {
       super();
       this.setEnabled(true);
     }
 
+
+    /*
+     * Instance methods.
+     */
+    
+
+    /**
+     * Returns the name of the subchart being represented by this {@link
+     * Requirements.Dependency}.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * @return the name of the subchart being represented by this {@link
+     * Requirements.Dependency}, or {@code null}
+     *
+     * @see #setName(String)
+     */
     public final String getName() {
       return this.name;
     }
 
+    /**
+     * Sets the name of the subchart being represented by this {@link
+     * Requirements.Dependency}.
+     *
+     * @param name the new name; may be {@code null}
+     *
+     * @see #getName()
+     */
     public final void setName(final String name) {
       this.name = name;
     }
 
+    /**
+     * Returns the version of the subchart being represented by this {@link
+     * Requirements.Dependency}.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * @return the version of the subchart being represented by this {@link
+     * Requirements.Dependency}, or {@code null}
+     *
+     * @see #setVersion(String)
+     */
     public final String getVersion() {
       return this.version;
     }
 
+    /**
+     * Sets the version of the subchart being represented by this {@link
+     * Requirements.Dependency}.
+     *
+     * @param version the new version; may be {@code null}
+     *
+     * @see #getVersion()
+     */
     public final void setVersion(final String version) {
       this.version = version;
     }
 
+    /**
+     * Returns the {@link String} representation of a URI which, when
+     * {@code index.yaml} is appended to it, results in a URI
+     * designating a Helm chart repository index.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * @return the {@link String} representation of a URI which, when
+     * {@code index.yaml} is appended to it, results in a URI
+     * designating a Helm chart repository index, or {@code null}
+     *
+     * @see #setRepository(String)
+     */
     public final String getRepository() {
       return this.repository;
     }
 
+    /**
+     * Sets the {@link String} representation of a URI which, when
+     * {@code index.yaml} is appended to it, results in a URI
+     * designating a Helm chart repository index.
+     *
+     * @param repository the {@link String} representation of a URI
+     * which, when {@code index.yaml} is appended to it, results in a
+     * URI designating a Helm chart repository index, or {@code null}
+     *
+     * @see #getRepository()
+     */
     public final void setRepository(final String repository) {
       this.repository = repository;
     }
 
+    /**
+     * Returns a period-separated path that, when evaluated against a
+     * {@link Map} of {@link Map}s representing user-supplied or
+     * default values, will hopefully result in a value that can, in
+     * turn, be evaluated as a truth-value to aid in the enabling and
+     * disabling of subcharts.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * <p>This method may return a value that actually holds several
+     * such paths separated by commas.  This is an artifact of the
+     * design of Helm's {@code requirements.yaml} file.</p>
+     *
+     * @return a period-separated path that, when evaluated against a
+     * {@link Map} of {@link Map}s representing user-supplied or
+     * default values, will hopefully result in a value that can, in
+     * turn, be evaluated as a truth-value to aid in the enabling and
+     * disabling of subcharts, or {@code null}
+     *
+     * @see #setCondition(String)
+     */
     public final String getCondition() {
       return this.condition;
     }
 
+    /**
+     * Sets the period-separated path that, when evaluated against a
+     * {@link Map} of {@link Map}s representing user-supplied or
+     * default values, will hopefully result in a value that can, in
+     * turn, be evaluated as a truth-value to aid in the enabling and
+     * disabling of subcharts.
+     *
+     * @param condition a period-separated path that, when evaluated
+     * against a {@link Map} of {@link Map}s representing
+     * user-supplied or default values, will hopefully result in a
+     * value that can, in turn, be evaluated as a truth-value to aid
+     * in the enabling and disabling of subcharts, or {@code null}
+     *
+     * @see #getCondition()
+     */
     public final void setCondition(final String condition) {
       this.condition = condition;
     }
 
+    /**
+     * Returns the {@link Collection} of tags that can be used to enable or
+     * disable subcharts.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * @return the {@link Collection} of tags that can be used to
+     * enable or disable subcharts, or {@code null}
+     *
+     * @see #setTags(Collection)
+     */
     public final Collection<String> getTags() {
       return this.tags;
     }
 
+    /**
+     * Sets the {@link Collection} of tags that can be used to enable
+     * or disable subcharts.
+     *
+     * @param tags the {@link Collection} of tags that can be used to
+     * enable or disable subcharts; may be {@code null}
+     *
+     * @see #getTags()
+     */
     public final void setTags(final Collection<String> tags) {
       this.tags = tags;
     }
 
+    /**
+     * Returns {@code true} if the subchart this {@link
+     * Requirements.Dependency} identifies is to be considered
+     * enabled.
+     *
+     * @return {@code true} if the subchart this {@link
+     * Requirements.Dependency} identifies is to be considered
+     * enabled; {@code false} otherwise
+     *
+     * @see #setEnabled(boolean)
+     */
     public final boolean isEnabled() {
       return this.enabled;
     }
 
+    /**
+     * Sets whether the subchart this {@link
+     * Requirements.Dependency} identifies is to be considered
+     * enabled.
+     *
+     * @param enabled whether the subchart this {@link
+     * Requirements.Dependency} identifies is to be considered
+     * enabled
+     *
+     * @see #isEnabled()
+     */
     public final void setEnabled(final boolean enabled) {
       this.enabled = enabled;
     }
 
+    /**
+     * Returns a {@link Collection} representing the contents of a {@code
+     * requirements.yaml}'s <a
+     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format">{@code
+     * import-values} section</a>.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * @return a {@link Collection} representing the contents of a {@code
+     * requirements.yaml}'s <a
+     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format">{@code
+     * import-values} section</a>, or {@code null}
+     *
+     * @see #setImportValues(Collection)
+     */
     public final Collection<Object> getImportValues() {
       return this.importValues;
     }
 
+    /**
+     * Sets the {@link Collection} representing the contents of a {@code
+     * requirements.yaml}'s <a
+     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format">{@code
+     * import-values} section</a>.
+     *
+     * @param importValues the {@link Collection} representing the contents of a {@code
+     * requirements.yaml}'s <a
+     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format">{@code
+     * import-values} section</a>; may be {@code null}
+     *
+     * @see #getImportValues()
+     */
     public final void setImportValues(final Collection<Object> importValues) {
       this.importValues = importValues;
     }
-    
+
+    /**
+     * Returns the alias to use for the subchart identified by this {@link
+     * Requirements.Dependency}.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * @return the alias to use for the subchart identified by this {@link
+     * Requirements.Dependency}, or {@code null}
+     *
+     * @see #setAlias(String)
+     */
     public final String getAlias() {
       return this.alias;
     }
 
+    /**
+     * Sets the alias to use for the subchart identified by this {@link
+     * Requirements.Dependency}.
+     *
+     * @param alias the alias to use for the subchart identified by this {@link
+     * Requirements.Dependency}; may be {@code null}
+     *
+     * @see #getAlias()
+     */
     public final void setAlias(final String alias) {
       this.alias = alias;
     }
 
+    /**
+     * Returns {@code true} if this {@link Requirements.Dependency}
+     * identifies the given {@link ChartOrBuilder}.
+     *
+     * @param chart the {@link ChartOrBuilder} to check; may be {@code
+     * null} in which case {@code false} will be returned
+     *
+     * @return {@code true} if this {@link Requirements.Dependency}
+     * identifies the given {@link ChartOrBuilder}; {@code false}
+     * otherwise
+     */
     public final boolean selects(final ChartOrBuilder chart) {
       if (chart == null) {
         return false;
@@ -476,7 +981,7 @@ public final class Requirements {
       return this.selects(chart.getMetadata());
     }
     
-    public final boolean selects(final MetadataOrBuilder metadata) {
+    private final boolean selects(final MetadataOrBuilder metadata) {
       final boolean returnValue;
       if (metadata == null) {
         returnValue = this.selects(null, null);
@@ -486,7 +991,7 @@ public final class Requirements {
       return returnValue;
     }
 
-    public final boolean selects(final String name, final String versionString) {
+    private final boolean selects(final String name, final String versionString) {
       final Object myName = this.getName();
       if (myName == null) {
         if (name != null) {
@@ -534,7 +1039,6 @@ public final class Requirements {
       }
     }
 
-    // Ported from ProcessRequirementsTags
     final void processTags(final Map<String, Object> values) {
       if (values != null) {
         final Object tagsObject = values.get("tags");
@@ -608,6 +1112,15 @@ public final class Requirements {
       }
     }
 
+    /**
+     * Returns a {@link String} representation of this {@link
+     * Requirements.Dependency}.
+     *
+     * <p>This method never returns {@code null}.</p>
+     *
+     * @return a non-{@code null} {@link String} representation of
+     * this {@link Requirements.Dependency}
+     */
     @Override
     public final String toString() {
       final StringBuilder sb = new StringBuilder();

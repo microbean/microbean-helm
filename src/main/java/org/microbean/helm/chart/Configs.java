@@ -18,11 +18,7 @@ package org.microbean.helm.chart;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
 
-import hapi.chart.ChartOuterClass.Chart;
 import hapi.chart.ChartOuterClass.ChartOrBuilder;
 import hapi.chart.ConfigOuterClass.Config;
 import hapi.chart.ConfigOuterClass.ConfigOrBuilder;
@@ -141,16 +137,6 @@ final class Configs {
     final Map<String, Object> map = toValuesMap(chart, configAsMap);
     assert map != null;
     final Map<String, Object> returnValue = coalesceDependencies(chart, map);
-    return returnValue;
-  }
-
-  static final String toYAML(final Map<String, Object> map) {
-    final String returnValue;
-    if (map == null || map.isEmpty()) {
-      returnValue = "";
-    } else {
-      returnValue = new Yaml().dump(map);
-    }
     return returnValue;
   }
 

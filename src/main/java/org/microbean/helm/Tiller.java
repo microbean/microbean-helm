@@ -31,6 +31,8 @@ import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceBlockingStub;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceFutureStub;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceStub;
 
+import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.ConfigAware;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient; // for javadoc only
 import io.fabric8.kubernetes.client.HttpClientAware;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -54,7 +56,7 @@ import org.microbean.kubernetes.Pods;
  *
  * @see ReleaseServiceGrpc
  */
-public class Tiller implements Closeable {
+public class Tiller implements ConfigAware<Config>, Closeable {
 
 
   /*
@@ -67,7 +69,7 @@ public class Tiller implements Closeable {
    *
    * <p>This field is never {@code null}.</p>
    */
-  public static final String VERSION = "2.5.0";
+  public static final String VERSION = "2.6.2";
 
   /**
    * The Kubernetes namespace into which Tiller server instances are
@@ -120,7 +122,16 @@ public class Tiller implements Closeable {
   /*
    * Instance fields.
    */
-  
+
+
+  /**
+   * The {@link Config} available at construction time.
+   *
+   * <p>This field may be {@code null}.</p>
+   *
+   * @see #getConfiguration()
+   */
+  private final Config config;
 
   /**
    * The {@link LocalPortForward} being used to communicate (most
@@ -159,6 +170,7 @@ public class Tiller implements Closeable {
   public Tiller(final ManagedChannel channel) {
     super();
     Objects.requireNonNull(channel);
+    this.config = null;
     this.portForward = null;
     this.channel = channel;
   }
@@ -177,6 +189,7 @@ public class Tiller implements Closeable {
   public Tiller(final LocalPortForward portForward) {
     super();
     Objects.requireNonNull(portForward);
+    this.config = null;
     this.portForward = null; // yes, null
     this.channel = this.buildChannel(portForward);
   }
@@ -231,7 +244,8 @@ public class Tiller implements Closeable {
    *
    * @param client the {@link KubernetesClient}-and-{@link
    * HttpClientAware} implementation that can communicate with a
-   * Kubernetes cluster; must not be {@code null}
+   * Kubernetes cluster; must not be {@code null}; no reference to
+   * this object is retained by this {@link Tiller} instance
    *
    * @param namespaceHousingTiller the namespace within which a Tiller
    * instance is hopefully running; if {@code null}, then the value of
@@ -263,7 +277,8 @@ public class Tiller implements Closeable {
    *
    * @param client the {@link KubernetesClient}-and-{@link
    * HttpClientAware} implementation that can communicate with a
-   * Kubernetes cluster; must not be {@code null}
+   * Kubernetes cluster; must not be {@code null}; no reference to
+   * this object is retained by this {@link Tiller} instance
    *
    * @param namespaceHousingTiller the namespace within which a Tiller
    * instance is hopefully running; if {@code null}, then the value of
@@ -288,6 +303,7 @@ public class Tiller implements Closeable {
                                                                Map<String, String> tillerLabels) throws MalformedURLException {
     super();
     Objects.requireNonNull(client);
+    this.config = client.getConfiguration();
     if (namespaceHousingTiller == null || namespaceHousingTiller.isEmpty()) {
       namespaceHousingTiller = DEFAULT_NAMESPACE;
     }
@@ -305,6 +321,19 @@ public class Tiller implements Closeable {
   /*
    * Instance methods.
    */
+
+
+  /**
+   * Returns any {@link Config} available at construction time.
+   *
+   * <p>This method may return {@code null}.</p>
+   *
+   * @return a {@link Config}, or {@code null}
+   */
+  @Override
+  public Config getConfiguration() {
+    return this.config;
+  }
   
 
   /**
@@ -332,15 +361,23 @@ public class Tiller implements Closeable {
   }
 
   /**
-   * Closes this {@link Tiller} after use.
+   * Closes this {@link Tiller} after use; any {@link
+   * LocalPortForward} or {@link ManagedChannel} <strong>used or
+   * created</strong> by or for this {@link Tiller} instance will be
+   * closed or {@linkplain ManagedChannel#shutdown() shut down}
+   * appropriately.
    *
    * @exception IOException if there was a problem closing the
    * underlying connection to a Tiller instance
+   *
+   * @see LocalPortForward#close()
+   *
+   * @see ManagedChannel#shutdown()
    */
   @Override
   public void close() throws IOException {
     if (this.channel != null) {
-      this.channel.shutdownNow();
+      this.channel.shutdown();
     }
     if (this.portForward != null) {
       this.portForward.close();

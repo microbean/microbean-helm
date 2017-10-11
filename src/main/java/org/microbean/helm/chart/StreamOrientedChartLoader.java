@@ -159,7 +159,7 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
    * <p>This method never returns {@code null}.
    *
    * <p>This method calls the {@link
-   * #load(haip.chart.ChartOuterClass.Chart.Builder, Iterable)} method
+   * #load(hapi.chart.ChartOuterClass.Chart.Builder, Iterable)} method
    * with the return value of the {@link
    * #toNamedInputStreamEntries(Object)} method.</p>
    *
@@ -730,14 +730,14 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
    */
 
 
-    /**
+  /**
    * An {@link Iterable} implementation that {@linkplain #iterator()
    * returns an empty <code>Iterator</code>}.
    *
    * @author <a href="https://about.me/lairdnelson"
    * target="_parent">Laird Nelson</a>
    */
-  protected static final class EmptyIterable implements Iterable<Entry<String, InputStream>> {
+  static final class EmptyIterable implements Iterable<Entry<String, InputStream>> {
 
 
     /*
@@ -748,7 +748,7 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
     /**
      * Creates a new {@link EmptyIterable}.
      */
-    protected EmptyIterable() {
+    EmptyIterable() {
       super();
     }
 

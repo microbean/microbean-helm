@@ -17,7 +17,6 @@
 package org.microbean.helm.chart;
 
 import java.io.FilterInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -29,7 +28,7 @@ import java.io.InputStream;
  *
  * @see FilterInputStream
  */
-public class NonClosingInputStream extends FilterInputStream {
+final class NonClosingInputStream extends FilterInputStream {
 
 
   /*
@@ -47,7 +46,7 @@ public class NonClosingInputStream extends FilterInputStream {
    *
    * @see FilterInputStream#FilterInputStream(InputStream)
    */
-  public NonClosingInputStream(final InputStream in) {
+  NonClosingInputStream(final InputStream in) {
     super(in);
   }
 

@@ -16,6 +16,7 @@
  */
 package org.microbean.helm.chart;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import hapi.chart.ChartOuterClass.Chart; // for javadoc only
@@ -29,7 +30,7 @@ import hapi.chart.ChartOuterClass.Chart.Builder;
  *
  * <p><strong>Implementations should pay close attention to any
  * potential resource leaks and control them in their implementation
- * of the {@link AutoCloseable#close()} method.</strong></p>
+ * of the {@link Closeable#close()} method.</strong></p>
  *
  * @param <T> the type of source from which {@link Chart}s may be
  * loaded
@@ -43,8 +44,27 @@ import hapi.chart.ChartOuterClass.Chart.Builder;
  *
  * @see Chart
  */
-public abstract class AbstractChartLoader<T> implements AutoCloseable {
+public abstract class AbstractChartLoader<T> implements Closeable {
 
+
+  /*
+   * Constructors.
+   */
+
+
+  /**
+   * Creates a new {@link AbstractChartLoader}.
+   */
+  protected AbstractChartLoader() {
+    super();
+  }
+
+
+  /*
+   * Instance methods.
+   */
+  
+  
   /**
    * Creates a new "top-level" {@link Builder} from the supplied
    * {@code source} and returns it.
@@ -61,27 +81,30 @@ public abstract class AbstractChartLoader<T> implements AutoCloseable {
    * @exception IOException if reading the supplied {@code source}
    * could not complete normally
    *
-   * @see #load(Builder, Object)
+   * @see #load(ChartOuterClass.Chart.Builder, Object)
    */
   public final Builder load(final T source) throws IOException {
     return this.load(null, source);
   }
   
   /**
-   * Creates a new {@link Builder} from the supplied {@code source} and
-   * returns it.
+   * Creates a new {@link Builder} from the supplied {@code source}
+   * and returns it.
    *
-   * <p>Implementations of this method must not return {@code null}.</p>
+   * <p>Implementations of this method must not return {@code null}
+   * and must not return {@code parent}.</p>
    *
    * @param parent the {@link Builder} that will serve as the parent
    * of the {@link Builder} that will be returned; may be (and often
    * is) {@code null}, indicating that the {@link Builder} being
-   * returned does not represent a subchart
+   * returned does not represent a subchart; must not be what is
+   * returned
    *
-   * @param source the source from which a new {@link Builder} should be
-   * created; must not be {@code null}
+   * @param source the source from which a new {@link Builder} should
+   * be created; must not be {@code null}
    *
-   * @return a new {@link Builder}; never {@code null}
+   * @return a new {@link Builder}; never {@code null}; never {@code
+   * parent}
    *
    * @exception NullPointerException if {@code source} is {@code null}
    *
@@ -90,19 +113,4 @@ public abstract class AbstractChartLoader<T> implements AutoCloseable {
    */
   public abstract Builder load(final Builder parent, final T source) throws IOException;
 
-  /**
-   * Closes any resources opened by this {@link AbstractChartLoader}.
-   *
-   * <p>This method signature overrides the {@link
-   * AutoCloseable#close()} method to specify that implementations may
-   * throw only {@link RuntimeException} and {@link IOException}
-   * instances.</p>
-   *
-   * @exception IOException if a problem occurs during closing
-   *
-   * @see AutoCloseable#close()
-   */
-  @Override
-  public abstract void close() throws IOException;
-  
 }
