@@ -44,6 +44,8 @@ import io.grpc.Metadata;
 
 import io.grpc.stub.MetadataUtils;
 
+import okhttp3.OkHttpClient;
+
 import org.microbean.kubernetes.Pods;
 
 /**
@@ -313,7 +315,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     if (tillerLabels == null) {
       tillerLabels = DEFAULT_LABELS;
     }
-    this.portForward = Pods.forwardPort(client.getHttpClient(), client.pods().inNamespace(namespaceHousingTiller).withLabels(tillerLabels), tillerPort);
+    final OkHttpClient httpClient = client.getHttpClient();
+    if (httpClient == null) {
+      throw new IllegalArgumentException("client", new IllegalStateException("client.getHttpClient() == null"));
+    }
+    this.portForward = Pods.forwardPort(httpClient, client.pods().inNamespace(namespaceHousingTiller).withLabels(tillerLabels), tillerPort);
+    assert this.portForward != null;
     this.channel = this.buildChannel(this.portForward);
   }
 

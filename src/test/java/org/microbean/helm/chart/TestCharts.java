@@ -31,6 +31,9 @@ import hapi.chart.ConfigOuterClass.Config;
 import hapi.release.ReleaseOuterClass.Release;
 
 import hapi.services.tiller.Tiller.InstallReleaseRequest;
+import hapi.services.tiller.Tiller.InstallReleaseResponse;
+import hapi.services.tiller.Tiller.UninstallReleaseRequest;
+import hapi.services.tiller.Tiller.UninstallReleaseResponse;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 
@@ -53,7 +56,7 @@ public class TestCharts {
   
   @Before
   public void setUp() throws IOException {
-    final URI uri = URI.create("https://kubernetes-charts.storage.googleapis.com/redis-0.8.0.tgz");
+    final URI uri = URI.create("https://kubernetes-charts.storage.googleapis.com/redis-0.10.1.tgz");
     assertNotNull(uri);
     final URL url = uri.toURL();
     assertNotNull(url);
@@ -71,7 +74,7 @@ public class TestCharts {
   }
 
   @Test
-  public void testInstall() throws ExecutionException, IOException, InterruptedException {
+  public void testRoundTrip() throws ExecutionException, IOException, InterruptedException {
     assumeFalse(Boolean.getBoolean("skipClusterTests"));
     try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
          final Tiller tiller = new Tiller(client);
@@ -79,6 +82,8 @@ public class TestCharts {
       final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
       assertNotNull(requestBuilder);
       requestBuilder.setTimeout(300L);
+      requestBuilder.setName("test-charts");
+      requestBuilder.setWait(true);
 
       Chart.Builder chartBuilder = null;
       try (final AbstractChartLoader<URL> loader = new URLChartLoader()) {
@@ -86,13 +91,25 @@ public class TestCharts {
       }
       assertNotNull(chartBuilder);
       
-      final Future<Release> releaseFuture = chartManager.install(requestBuilder, chartBuilder);
+      final Future<InstallReleaseResponse> releaseFuture = chartManager.install(requestBuilder, chartBuilder);
       assertNotNull(releaseFuture);
-      final Release release = releaseFuture.get();
+      final Release release = releaseFuture.get().getRelease();
       assertNotNull(release);
       assertNotNull(release.getName());
       assertTrue(release.hasChart());
       assertTrue(release.hasConfig());
+
+      final UninstallReleaseRequest.Builder uninstallRequestBuilder = UninstallReleaseRequest.newBuilder();
+      assertNotNull(uninstallRequestBuilder);
+      uninstallRequestBuilder.setTimeout(300L);
+      uninstallRequestBuilder.setName("test-charts");
+      uninstallRequestBuilder.setPurge(true);
+
+      final Future<UninstallReleaseResponse> uninstallReleaseResponseFuture = chartManager.uninstall(uninstallRequestBuilder);
+      assertNotNull(uninstallReleaseResponseFuture);
+      final UninstallReleaseResponse response = uninstallReleaseResponseFuture.get();
+      assertNotNull(response);
+      assertNotNull(response.getRelease());
     }
   }
 
