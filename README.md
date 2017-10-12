@@ -12,9 +12,7 @@ to do these operations.
 
 # Status
 
-The microbean-helm project is currently in a **pre-alpha** state.  It
-should be fine with basic chart operations, provided that the charts
-involved do not make heavy use of `requirements.yaml`.
+The microbean-helm project is currently in a **alpha** state.
 
 **Version 2 and later of this project, when finally released, will
 _not_ be backwards compatible with earlier versions.**
@@ -22,9 +20,10 @@ _not_ be backwards compatible with earlier versions.**
 # Versioning
 
 The microbean-helm project's version number tracks the Helm and Tiller
-release it works with, together with a build number.  For example, a
-microbean-helm version of `2.6.2.4` means that the Helm version it
-tracks is `2.6.2` and the build number is `4`.
+release it works with, together with its own version semantics.  For
+example, a microbean-helm version of `2.6.2.1.0.0` means that the Helm
+version it tracks is `2.6.2` and the (SemVer-compatible) version of
+the non-generated code that is part of _this_ project is `1.0.0`.
 
 # Installation
 
@@ -35,7 +34,7 @@ like this:
     <dependency>
       <groupId>org.microbean</groupId>
       <artifactId>microbean-helm</artifactId>
-      <version>2.6.2.0-SNAPSHOT</version> <!-- or another -->
+      <version>2.6.2.1.0.0-SNAPSHOT</version> <!-- or another -->
       <type>jar</type>
     </dependency>
     

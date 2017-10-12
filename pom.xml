@@ -431,7 +431,7 @@
               <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.7.0:exe:${os.detected.classifier}</pluginArtifact>
               <pluginId>grpc-java</pluginId>
               <protoSourceRoot>${project.build.directory}/generated-sources/helm/_proto</protoSourceRoot>
-              <protocArtifact>com.google.protobuf:protoc:3.3.0:exe:${os.detected.classifier}</protocArtifact>
+              <protocArtifact>com.google.protobuf:protoc:3.4.0:exe:${os.detected.classifier}</protocArtifact>
             </configuration>
           </execution>
         </executions>
