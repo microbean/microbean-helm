@@ -255,16 +255,17 @@ public class ReleaseManager implements Closeable {
    *
    * <p>Overrides of this method must not return {@code null}.</p>
    *
-   * @param requestBuilder the {@link InstallReleaseRequest.Builder}
-   * representing the installation request; must not be {@code null}
-   * and must {@linkplain
-   * #validate(Tiller.InstallReleaseRequestOrBuilder) pass
+   * @param requestBuilder the {@link
+   * hapi.services.tiller.Tiller.InstallReleaseRequest.Builder} representing the
+   * installation request; must not be {@code null} and must
+   * {@linkplain #validate(Tiller.InstallReleaseRequestOrBuilder) pass
    * validation}; its {@link
-   * Tiller.InstallReleaseRequest.Builder#setChart(ChartOuterClass.Chart.Builder)}
+   * hapi.services.tiller.Tiller.InstallReleaseRequest.Builder#setChart(hapi.chart.ChartOuterClass.Chart.Builder)}
    * method will be called with the supplied {@code chartBuilder} as
    * its argument value
    *
-   * @param chartBuilder a {@link Chart.Builder} representing the Helm
+   * @param chartBuilder a {@link
+   * hapi.chart.ChartOuterClass.Chart.Builder} representing the Helm
    * chart to install; must not be {@code null}
    *
    * @return a {@link Future} containing a {@link
@@ -334,7 +335,7 @@ public class ReleaseManager implements Closeable {
    * null}
    *
    * @exception PatternSyntaxException if the {@link
-   * Tiller.ListReleasesRequestOrBuilder#getFilter()} return value is
+   * ListReleasesRequestOrBuilder#getFilter()} return value is
    * non-{@code null}, non-{@linkplain String#isEmpty() empty} but not
    * a {@linkplain Pattern#compile(String) valid regular expression}
    */
@@ -433,15 +434,18 @@ public class ReleaseManager implements Closeable {
    *
    * <p>Overrides of this method must not return {@code null}.</p>
    *
-   * @param requestBuilder the {@link UpdateReleaseRequest.Builder}
+   * @param requestBuilder the {@link
+   * hapi.services.tiller.Tiller.UpdateReleaseRequest.Builder}
    * representing the installation request; must not be {@code null}
    * and must {@linkplain
    * #validate(Tiller.UpdateReleaseRequestOrBuilder) pass validation};
-   * its {@link UpdateReleaseRequest.Builder#setChart(Chart.Builder)}
+   * its {@link
+   * hapi.services.tiller.Tiller.UpdateReleaseRequest.Builder#setChart(hapi.chart.ChartOuterClass.Chart.Builder)}
    * method will be called with the supplied {@code chartBuilder} as
    * its argument value
    *
-   * @param chartBuilder a {@link Chart.Builder} representing the Helm
+   * @param chartBuilder a {@link
+   * hapi.chart.ChartOuterClass.Chart.Builder} representing the Helm
    * chart with which to update the release; must not be {@code null}
    *
    * @return a {@link Future} containing a {@link
