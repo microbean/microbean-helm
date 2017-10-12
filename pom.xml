@@ -4,7 +4,7 @@
 
   <groupId>org.microbean</groupId>
   <artifactId>microbean-helm</artifactId>
-  <version>2.6.2.0-SNAPSHOT</version>
+  <version>2.6.2-1.0.0-SNAPSHOT</version>
 
   <parent>
     <groupId>org.microbean</groupId>
@@ -52,35 +52,35 @@
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>3.3.1</version>
+        <version>3.4.0</version>
         <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-netty</artifactId>
-        <version>1.4.0</version>
+        <version>1.7.0</version>
         <type>jar</type>
       </dependency>
       
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-protobuf</artifactId>
-        <version>1.4.0</version>
+        <version>1.7.0</version>
         <type>jar</type>
       </dependency>
       
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-stub</artifactId>
-        <version>1.4.0</version>
+        <version>1.7.0</version>
         <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>io.fabric8</groupId>
         <artifactId>kubernetes-client</artifactId>
-        <version>2.5.6</version>
+        <version>3.0.0</version>
         <type>jar</type>
       </dependency>
 
@@ -88,7 +88,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-tcnative-boringssl-static</artifactId>
-        <version>2.0.3.Final</version>
+        <version>2.0.5.Final</version>
         <type>jar</type>
         <classifier>${os.detected.classifier}</classifier>
       </dependency>
@@ -205,7 +205,6 @@
       <scope>compile</scope>
     </dependency>
 
-
     <!-- Runtime-scoped dependencies. -->
 
     <!-- See https://github.com/grpc/grpc-java/blob/master/SECURITY.md#openssl-statically-linked-netty-tcnative-boringssl-static -->
@@ -275,12 +274,12 @@
                 <location>${project.basedir}/src/main/javadoc/com.github.zafarkhaja/java-semver/0.9.0</location>
               </offlineLink>
               <offlineLink>
-                <url>http://static.javadoc.io/io.fabric8/kubernetes-client/2.3.1</url>
-                <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-client/2.3.1</location>
+                <url>http://static.javadoc.io/io.fabric8/kubernetes-client/3.0.0</url>
+                <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-client/3.0.0</location>
               </offlineLink>
               <offlineLink>
-                <url>http://static.javadoc.io/io.fabric8/kubernetes-model/1.0.73</url>
-                <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-model/1.0.73</location>
+                <url>http://static.javadoc.io/io.fabric8/kubernetes-model/1.1.4</url>
+                <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-model/1.1.4</location>
               </offlineLink>
               <offlineLink>
                 <url>http://static.javadoc.io/org.kamranzafar/jtar/2.3</url>
@@ -429,7 +428,7 @@
             </goals>
             <configuration>
               <checkStaleness>true</checkStaleness>
-              <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.4.0:exe:${os.detected.classifier}</pluginArtifact>
+              <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.7.0:exe:${os.detected.classifier}</pluginArtifact>
               <pluginId>grpc-java</pluginId>
               <protoSourceRoot>${project.build.directory}/generated-sources/helm/_proto</protoSourceRoot>
               <protocArtifact>com.google.protobuf:protoc:3.3.0:exe:${os.detected.classifier}</protocArtifact>
