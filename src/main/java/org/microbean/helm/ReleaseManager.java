@@ -44,9 +44,6 @@ import hapi.services.tiller.Tiller.GetReleaseContentResponse;
 import hapi.services.tiller.Tiller.GetReleaseStatusRequest;
 import hapi.services.tiller.Tiller.GetReleaseStatusRequestOrBuilder;
 import hapi.services.tiller.Tiller.GetReleaseStatusResponse;
-import hapi.services.tiller.Tiller.GetVersionRequest;
-import hapi.services.tiller.Tiller.GetVersionRequestOrBuilder;
-import hapi.services.tiller.Tiller.GetVersionResponse;
 import hapi.services.tiller.Tiller.InstallReleaseRequest;
 import hapi.services.tiller.Tiller.InstallReleaseRequestOrBuilder;
 import hapi.services.tiller.Tiller.InstallReleaseResponse;
@@ -68,6 +65,12 @@ import hapi.services.tiller.Tiller.UpdateReleaseResponse;
 
 import org.microbean.helm.chart.Requirements;
 
+/**
+ * A manager of <a href="https://docs.helm.sh/glossary/#release">Helm releases</a>.
+ *
+ * @author <a href="https://about.me/lairdnelson/"
+ * target="_parent">Laird Nelson</a>
+ */
 public class ReleaseManager implements Closeable {
 
 
@@ -113,7 +116,19 @@ public class ReleaseManager implements Closeable {
    * Constructors.
    */
 
-  
+
+  /**
+   * Creates a new {@link ReleaseManager}.
+   *
+   * @param tiller the {@link Tiller} instance representing a
+   * connection to the <a
+   * href="https://docs.helm.sh/architecture/#components">Tiller
+   * server</a>; must not be {@code null}
+   *
+   * @exception NullPointerException if {@code tiller} is {@code null}
+   *
+   * @see Tiller
+   */
   public ReleaseManager(final Tiller tiller) {
     super();
     Objects.requireNonNull(tiller);
@@ -125,6 +140,22 @@ public class ReleaseManager implements Closeable {
    * Instance methods.
    */
 
+
+  /**
+   * Returns the {@link Tiller} instance used to communicate with
+   * Helm's back-end Tiller component.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * @return a non-{@code null} {@link Tiller}
+   *
+   * @see #ReleaseManager(Tiller)
+   *
+   * @see Tiller
+   */
+  protected final Tiller getTiller() {
+    return this.tiller;
+  }
   
   /**
    * Calls {@link Tiller#close() close()} on the {@link Tiller}
@@ -135,78 +166,114 @@ public class ReleaseManager implements Closeable {
    */
   @Override
   public void close() throws IOException {
-    this.tiller.close();
+    this.getTiller().close();
   }
 
-  public Future<GetReleaseContentResponse> getContent(final GetReleaseContentRequestOrBuilder request)
-    throws IOException {
+  /**
+   * Returns the content that made up a given Helm release.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @param request the {@link GetReleaseContentRequest} describing
+   * the release; must not be {@code null}
+   *
+   * @return a {@link Future} containing a {@link
+   * GetReleaseContentResponse} that has the information requested;
+   * never {@code null}
+   *
+   * @exception NullPointerException if {@code request} is {@code
+   * null}
+   */
+  public Future<GetReleaseContentResponse> getContent(final GetReleaseContentRequest request) throws IOException {
     Objects.requireNonNull(request);
     validate(request);
 
-    final ReleaseServiceFutureStub stub = this.tiller.getReleaseServiceFutureStub();
+    final ReleaseServiceFutureStub stub = this.getTiller().getReleaseServiceFutureStub();
     assert stub != null;
-    final Future<GetReleaseContentResponse> returnValue;
-    if (request instanceof GetReleaseContentRequest.Builder) {
-      returnValue = stub.getReleaseContent(((GetReleaseContentRequest.Builder)request).build());
-    } else {
-      assert request instanceof GetReleaseContentRequest;
-      returnValue = stub.getReleaseContent((GetReleaseContentRequest)request);
-    }
-    return returnValue;
+    return stub.getReleaseContent(request);
   }
 
-  public Future<GetHistoryResponse> getHistory(final GetHistoryRequestOrBuilder request)
-    throws IOException {
+  /**
+   * Returns the history of a given Helm release.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @param request the {@link GetHistoryRequest}
+   * describing the release; must not be {@code null}
+   *
+   * @return a {@link Future} containing a {@link
+   * GetHistoryResponse} that has the information requested;
+   * never {@code null}
+   *
+   * @exception NullPointerException if {@code request} is {@code
+   * null}
+   */
+  public Future<GetHistoryResponse> getHistory(final GetHistoryRequest request) throws IOException {
     Objects.requireNonNull(request);
     validate(request);
 
-    final ReleaseServiceFutureStub stub = this.tiller.getReleaseServiceFutureStub();
+    final ReleaseServiceFutureStub stub = this.getTiller().getReleaseServiceFutureStub();
     assert stub != null;
-    final Future<GetHistoryResponse> returnValue;
-    if (request instanceof GetHistoryRequest.Builder) {
-      returnValue = stub.getHistory(((GetHistoryRequest.Builder)request).build());
-    } else {
-      assert request instanceof GetHistoryRequest;
-      returnValue = stub.getHistory((GetHistoryRequest)request);
-    }
-    return returnValue;
+    return stub.getHistory(request);
   }
 
-  public Future<GetVersionResponse> getVersion(final GetVersionRequestOrBuilder request)
-    throws IOException {
+  /**
+   * Returns the status of a given Helm release.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @param request the {@link GetReleaseStatusRequest} describing the
+   * release; must not be {@code null}
+   *
+   * @return a {@link Future} containing a {@link
+   * GetReleaseStatusResponse} that has the information requested;
+   * never {@code null}
+   *
+   * @exception NullPointerException if {@code request} is {@code
+   * null}
+   */
+  public Future<GetReleaseStatusResponse> getStatus(final GetReleaseStatusRequest request) throws IOException {
     Objects.requireNonNull(request);
     validate(request);
 
-    final ReleaseServiceFutureStub stub = this.tiller.getReleaseServiceFutureStub();
+    final ReleaseServiceFutureStub stub = this.getTiller().getReleaseServiceFutureStub();
     assert stub != null;
-    final Future<GetVersionResponse> returnValue;
-    if (request instanceof GetVersionRequest.Builder) {
-      returnValue = stub.getVersion(((GetVersionRequest.Builder)request).build());
-    } else {
-      assert request instanceof GetVersionRequest;
-      returnValue = stub.getVersion((GetVersionRequest)request);
-    }
-    return returnValue;
-  }   
-
-  public Future<GetReleaseStatusResponse> getStatus(final GetReleaseStatusRequestOrBuilder request)
-    throws IOException {
-    Objects.requireNonNull(request);
-    validate(request);
-
-    final ReleaseServiceFutureStub stub = this.tiller.getReleaseServiceFutureStub();
-    assert stub != null;
-    final Future<GetReleaseStatusResponse> returnValue;
-    if (request instanceof GetReleaseStatusRequest.Builder) {
-      returnValue = stub.getReleaseStatus(((GetReleaseStatusRequest.Builder)request).build());
-    } else {
-      assert request instanceof GetReleaseStatusRequest;
-      returnValue = stub.getReleaseStatus((GetReleaseStatusRequest)request);
-    }
-    return returnValue;
+    return stub.getReleaseStatus(request);
   }   
   
-  
+  /**
+   * Installs a release.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @param requestBuilder the {@link InstallReleaseRequest.Builder}
+   * representing the installation request; must not be {@code null}
+   * and must {@linkplain #validate(InstallReleaseRequest.Builder)
+   * pass validation}; its {@link
+   * InstallReleaseRequest.Builder#setChart(Chart.Builder)} method
+   * will be called with the supplied {@code chartBuilder} as its
+   * argument value
+   *
+   * @param chartBuilder a {@link Chart.Builder} representing the Helm
+   * chart to install; must not be {@code null}
+   *
+   * @return a {@link Future} containing a {@link
+   * InstallReleaseResponse} that has the information requested; never
+   * {@code null}
+   *
+   * @exception NullPointerException if {@code request} is {@code
+   * null}
+   *
+   * @see org.microbean.helm.chart.AbstractChartLoader
+   */
   public Future<InstallReleaseResponse> install(final InstallReleaseRequest.Builder requestBuilder,
                                                 final Chart.Builder chartBuilder)
     throws IOException {
@@ -226,7 +293,7 @@ public class ReleaseManager implements Closeable {
     
     String releaseNamespace = requestBuilder.getNamespace();
     if (releaseNamespace == null || releaseNamespace.isEmpty()) {
-      final io.fabric8.kubernetes.client.Config configuration = this.tiller.getConfiguration();
+      final io.fabric8.kubernetes.client.Config configuration = this.getTiller().getConfiguration();
       if (configuration == null) {
         requestBuilder.setNamespace("default");
       } else {
@@ -239,83 +306,147 @@ public class ReleaseManager implements Closeable {
       }
     }
     
-    final ReleaseServiceFutureStub stub = this.tiller.getReleaseServiceFutureStub();
+    final ReleaseServiceFutureStub stub = this.getTiller().getReleaseServiceFutureStub();
     assert stub != null;
     return stub.installRelease(requestBuilder.build());
   }
 
   /**
+   * Returns information about Helm releases.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @param request the {@link ListReleasesRequest} describing the
+   * releases to be returned; must not be {@code null}
+   *
+   * @return an {@link Iterator} of {@link ListReleasesResponse}
+   * objects comprising the information requested; never {@code null}
+   *
+   * @exception NullPointerException if {@code request} is {@code
+   * null}
+   *
    * @exception PatternSyntaxException if the {@link
    * Tiller.ListReleasesRequestOrBuilder#getFilter()} return value is
    * non-{@code null}, non-{@linkplain String#isEmpty() empty} but not
    * a {@linkplain Pattern#compile(String) valid regular expression}
    */
-  public Iterator<ListReleasesResponse> list(final ListReleasesRequestOrBuilder request) {
+  public Iterator<ListReleasesResponse> list(final ListReleasesRequest request) {
     Objects.requireNonNull(request);
     validate(request);
 
-    final ReleaseServiceBlockingStub stub = this.tiller.getReleaseServiceBlockingStub();
+    final ReleaseServiceBlockingStub stub = this.getTiller().getReleaseServiceBlockingStub();
     assert stub != null;
-    final Iterator<ListReleasesResponse> returnValue;
-    if (request instanceof ListReleasesRequest.Builder) {
-      returnValue = stub.listReleases(((ListReleasesRequest.Builder)request).build());
-    } else {
-      assert request instanceof ListReleasesRequest;
-      returnValue = stub.listReleases((ListReleasesRequest)request);
-    }
-    return returnValue;
+    return stub.listReleases(request);
   }
 
-  public Future<RollbackReleaseResponse> rollback(final RollbackReleaseRequestOrBuilder request)
+  /**
+   * Rolls back a previously installed release.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @param request the {@link RollbackReleaseRequest} describing the
+   * release; must not be {@code null}
+   *
+   * @return a {@link Future} containing a {@link
+   * RollbackReleaseResponse} that has the information requested;
+   * never {@code null}
+   *
+   * @exception NullPointerException if {@code request} is {@code
+   * null}
+   */
+  public Future<RollbackReleaseResponse> rollback(final RollbackReleaseRequest request)
     throws IOException {
     Objects.requireNonNull(request);
     validate(request);
 
-    final ReleaseServiceFutureStub stub = this.tiller.getReleaseServiceFutureStub();
+    final ReleaseServiceFutureStub stub = this.getTiller().getReleaseServiceFutureStub();
     assert stub != null;
-    final Future<RollbackReleaseResponse> returnValue;
-    if (request instanceof RollbackReleaseRequest.Builder) {
-      returnValue = stub.rollbackRelease(((RollbackReleaseRequest.Builder)request).build());
-    } else {
-      assert request instanceof RollbackReleaseRequest;
-      returnValue = stub.rollbackRelease((RollbackReleaseRequest)request);
-    }
-    return returnValue;
+    return stub.rollbackRelease(request);
   }
 
-  public Iterator<TestReleaseResponse> test(final TestReleaseRequestOrBuilder request) {
+  /**
+   * Returns information about tests run on a given Helm release.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @param request the {@link TestReleaseRequest} describing the
+   * release to be tested; must not be {@code null}
+   *
+   * @return an {@link Iterator} of {@link TestReleaseResponse}
+   * objects comprising the information requested; never {@code null}
+   *
+   * @exception NullPointerException if {@code request} is {@code
+   * null}
+   */
+  public Iterator<TestReleaseResponse> test(final TestReleaseRequest request) {
     Objects.requireNonNull(request);
     validate(request);
 
-    final ReleaseServiceBlockingStub stub = this.tiller.getReleaseServiceBlockingStub();
+    final ReleaseServiceBlockingStub stub = this.getTiller().getReleaseServiceBlockingStub();
     assert stub != null;
-    final Iterator<TestReleaseResponse> returnValue;
-    if (request instanceof TestReleaseRequest.Builder) {
-      returnValue = stub.runReleaseTest(((TestReleaseRequest.Builder)request).build());
-    } else {
-      assert request instanceof TestReleaseRequest;
-      returnValue = stub.runReleaseTest((TestReleaseRequest)request);
-    }
-    return returnValue;
+    return stub.runReleaseTest(request);
   }
-  
-  public Future<UninstallReleaseResponse> uninstall(final UninstallReleaseRequestOrBuilder request)
+
+  /**
+   * Uninstalls (deletes) a previously installed release.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @param request the {@link UninstallReleaseRequest} describing the
+   * release; must not be {@code null}
+   *
+   * @return a {@link Future} containing a {@link
+   * UninstallReleaseResponse} that has the information requested;
+   * never {@code null}
+   *
+   * @exception NullPointerException if {@code request} is {@code
+   * null}
+   */
+  public Future<UninstallReleaseResponse> uninstall(final UninstallReleaseRequest request)
     throws IOException {
     Objects.requireNonNull(request);
     validate(request);
 
-    final ReleaseServiceFutureStub stub = this.tiller.getReleaseServiceFutureStub();
+    final ReleaseServiceFutureStub stub = this.getTiller().getReleaseServiceFutureStub();
     assert stub != null;
-    final Future<UninstallReleaseResponse> returnValue;
-    if (request instanceof UninstallReleaseRequest.Builder) {
-      returnValue = stub.uninstallRelease(((UninstallReleaseRequest.Builder)request).build());
-    } else {
-      assert request instanceof UninstallReleaseRequest;
-      returnValue = stub.uninstallRelease((UninstallReleaseRequest)request);
-    }
-    return returnValue;
+    return stub.uninstallRelease(request);
   }
-  
+
+  /**
+   * Updates a release.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @param requestBuilder the {@link UpdateReleaseRequest.Builder}
+   * representing the installation request; must not be {@code null}
+   * and must {@linkplain #validate(UpdateReleaseRequest.Builder)
+   * pass validation}; its {@link
+   * UpdateReleaseRequest.Builder#setChart(Chart.Builder)} method
+   * will be called with the supplied {@code chartBuilder} as its
+   * argument value
+   *
+   * @param chartBuilder a {@link Chart.Builder} representing the Helm
+   * chart with which to update the release; must not be {@code null}
+   *
+   * @return a {@link Future} containing a {@link
+   * UpdateReleaseResponse} that has the information requested; never
+   * {@code null}
+   *
+   * @exception NullPointerException if {@code request} is {@code
+   * null}
+   *
+   * @see org.microbean.helm.chart.AbstractChartLoader
+   */
   public Future<UpdateReleaseResponse> update(final UpdateReleaseRequest.Builder requestBuilder,
                                               final Chart.Builder chartBuilder)
     throws IOException {
@@ -333,35 +464,86 @@ public class ReleaseManager implements Closeable {
     // crashes when there's a null in the values slot.
     requestBuilder.setChart(Requirements.apply(chartBuilder, requestBuilder.getValuesBuilder()));
 
-    final ReleaseServiceFutureStub stub = this.tiller.getReleaseServiceFutureStub();
+    final ReleaseServiceFutureStub stub = this.getTiller().getReleaseServiceFutureStub();
     assert stub != null;
     return stub.updateRelease(requestBuilder.build());
   }
 
+  /**
+   * Validates the supplied {@link GetReleaseContentRequestOrBuilder}.
+   *
+   * @param request the request to validate
+   *
+   * @exception NullPointerException if {@code request} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code request} is invalid
+   *
+   * @see #validateReleaseName(String)
+   */
   protected void validate(final GetReleaseContentRequestOrBuilder request) {
     Objects.requireNonNull(request);
     validateReleaseName(request.getName());
   }
 
+  /**
+   * Validates the supplied {@link GetHistoryRequestOrBuilder}.
+   *
+   * @param request the request to validate
+   *
+   * @exception NullPointerException if {@code request} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code request} is invalid
+   *
+   * @see #validateReleaseName(String)
+   */
   protected void validate(final GetHistoryRequestOrBuilder request) {
     Objects.requireNonNull(request);
     validateReleaseName(request.getName());
   }
 
+  /**
+   * Validates the supplied {@link GetReleaseStatusRequestOrBuilder}.
+   *
+   * @param request the request to validate
+   *
+   * @exception NullPointerException if {@code request} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code request} is invalid
+   *
+   * @see #validateReleaseName(String)
+   */
   protected void validate(final GetReleaseStatusRequestOrBuilder request) {
     Objects.requireNonNull(request);
     validateReleaseName(request.getName());
   }
-  
-  protected void validate(final GetVersionRequestOrBuilder request) {
-    Objects.requireNonNull(request);
-  }
-  
+
+  /**
+   * Validates the supplied {@link InstallReleaseRequestOrBuilder}.
+   *
+   * @param request the request to validate
+   *
+   * @exception NullPointerException if {@code request} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code request} is invalid
+   *
+   * @see #validateReleaseName(String)
+   */
   protected void validate(final InstallReleaseRequestOrBuilder request) {
     Objects.requireNonNull(request);
     validateReleaseName(request.getName());
   }
 
+  /**
+   * Validates the supplied {@link ListReleasesRequestOrBuilder}.
+   *
+   * @param request the request to validate
+   *
+   * @exception NullPointerException if {@code request} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code request} is invalid
+   *
+   * @see #validateReleaseName(String)
+   */
   protected void validate(final ListReleasesRequestOrBuilder request) {
     Objects.requireNonNull(request);
     final String filter = request.getFilter();
@@ -370,26 +552,91 @@ public class ReleaseManager implements Closeable {
     }
   }
 
+  /**
+   * Validates the supplied {@link RollbackReleaseRequestOrBuilder}.
+   *
+   * @param request the request to validate
+   *
+   * @exception NullPointerException if {@code request} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code request} is invalid
+   *
+   * @see #validateReleaseName(String)
+   */
   protected void validate(final RollbackReleaseRequestOrBuilder request) {
     Objects.requireNonNull(request);
     validateReleaseName(request.getName());
   }
 
+  /**
+   * Validates the supplied {@link TestReleaseRequestOrBuilder}.
+   *
+   * @param request the request to validate
+   *
+   * @exception NullPointerException if {@code request} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code request} is invalid
+   *
+   * @see #validateReleaseName(String)
+   */
   protected void validate(final TestReleaseRequestOrBuilder request) {
     Objects.requireNonNull(request);
     validateReleaseName(request.getName());
   }
-  
+
+  /**
+   * Validates the supplied {@link UninstallReleaseRequestOrBuilder}.
+   *
+   * @param request the request to validate
+   *
+   * @exception NullPointerException if {@code request} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code request} is invalid
+   *
+   * @see #validateReleaseName(String)
+   */
   protected void validate(final UninstallReleaseRequestOrBuilder request) {
     Objects.requireNonNull(request);
     validateReleaseName(request.getName());
   }
 
+  /**
+   * Validates the supplied {@link UpdateReleaseRequestOrBuilder}.
+   *
+   * @param request the request to validate
+   *
+   * @exception NullPointerException if {@code request} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code request} is invalid
+   *
+   * @see #validateReleaseName(String)
+   */
   protected void validate(final UpdateReleaseRequestOrBuilder request) {
     Objects.requireNonNull(request);
     validateReleaseName(request.getName());
   }
 
+  /**
+   * Ensures that the supplied {@code name} is a valid Helm release
+   * name.
+   *
+   * <p>Because Helm release names are often used in hostnames, they
+   * should conform to <a
+   * href="https://tools.ietf.org/html/rfc1123#page-13">RFC 1123</a>.
+   * This method performs that validation by default, using the {@link
+   * #RFC_1123_PATTERN} field.</p>
+   *
+   * @param name the name to validate; may be {@code null} or
+   * {@linkplain String#isEmpty()} since Tiller will generate a valid
+   * name in such a case using the <a
+   * href="https://github.com/technosophos/moniker">{@code
+   * moniker}</a> project; if non-{@code null} must match the pattern
+   * represented by the value of the {@link #RFC_1123_PATTERN} field
+   *
+   * @see #RFC_1123_PATTERN
+   *
+   * @see <a href="https://tools.ietf.org/html/rfc1123#page-13">RFC
+   */
   protected void validateReleaseName(final String name) {
     if (name != null && !name.isEmpty()) {
       final Matcher matcher = RFC_1123_PATTERN.matcher(name);

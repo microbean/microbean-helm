@@ -30,6 +30,9 @@ import hapi.services.tiller.ReleaseServiceGrpc;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceBlockingStub;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceFutureStub;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceStub;
+import hapi.services.tiller.Tiller.GetVersionResponse;
+
+import hapi.version.VersionOuterClass.VersionOrBuilder;
 
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigAware;
@@ -451,4 +454,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     return returnValue;
   }
 
+  public VersionOrBuilder getVersion() throws IOException {
+    final ReleaseServiceBlockingStub stub = this.getReleaseServiceBlockingStub();
+    assert stub != null;
+    final GetVersionResponse response = stub.getVersion(null);
+    assert response != null;
+    return response.getVersion();
+  }
+  
 }

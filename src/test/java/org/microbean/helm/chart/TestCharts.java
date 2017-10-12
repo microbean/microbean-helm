@@ -30,10 +30,14 @@ import hapi.chart.ConfigOuterClass.Config;
 
 import hapi.release.ReleaseOuterClass.Release;
 
+import hapi.services.tiller.Tiller.GetVersionRequest;
+import hapi.services.tiller.Tiller.GetVersionResponse;
 import hapi.services.tiller.Tiller.InstallReleaseRequest;
 import hapi.services.tiller.Tiller.InstallReleaseResponse;
 import hapi.services.tiller.Tiller.UninstallReleaseRequest;
 import hapi.services.tiller.Tiller.UninstallReleaseResponse;
+
+import hapi.version.VersionOuterClass.VersionOrBuilder;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 
@@ -74,6 +78,17 @@ public class TestCharts {
   }
 
   @Test
+  public void testGetVersion() throws IOException {
+    assumeFalse(Boolean.getBoolean("skipClusterTests"));
+    try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
+         final Tiller tiller = new Tiller(client)) {
+      final VersionOrBuilder version = tiller.getVersion();
+      assertNotNull(version);
+      assertNotNull(version.getSemVer());
+    }
+  }
+  
+  @Test
   public void testRoundTrip() throws ExecutionException, IOException, InterruptedException {
     assumeFalse(Boolean.getBoolean("skipClusterTests"));
     try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
@@ -105,7 +120,7 @@ public class TestCharts {
       uninstallRequestBuilder.setName("test-charts");
       uninstallRequestBuilder.setPurge(true);
 
-      final Future<UninstallReleaseResponse> uninstallReleaseResponseFuture = chartManager.uninstall(uninstallRequestBuilder);
+      final Future<UninstallReleaseResponse> uninstallReleaseResponseFuture = chartManager.uninstall(uninstallRequestBuilder.build());
       assertNotNull(uninstallReleaseResponseFuture);
       final UninstallReleaseResponse response = uninstallReleaseResponseFuture.get();
       assertNotNull(response);

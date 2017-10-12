@@ -57,6 +57,8 @@ import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.extensions.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.DeploymentSpec;
 
+import org.microbean.development.annotation.Experimental;
+
 /**
  * A class that idiomatically but faithfully emulates the
  * Tiller-installing behavior of the {@code helm init} command.
@@ -80,6 +82,7 @@ import io.fabric8.kubernetes.api.model.extensions.DeploymentSpec;
  * href="https://github.com/kubernetes/helm/blob/master/cmd/helm/installer/install.go">The
  * {@code install.go} source code from the Helm project</a>
  */
+@Experimental
 public class TillerInstaller {
 
 

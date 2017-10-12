@@ -23,5 +23,10 @@
  * target="_parent">Laird Nelson</a>
  *
  * @see org.microbean.helm.Tiller
+ *
+ * @see org.microbean.helm.ReleaseManager
  */
+@Version("2.6.2")
 package org.microbean.helm;
+
+import org.microbean.development.annotation.Version;
