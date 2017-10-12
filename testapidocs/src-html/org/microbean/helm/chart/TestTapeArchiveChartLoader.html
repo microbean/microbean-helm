@@ -81,7 +81,7 @@
 <span class="sourceLineNo">073</span><a name="line.73"></a>
 <span class="sourceLineNo">074</span>  @Test<a name="line.74"></a>
 <span class="sourceLineNo">075</span>  public void testLoad() throws IOException {<a name="line.75"></a>
-<span class="sourceLineNo">076</span>    final Chart chart = new TapeArchiveChartLoader().load(this.stream);<a name="line.76"></a>
+<span class="sourceLineNo">076</span>    final Chart chart = new TapeArchiveChartLoader().load(this.stream).build();<a name="line.76"></a>
 <span class="sourceLineNo">077</span>    assertNotNull(chart);<a name="line.77"></a>
 <span class="sourceLineNo">078</span>    final Metadata metadata = chart.getMetadata();<a name="line.78"></a>
 <span class="sourceLineNo">079</span>    assertNotNull(metadata);<a name="line.79"></a>
