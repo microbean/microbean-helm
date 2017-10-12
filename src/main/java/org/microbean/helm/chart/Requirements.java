@@ -378,8 +378,8 @@ public final class Requirements {
    * @param userSuppliedValues a {@link ConfigOrBuilder} representing
    * overriding values; may be {@code null}
    *
-   * @param processImportValues whether rules concerning subchart
-   * value importation should be processed or not
+   * @param firstInvocation {@code true} if this is a non-recursive
+   * call, and hence certain "top-level" processing should take place
    *
    * @return the supplied {@code chartBuilder} for convenience; never
    * {@code null}
@@ -387,7 +387,7 @@ public final class Requirements {
    * @exception NullPointerException if {@code chartBuilder} is {@code
    * null}
    */
-  static final Chart.Builder apply(final Chart.Builder chartBuilder, final ConfigOrBuilder userSuppliedValues, final boolean processImportValues) {
+  static final Chart.Builder apply(final Chart.Builder chartBuilder, final ConfigOrBuilder userSuppliedValues, final boolean topLevel) {
     Objects.requireNonNull(chartBuilder);
 
     final Requirements requirements = fromChartOrBuilder(chartBuilder);
@@ -399,16 +399,31 @@ public final class Requirements {
         final List<? extends Chart.Builder> existingSubcharts = chartBuilder.getDependenciesBuilderList();
         if (existingSubcharts != null && !existingSubcharts.isEmpty()) { 
 
+          Collection<Dependency> missingSubcharts = null;
+          
           for (final Dependency dependency : requirementsDependencies) {
             if (dependency != null) {
+              boolean dependencySelectsAtLeastOneSubchart = false;
               for (final Chart.Builder subchart : existingSubcharts) {
                 if (subchart != null) {
+                  dependencySelectsAtLeastOneSubchart = dependencySelectsAtLeastOneSubchart || dependency.selects(subchart);
                   dependency.adjustName(subchart);
                 }
               }
-              dependency.setNameToAlias();
+              if (topLevel && !dependencySelectsAtLeastOneSubchart) {
+                if (missingSubcharts == null) {
+                  missingSubcharts = new ArrayList<>();
+                }
+                missingSubcharts.add(dependency);
+              } else {
+                dependency.setNameToAlias();
+              }
               assert dependency.isEnabled();
             }
+          }
+
+          if (missingSubcharts != null && !missingSubcharts.isEmpty()) {
+            throw new MissingDependenciesException(missingSubcharts);
           }
 
           // Combine the supplied values with the chart's default
@@ -450,14 +465,14 @@ public final class Requirements {
             }
             
             // If we get here, this is an enabled subchart.
-            Requirements.apply(subchart, configBuilder, false /* don't run processImportValues() */); // <-- RECURSIVE CALL
+            Requirements.apply(subchart, configBuilder, false /* not topLevel, i.e. this is recursive */); // <-- RECURSIVE CALL
           }
           
         }
       }
     }
     final Chart.Builder returnValue;
-    if (processImportValues) {
+    if (topLevel) {
       returnValue = processImportValues(chartBuilder);
     } else {
       returnValue = chartBuilder;
@@ -1019,23 +1034,31 @@ public final class Requirements {
       return true;
     }
 
-    final void adjustName(final Chart.Builder subchart) {
+    final boolean adjustName(final Chart.Builder subchart) {
+      boolean returnValue = false;
       if (subchart != null && this.selects(subchart)) {
         final String alias = this.getAlias();
         if (alias != null && !alias.isEmpty() && subchart.hasMetadata()) {
           final Metadata.Builder subchartMetadataBuilder = subchart.getMetadataBuilder();
           assert subchartMetadataBuilder != null;
-          // Rename the chart to have our alias as its new name.
-          subchartMetadataBuilder.setName(alias);
+          if (!alias.equals(subchartMetadataBuilder.getName())) {
+            // Rename the chart to have our alias as its new name.
+            subchartMetadataBuilder.setName(alias);
+            returnValue = true;
+          }
         }
       }
+      return returnValue;
     }
 
-    final void setNameToAlias() {
+    final boolean setNameToAlias() {
+      boolean returnValue = false;
       final String alias = this.getAlias();
-      if (alias != null && !alias.isEmpty()) {
+      if (alias != null && !alias.isEmpty() && !alias.equals(this.getName())) {        
         this.setName(alias);
+        returnValue = true;
       }
+      return returnValue;
     }
 
     final void processTags(final Map<String, Object> values) {

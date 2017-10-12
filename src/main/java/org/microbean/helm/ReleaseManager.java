@@ -63,6 +63,7 @@ import hapi.services.tiller.Tiller.UpdateReleaseRequest;
 import hapi.services.tiller.Tiller.UpdateReleaseRequestOrBuilder;
 import hapi.services.tiller.Tiller.UpdateReleaseResponse;
 
+import org.microbean.helm.chart.MissingDependenciesException;
 import org.microbean.helm.chart.Requirements;
 
 /**
@@ -270,6 +271,10 @@ public class ReleaseManager implements Closeable {
    * InstallReleaseResponse} that has the information requested; never
    * {@code null}
    *
+   * @exception MissingDependenciesException if the supplied {@code
+   * chartBuilder} has a {@code requirements.yaml} resource in it that
+   * mentions subcharts that it does not contain
+   * 
    * @exception NullPointerException if {@code request} is {@code
    * null}
    *

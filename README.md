@@ -1,6 +1,6 @@
 # microbean-helm
 
-The microbean-helm project lets you work with the server-side
+The [microbean-helm project][12] lets you work with the server-side
 componentry of [Helm][0] from Java.
 
 This means your Java applications can now manage applications in your
@@ -65,16 +65,18 @@ send them back and forth to and from Tiller.
 In a normal Helm usage scenario, Tiller
 is
 [installed just-in-time by the `helm` command line client (via the `helm init` subcommand)][5].
-It runs as a Pod in a Kubernetes cluster.  microbean-helm features the
-`TillerInstaller` class that can do the same thing from Java.
+It runs as a Pod in a Kubernetes cluster.  microbean-helm features
+the [`TillerInstaller` class][13] that can do the same thing from
+Java.
 
 ## Tiller Connectivity
 
 Because Tiller normally runs as a Pod, communicating with it from
 outside the cluster is not straightforward.  The `helm` command line
-client forwards a local port to a port on the Tiller Pod and, via this
-tunnel, establishes communication with the Tiller server.  The
-microbean-helm project does the same thing but via a Java library.
+client internally forwards a local port to a port on the Tiller Pod
+and, via this tunnel, establishes communication with the Tiller
+server.  The microbean-helm project does the same thing but via a Java
+library.
 
 ## Tiller Communication
 
@@ -82,11 +84,23 @@ Tiller is fundamentally a [gRPC][6] application.  The microbean-helm
 project [generates the Java bindings][7] to its gRPC API, allowing
 applications to communicate with Tiller using Java classes.
 
+# [`ReleaseManager`][4]
+
+Ideally, business logic for installing and updating releases would be
+entirely encapsulated within the Tiller server.  Unfortunately, this
+is not the case.  The `helm` command-line program investigates and
+processes a Helm chart's `requirements.yaml` file at installation time
+and uses it to alter what is actually dispatched to Tiller.  For this
+reason, if you are using the microbean-helm project, you must use the
+_non_-generated [`ReleaseManager` class][4] to perform your
+Helm-related operations, since it contains a port of the business
+logic embedded in the `helm` program.
+
 [0]: https://helm.sh/
 [1]: https://kubernetes.io/
 [2]: https://docs.helm.sh/glossary/#tiller
 [3]: https://docs.helm.sh/developing_charts/#
-[4]: https://microbean.github.io/microbean-helm/apidocs/hapi/services/tiller/ReleaseServiceGrpc.ReleaseServiceStub.html
+[4]: https://microbean.github.io/microbean-helm/apidocs/org/microbean/helm/ReleaseManager.html
 [5]: https://docs.helm.sh/using_helm/#easy-in-cluster-installation
 [6]: http://www.grpc.io/
 [7]: https://microbean.github.io/microbean-helm/apidocs/index.html
@@ -94,3 +108,5 @@ applications to communicate with Tiller using Java classes.
 [9]: https://docs.helm.sh/glossary/#release
 [10]: http://search.maven.org/#search%7Cga%7C1%7Ca%3Amicrobean-helm
 [11]: https://oss.sonatype.org/content/repositories/snapshots/org/microbean/microbean-helm/
+[12]: https://github.com/microbean/microbean-helm
+[13]:https://microbean.github.io/microbean-helm/apidocs/org/microbean/helm/TillerInstaller.html
