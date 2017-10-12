@@ -256,11 +256,12 @@ public class ReleaseManager implements Closeable {
    *
    * @param requestBuilder the {@link InstallReleaseRequest.Builder}
    * representing the installation request; must not be {@code null}
-   * and must {@linkplain #validate(InstallReleaseRequest.Builder)
-   * pass validation}; its {@link
-   * InstallReleaseRequest.Builder#setChart(Chart.Builder)} method
-   * will be called with the supplied {@code chartBuilder} as its
-   * argument value
+   * and must {@linkplain
+   * #validate(Tiller.InstallReleaseRequestOrBuilder) pass
+   * validation}; its {@link
+   * Tiller.InstallReleaseRequest.Builder#setChart(ChartOuterClass.Chart.Builder)}
+   * method will be called with the supplied {@code chartBuilder} as
+   * its argument value
    *
    * @param chartBuilder a {@link Chart.Builder} representing the Helm
    * chart to install; must not be {@code null}
@@ -429,11 +430,11 @@ public class ReleaseManager implements Closeable {
    *
    * @param requestBuilder the {@link UpdateReleaseRequest.Builder}
    * representing the installation request; must not be {@code null}
-   * and must {@linkplain #validate(UpdateReleaseRequest.Builder)
-   * pass validation}; its {@link
-   * UpdateReleaseRequest.Builder#setChart(Chart.Builder)} method
-   * will be called with the supplied {@code chartBuilder} as its
-   * argument value
+   * and must {@linkplain
+   * #validate(Tiller.UpdateReleaseRequestOrBuilder) pass validation};
+   * its {@link UpdateReleaseRequest.Builder#setChart(Chart.Builder)}
+   * method will be called with the supplied {@code chartBuilder} as
+   * its argument value
    *
    * @param chartBuilder a {@link Chart.Builder} representing the Helm
    * chart with which to update the release; must not be {@code null}
@@ -636,6 +637,7 @@ public class ReleaseManager implements Closeable {
    * @see #RFC_1123_PATTERN
    *
    * @see <a href="https://tools.ietf.org/html/rfc1123#page-13">RFC
+   * 1123</a>
    */
   protected void validateReleaseName(final String name) {
     if (name != null && !name.isEmpty()) {
