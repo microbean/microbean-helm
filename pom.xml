@@ -362,7 +362,7 @@
             </goals>
             <configuration>
               <checkoutDirectory>${project.build.directory}/generated-sources/helm</checkoutDirectory>
-              <connectionUrl>scm:git:git@github.com:kubernetes/helm.git</connectionUrl>
+              <connectionUrl>scm:git:https://github.com/kubernetes/helm.git</connectionUrl>
               <includes>_proto/hapi/**</includes>
               <scmVersion>v2.6.2</scmVersion>
               <scmVersionType>tag</scmVersionType>
