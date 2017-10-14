@@ -1,5 +1,7 @@
 # microbean-helm
 
+[![Build Status](https://travis-ci.org/microbean/microbean-helm.svg?branch=master)](https://travis-ci.org/microbean/microbean-helm)
+
 The [microbean-helm project][12] lets you work with the server-side
 componentry of [Helm][0] from Java.
 
