@@ -124,7 +124,7 @@
       <dependency>
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
-        <version>1.18</version>
+        <version>1.19</version>
         <type>jar</type>
       </dependency>
       
@@ -285,6 +285,10 @@
                 <url>http://static.javadoc.io/org.kamranzafar/jtar/2.3</url>
                 <location>${project.basedir}/src/main/javadoc/org.kamranzafar/jtar/2.3</location>
               </offlineLink>
+              <offlineLink>
+                <url>http://static.javadoc.io/org.yaml/snakeyaml/1.19</url>
+                <location>${project.basedir}/src/main/javadoc/org.yaml/snakeyaml/1.19</location>
+              </offlineLink>
             </offlineLinks>
           </configuration>
         </plugin>
@@ -375,6 +379,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
+            <project.build.directory>${project.build.directory}</project.build.directory>
             <org.slf4j.simpleLogger.log.io.fabric8>info</org.slf4j.simpleLogger.log.io.fabric8>
             <skipInstallationTest>${skipInstallationTest}</skipInstallationTest>
             <skipClusterTests>${skipClusterTests}</skipClusterTests>
