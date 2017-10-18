@@ -1,7 +1,15 @@
 <body>
 
   <p>Provides classes and interfaces for working
-  with <a href="https://helm.sh/">Helm</a> from Java.</p>
+    with <a href="https://helm.sh/">Helm</a> from Java.</p>
+
+  <p>In general, classes that belong to a package whose name starts
+  with <code>hapi.</code> are generated and compiled from
+  the <a href="https://github.com/kubernetes/helm/tree/master/_proto">protocol
+  buffers sources</a> owned by the Helm project.  Any classes that
+  belong to a package whose name starts
+  with <code>org.microbean.</code> are compiled from Java source code
+  housed in this project.</p>
 
   @author <a href="https://about.me/lairdnelson"
   target="_parent">Laird Nelson</a>
@@ -9,5 +17,9 @@
   @see org.microbean.helm.Tiller
 
   @see org.microbean.helm.ReleaseManager
+
+  @see org.microbean.helm.chart.URLChartLoader
+
+  @see org.microbean.helm.chart.TapeArchiveChartWriter
   
 </body>
