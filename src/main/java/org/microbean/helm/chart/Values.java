@@ -126,7 +126,9 @@ final class Values {
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * <p>This method returns {@code targetMap} (not a copy).</p>
+   * <p>This method returns {@code targetMap} (not a copy).  If {@code
+   * targetMap} is {@code null}, then this method returns a new {@link
+   * Map} implementation.</p>
    *
    * <p>This method may modify {@code targetMap}'s contents if {@code
    * sourceMap} contains entries that {@code targetMap} does not
@@ -140,21 +142,21 @@ final class Values {
    *
    * @param sourceMap the {@link Map} that will contribute entries to
    * the {@code targetMap} only if they are not already contained;
-   * must not be {@code null}
+   * may be {@code null}
    *
    * @param targetMap the {@link Map} that will contain all the
-   * results of this logical operation; must not be {@code null}
+   * results of this logical operation; may be {@code null}
    *
    * @return {@code targetMap}, not a copy, that will normally be
-   * changed to incorporate the results of this operation
-   *
-   * @exception NullPointerException if either {@code sourceMap} or
-   * {@code targetMap} is {@code null}
+   * changed to incorporate the results of this operation, or a new
+   * {@link Map} containing the results of this operation if {@code
+   * targetMap} was originally {@code null}
    */
-  static final Map<String, Object> coalesceMaps(final Map<? extends String, ?> sourceMap, final Map<String, Object> targetMap) {
-    Objects.requireNonNull(sourceMap);
-    Objects.requireNonNull(targetMap);
-    if (!sourceMap.isEmpty()) {
+  static final Map<String, Object> coalesceMaps(final Map<? extends String, ?> sourceMap, Map<String, Object> targetMap) {
+    if (targetMap == null) {
+      targetMap = new HashMap<>();
+    }
+    if (sourceMap != null && !sourceMap.isEmpty()) {
       final Set<? extends Entry<? extends String, ?>> sourceMapEntrySet = sourceMap.entrySet();
       if (sourceMapEntrySet != null && !sourceMapEntrySet.isEmpty()) {
         for (final Entry<? extends String, ?> sourceMapEntry : sourceMapEntrySet) {

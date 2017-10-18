@@ -201,7 +201,6 @@ final class Configs {
       if (raw != null && !raw.isEmpty()) {
         @SuppressWarnings("unchecked")            
         final Map<String, Object> sourceMap = (Map<String, Object>)new Yaml().load(raw);
-        assert sourceMap != null;
         targetMap = Values.coalesceMaps(sourceMap, targetMap);
       }
     }

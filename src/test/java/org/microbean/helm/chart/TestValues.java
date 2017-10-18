@@ -86,9 +86,9 @@ public class TestValues {
     assertEquals("targetValue", coalescedMap.get("sharedCoalescedKey"));
   }
   
-  @Test(expected = NullPointerException.class)
-  public void testCoalesceMapsEnsuringNullSourceMapCausesNullPointerException() {
-    Values.coalesceMaps(null, null);
+  @Test
+  public void testCoalesceMapsEnsuringNullSourceMapNoLongerCausesNullPointerException() {
+    assertNotNull(Values.coalesceMaps(null, null));
   }
   
 }
