@@ -401,22 +401,6 @@
               </excludes>
             </configuration>
           </execution>
-          <execution>
-            <id>Run TestHelmIgnorePathMatcher only</id>
-            <phase>test</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <configuration>
-              <includes>
-                <include>org/microbean/helm/chart/TestHelmIgnorePathMatcher.java</include>
-              </includes>
-              <excludes>
-                <exclude>**/**</exclude>
-              </excludes>
-              <workingDirectory>${project.build.testOutputDirectory}/TestHelmIgnorePathMatcher</workingDirectory>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
       
@@ -488,5 +472,38 @@
       </plugin>
     </plugins>
   </reporting>
+
+  <profiles>
+    <profile>
+      <id>Run TestHelmIgnorePathMatcher only</id>
+      <activation>
+        <property>
+          <name>!test</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>Run TestHelmIgnorePathMatcher only</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <configuration>
+                  <includes>
+                    <include>org/microbean/helm/chart/TestHelmIgnorePathMatcher.java</include>
+                  </includes>
+                  <workingDirectory>${project.build.testOutputDirectory}/TestHelmIgnorePathMatcher</workingDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
   
 </project>
