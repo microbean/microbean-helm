@@ -9,7 +9,7 @@
   <parent>
     <groupId>org.microbean</groupId>
     <artifactId>microbean-pluginmanagement-pom</artifactId>
-    <version>4</version>
+    <version>5</version>
   </parent>
 
   <name>microBean Helm</name>
