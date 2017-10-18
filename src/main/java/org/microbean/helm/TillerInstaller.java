@@ -80,7 +80,7 @@ import org.microbean.development.annotation.Experimental;
  *
  * @see <a
  * href="https://github.com/kubernetes/helm/blob/master/cmd/helm/installer/install.go">The
- * {@code install.go} source code from the Helm project</a>
+ * <code>install.go</code> source code from the Helm project</a>
  */
 @Experimental
 public class TillerInstaller {
@@ -226,8 +226,9 @@ public class TillerInstaller {
    * the default Service Account will be used instead
    *
    * @param imageName the name of the Docker image that contains the
-   * Tiller code; may be {@code null} in which case {@code
-   * gcr.io/kubernetes-helm/tiller:v2.5.0} will be used instead
+   * Tiller code; may be {@code null} in which case the Java {@link
+   * String} <code>"gcr.io/kubernetes-helm/tiller:v" + {@value
+   * #VERSION}</code> will be used instead
    *
    * @param imagePullPolicy an {@link ImagePullPolicy} specifying how
    * the Tiller image should be pulled; may be {@code null} in which
