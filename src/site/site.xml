@@ -19,6 +19,7 @@
       <item name="Overview" href="index.html"/>
       <item name="JavaDocs" href="apidocs/index.html"/>
       <item name="Github Repository" href="${project.scm.url}"/>
+      <item name="Examples" href="examples.html"/>
     </menu>
     <menu ref="reports"/>
   </body>
