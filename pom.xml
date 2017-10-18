@@ -24,6 +24,11 @@
     <tag>HEAD</tag>
   </scm>
 
+  <issueManagement>
+    <system>Github</system>
+    <url>https://github.com/microbean/${project.artifactId}/issues/</url>
+  </issueManagement>
+
   <!--
 
      For more on the structure of this pom.xml file, which is chiefly
