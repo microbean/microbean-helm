@@ -130,7 +130,7 @@ final class Configs {
         configAsMap = null;
       } else {
         @SuppressWarnings("unchecked")
-        final Map<String, Object> temp = (Map<String, Object>)new Yaml().load(raw);
+        final Map<String, Object> temp = (Map<String, Object>)new Yaml().loadAs(raw, Map.class);
         configAsMap = temp;
       }
     }
@@ -151,10 +151,10 @@ final class Configs {
    * ChartOrBuilder#getValues() ConfigOrBuilder} representing its
    * default values, grabs its {@linkplain ConfigOrBuilder#getRaw()
    * YAML representation}, marshals it into a {@link Map} using the
-   * {@link Yaml#load(String)} method, and then passes that {@link
-   * Map} as the first parameter&mdash;and the {@code targetMap} as
-   * the second parameter&mdash;to the {@link #coalesceMaps(Map, Map)}
-   * method and returns its result.
+   * {@link Yaml#loadAs(String, Class)} method, and then passes that
+   * {@link Map} as the first parameter&mdash;and the {@code
+   * targetMap} as the second parameter&mdash;to the {@link
+   * #coalesceMaps(Map, Map)} method and returns its result.
    *
    * <p>This method never returns {@code null}.</p>
    *
@@ -177,7 +177,7 @@ final class Configs {
    *
    * @see ConfigOrBuilder#getRaw()
    *
-   * @see Yaml#load(String)
+   * @see Yaml#loadAs(String, Class)
    */
   private static final Map<String, Object> computeEffectiveValues(final ChartOrBuilder chart, Map<String, Object> targetMap) {
     if (targetMap == null) {
@@ -199,8 +199,8 @@ final class Configs {
     if (config != null) {
       final String raw = config.getRaw();
       if (raw != null && !raw.isEmpty()) {
-        @SuppressWarnings("unchecked")            
-        final Map<String, Object> sourceMap = (Map<String, Object>)new Yaml().load(raw);
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> sourceMap = new Yaml().loadAs(raw, Map.class);
         targetMap = Values.coalesceMaps(sourceMap, targetMap);
       }
     }
