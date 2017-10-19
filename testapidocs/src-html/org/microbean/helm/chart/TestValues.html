@@ -94,9 +94,9 @@
 <span class="sourceLineNo">086</span>    assertEquals("targetValue", coalescedMap.get("sharedCoalescedKey"));<a name="line.86"></a>
 <span class="sourceLineNo">087</span>  }<a name="line.87"></a>
 <span class="sourceLineNo">088</span>  <a name="line.88"></a>
-<span class="sourceLineNo">089</span>  @Test(expected = NullPointerException.class)<a name="line.89"></a>
-<span class="sourceLineNo">090</span>  public void testCoalesceMapsEnsuringNullSourceMapCausesNullPointerException() {<a name="line.90"></a>
-<span class="sourceLineNo">091</span>    Values.coalesceMaps(null, null);<a name="line.91"></a>
+<span class="sourceLineNo">089</span>  @Test<a name="line.89"></a>
+<span class="sourceLineNo">090</span>  public void testCoalesceMapsEnsuringNullSourceMapNoLongerCausesNullPointerException() {<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    assertNotNull(Values.coalesceMaps(null, null));<a name="line.91"></a>
 <span class="sourceLineNo">092</span>  }<a name="line.92"></a>
 <span class="sourceLineNo">093</span>  <a name="line.93"></a>
 <span class="sourceLineNo">094</span>}<a name="line.94"></a>
