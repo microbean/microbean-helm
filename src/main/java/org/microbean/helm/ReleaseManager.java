@@ -81,8 +81,21 @@ public class ReleaseManager implements Closeable {
 
   
   /**
-   * A {@link Pattern} specifying the constraints that a Helm release
-   * name should satisfy.
+   * The maximum number of characters a <a
+   * href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/identifiers.md#definitions">Kubernetes
+   * identifier of type {@code DNS_SUBDOMAIN}</a> is permitted to contain
+   * ({@value}).
+   *
+   * @see <a
+   * href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/identifiers.md#definitions">Kubernetes
+   * identifier definitions</a>
+   */
+  public static final int DNS_SUBDOMAIN_MAX_LENGTH = 253;
+
+  /**
+   * A {@link Pattern} specifying the constraints that a non-{@code
+   * null}, non-{@linkplain String#isEmpty() empty} Helm release name
+   * should satisfy.
    *
    * <p>Because Helm release names are often used in hostnames, they
    * should conform to <a
@@ -93,8 +106,55 @@ public class ReleaseManager implements Closeable {
    *
    * @see <a href="https://tools.ietf.org/html/rfc1123#page-13">RFC
    * 1123</a>
+   *
+   * @see <a
+   * href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/identifiers.md#definitions">Kubernetes
+   * identifier definitions</a>
    */
-  public static final Pattern RFC_1123_PATTERN = Pattern.compile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$");
+  public static final Pattern DNS_SUBDOMAIN_PATTERN = Pattern.compile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$");
+
+  /**
+   * The maximum number of characters a <a
+   * href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/identifiers.md#definitions">Kubernetes
+   * identifier of type {@code DNS_LABEL}</a> is permitted to contain
+   * ({@value}).
+   *
+   * @see <a
+   * href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/identifiers.md#definitions">Kubernetes
+   * identifier definitions</a>
+   */
+  public static final int DNS_LABEL_MAX_LENGTH = 63;
+
+  /**
+   * A {@link Pattern} specifying the constraints that a non-{@code
+   * null}, non-{@linkplain String#isEmpty() empty} Kubernetes
+   * namespace should satisfy.
+   *
+   * @see #validateNamespace(String)
+   *
+   * @see <a href="https://tools.ietf.org/html/rfc1123#page-13">RFC
+   * 1123</a>
+   *
+   * @see <a
+   * href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/identifiers.md#definitions">Kubernetes
+   * identifier definitions</a>
+   */
+  public static final Pattern DNS_LABEL_PATTERN = Pattern.compile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$");
+
+  /**
+   * The maximum number of characters a Helm release name is permitted
+   * to contain ({@value}).
+   *
+   * @see <a href="https://github.com/kubernetes/helm/pull/1560">Helm pull request #1560</a>
+   */
+  public static final int HELM_RELEASE_NAME_MAX_LENGTH = 53;
+  
+  /**
+   * An alias for the {@link #DNS_SUBDOMAIN_PATTERN} field.
+   *
+   * @see #DNS_SUBDOMAIN_PATTERN
+   */
+  public static final Pattern RFC_1123_PATTERN = DNS_SUBDOMAIN_PATTERN;
 
 
   /*
@@ -308,9 +368,12 @@ public class ReleaseManager implements Closeable {
         if (releaseNamespace == null || releaseNamespace.isEmpty()) {
           requestBuilder.setNamespace("default");
         } else {
+          this.validateNamespace(releaseNamespace);
           requestBuilder.setNamespace(releaseNamespace);
         }
       }
+    } else {
+      this.validateNamespace(releaseNamespace);
     }
     
     final ReleaseServiceFutureStub stub = this.getTiller().getReleaseServiceFutureStub();
@@ -630,30 +693,72 @@ public class ReleaseManager implements Closeable {
    * Ensures that the supplied {@code name} is a valid Helm release
    * name.
    *
+   * <p>Because frequently Helm releases are not required to be named
+   * by the end user, a {@code null} or {@linkplain String#isEmpty()
+   * empty} {@code name} is valid.</p>
+   *
    * <p>Because Helm release names are often used in hostnames, they
    * should conform to <a
    * href="https://tools.ietf.org/html/rfc1123#page-13">RFC 1123</a>.
    * This method performs that validation by default, using the {@link
-   * #RFC_1123_PATTERN} field.</p>
+   * #DNS_SUBDOMAIN_PATTERN} field.</p>
    *
    * @param name the name to validate; may be {@code null} or
    * {@linkplain String#isEmpty()} since Tiller will generate a valid
    * name in such a case using the <a
    * href="https://github.com/technosophos/moniker">{@code
    * moniker}</a> project; if non-{@code null} must match the pattern
-   * represented by the value of the {@link #RFC_1123_PATTERN} field
+   * represented by the value of the {@link #DNS_SUBDOMAIN_PATTERN} field
    *
-   * @see #RFC_1123_PATTERN
+   * @see #DNS_SUBDOMAIN_PATTERN
    *
    * @see <a href="https://tools.ietf.org/html/rfc1123#page-13">RFC
    * 1123</a>
    */
-  protected void validateReleaseName(final String name) {
-    if (name != null && !name.isEmpty()) {
-      final Matcher matcher = RFC_1123_PATTERN.matcher(name);
-      assert matcher != null;
-      if (!matcher.matches()) {
-        throw new IllegalArgumentException("Invalid release name: " + name + "; must match " + RFC_1123_PATTERN.toString());
+  protected void validateReleaseName(final String name) {    
+    if (name != null) {
+      final int nameLength = name.length();
+      if (nameLength > HELM_RELEASE_NAME_MAX_LENGTH) {
+        throw new IllegalArgumentException("Invalid release name: " + name + "; length is greater than " + HELM_RELEASE_NAME_MAX_LENGTH + " characters: " + nameLength);
+      } else if (nameLength > 0) {
+        final Matcher matcher = DNS_SUBDOMAIN_PATTERN.matcher(name);
+        assert matcher != null;
+        if (!matcher.matches()) {
+          throw new IllegalArgumentException("Invalid release name: " + name + "; must match " + DNS_SUBDOMAIN_PATTERN.toString());
+        }
+      }
+    }
+  }
+
+  /**
+   * Ensures that the supplied {@code namespace} is a valid namespace.
+   *
+   * <p>Namespaces <a
+   * href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/identifiers.md#general-design">must
+   * conform</a> to <a
+   * href="https://tools.ietf.org/html/rfc1123#page-13">RFC 1123</a>.
+   * This method performs that validation by default, using the {@link
+   * #DNS_SUBDOMAIN_PATTERN} field.</p>
+   *
+   * @param namespace the namespace to validate; may be {@code null} or
+   * {@linkplain String#isEmpty()}
+   *
+   * @see #DNS_LABEL_PATTERN
+   *
+   * @see <a href="https://tools.ietf.org/html/rfc1123#page-13">RFC
+   * 1123</a>
+   */
+  protected void validateNamespace(final String namespace) {
+    if (namespace != null) {
+      final int namespaceLength = namespace.length();
+      if (namespaceLength > DNS_LABEL_MAX_LENGTH) {
+        throw new IllegalArgumentException("Invalid namespace: " + namespace + "; length is greater than " + DNS_LABEL_MAX_LENGTH + " characters: " + namespaceLength);
+      } else if (namespaceLength > 0) {
+        final Matcher matcher = DNS_LABEL_PATTERN.matcher(namespace);
+        assert matcher != null;
+        if (!matcher.matches()) {
+          throw new IllegalArgumentException("Invalid namespace: " + namespace + "; must match " + DNS_LABEL_PATTERN.toString());
+        }
       }
     }
   }
