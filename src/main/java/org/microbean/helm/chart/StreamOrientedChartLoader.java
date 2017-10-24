@@ -575,57 +575,7 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
     assert map != null;
     final Metadata.Builder metadataBuilder = chartBuilder.getMetadataBuilder();
     assert metadataBuilder != null;
-    @SuppressWarnings("unchecked")
-    final Iterable<String> keywords = (Iterable<String>)map.get("keywords");
-    if (keywords != null) {
-      metadataBuilder.addAllKeywords(keywords);
-    }
-    @SuppressWarnings("unchecked")
-    final Iterable<? extends Map<?, ?>> maintainers = (Iterable<? extends Map<?, ?>>)map.get("maintainers");
-    if (maintainers != null) {
-      for (final Map<?, ?> maintainer : maintainers) {
-        if (maintainer != null) {
-          final Maintainer.Builder maintainerBuilder = metadataBuilder.addMaintainersBuilder();
-          assert maintainerBuilder != null;
-          maintainerBuilder.setName((String)maintainer.get("name"));
-          maintainerBuilder.setEmail((String)maintainer.get("email"));
-        }
-      }
-    }
-    @SuppressWarnings("unchecked")
-    final Iterable<String> sources = (Iterable<String>)map.get("sources");
-    if (sources != null) {
-      metadataBuilder.addAllSources(sources);
-    }
-    final String name = (String)map.get("name");
-    if (name != null) {
-      metadataBuilder.setName(name);
-    }
-    final String version = (String)map.get("version");
-    if (version != null) {
-      metadataBuilder.setVersion(version);
-    }
-    final String description = (String)map.get("description");
-    if (description != null) {
-      metadataBuilder.setDescription(description);
-    }
-    final String engine = (String)map.get("engine");
-    if (engine != null) {
-      metadataBuilder.setEngine(engine);
-    }
-    final String icon = (String)map.get("icon");
-    if (icon != null) {
-      metadataBuilder.setIcon(icon);
-    }
-    final String appVersion = (String)map.get("appVersion");
-    if (appVersion != null) {
-      metadataBuilder.setAppVersion(appVersion);
-    }
-    final String tillerVersion = (String)map.get("tillerVersion");
-    if (tillerVersion != null) {
-      metadataBuilder.setTillerVersion(tillerVersion);
-    }
-    metadataBuilder.setDeprecated("true".equals(String.valueOf(map.get("deprecated"))));
+    Metadatas.populateMetadataBuilder(metadataBuilder, map);
   }
 
   /**
