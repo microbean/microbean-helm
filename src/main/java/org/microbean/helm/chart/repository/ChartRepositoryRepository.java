@@ -57,6 +57,17 @@ public class ChartRepositoryRepository extends ChartResolver {
 
   private final Set<ChartRepository> chartRepositories;
 
+  public ChartRepositoryRepository(final Set<? extends ChartRepository> chartRepositories) {
+    super();
+    this.apiVersion = null;
+    this.generationInstant = null;
+    if (chartRepositories == null || chartRepositories.isEmpty()) {
+      this.chartRepositories = Collections.emptySet();
+    } else {
+      this.chartRepositories = Collections.unmodifiableSet(new LinkedHashSet<>(chartRepositories));
+    }
+  }
+  
   public ChartRepositoryRepository(final String apiVersion, final Instant generationInstant, final Set<? extends ChartRepository> chartRepositories) {
     super();
     this.apiVersion = Objects.requireNonNull(apiVersion);

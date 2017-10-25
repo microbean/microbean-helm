@@ -1,5 +1,4 @@
 language: java
 
 before_script:
-  - mkdir -p ${HOME}/.helm/cache/archive
-  - mkdir -p ${HOME}/.helm/repository/cache
+  - mkdir -p ${HOME}/.helm/{cache/archive,repository/cache}

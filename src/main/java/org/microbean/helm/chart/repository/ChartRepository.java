@@ -85,6 +85,14 @@ public class ChartRepository extends ChartResolver {
 
   private transient Index index;
 
+  public ChartRepository(final String name, final URI uri) {
+    this(name, uri, null, null, Paths.get(new StringBuilder(Objects.requireNonNull(name)).append("-index.yaml").toString()), null, null, null);
+  }
+  
+  public ChartRepository(final String name, final URI uri, final Path cachedIndexPath) {
+    this(name, uri, null, null, cachedIndexPath, null, null, null);
+  }
+  
   public ChartRepository(final String name, final URI uri, final Path cachedIndexPath, final Path certificateAuthorityPath, final Path certificatePath, final Path keyPath) {
     this(name, uri, null, null, cachedIndexPath, certificateAuthorityPath, certificatePath, keyPath);
   }
