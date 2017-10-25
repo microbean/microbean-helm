@@ -45,6 +45,7 @@ import org.microbean.development.annotation.Experimental;
 import org.yaml.snakeyaml.Yaml;
 
 import org.microbean.helm.chart.resolver.ChartResolver;
+import org.microbean.helm.chart.resolver.ChartResolverException;
 
 @Experimental
 public class ChartRepositoryRepository extends ChartResolver {
@@ -106,7 +107,7 @@ public class ChartRepositoryRepository extends ChartResolver {
   }
 
   @Override
-  public Chart.Builder resolve(final String chartName, final String chartVersion) throws IOException, URISyntaxException {
+  public Chart.Builder resolve(final String chartName, final String chartVersion) throws ChartResolverException {
     Objects.requireNonNull(chartName);
     Chart.Builder returnValue = null;
     final String[] parts = slashPattern.split(chartName, 2);
@@ -116,7 +117,7 @@ public class ChartRepositoryRepository extends ChartResolver {
     return returnValue;
   }
 
-  public Chart.Builder resolve(final String repositoryName, final String chartName, final String chartVersion) throws IOException, URISyntaxException {
+  public Chart.Builder resolve(final String repositoryName, final String chartName, final String chartVersion) throws ChartResolverException {
     Objects.requireNonNull(repositoryName);
     Objects.requireNonNull(chartName);
     Chart.Builder returnValue = null;

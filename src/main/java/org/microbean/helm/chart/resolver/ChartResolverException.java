@@ -16,21 +16,24 @@
  */
 package org.microbean.helm.chart.resolver;
 
-import java.io.IOException;
+public class ChartResolverException extends Exception {
 
-import java.net.URISyntaxException;
+  private static final long serialVersionUID = 1L;
 
-import hapi.chart.ChartOuterClass.Chart;
-
-import org.microbean.development.annotation.Experimental;
-
-@Experimental
-public abstract class ChartResolver {
-
-  protected ChartResolver() {
+  public ChartResolverException() {
     super();
   }
-
-  public abstract Chart.Builder resolve(final String chartName, final String chartVersion) throws ChartResolverException;
   
+  public ChartResolverException(final String message) {
+    super(message);
+  }
+
+  public ChartResolverException(final Throwable cause) {
+    super(cause);
+  }
+
+  public ChartResolverException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
+
 }
