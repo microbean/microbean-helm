@@ -61,6 +61,7 @@ import org.microbean.helm.chart.Metadatas;
 import org.microbean.helm.chart.TapeArchiveChartLoader;
 
 import org.microbean.helm.chart.resolver.ChartResolver;
+import org.microbean.helm.chart.resolver.ChartResolverException;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -307,13 +308,20 @@ public class ChartRepository extends ChartResolver {
   }
 
   @Override
-  public Chart.Builder resolve(final String chartName, String chartVersion) throws IOException, URISyntaxException {
+  public Chart.Builder resolve(final String chartName, String chartVersion) throws ChartResolverException {
     Objects.requireNonNull(chartName);
     Chart.Builder returnValue = null;
-    final Path cachedChartPath = this.getCachedChartPath(chartName, chartVersion);
+    Path cachedChartPath = null;
+    try {
+      cachedChartPath = this.getCachedChartPath(chartName, chartVersion);
+    } catch (final IOException | URISyntaxException exception) {
+      throw new ChartResolverException(exception.getMessage(), exception);
+    }
     if (cachedChartPath != null && Files.isRegularFile(cachedChartPath)) {
       try (final TapeArchiveChartLoader loader = new TapeArchiveChartLoader()) {
         returnValue = loader.load(new TarInputStream(new GZIPInputStream(new BufferedInputStream(Files.newInputStream(cachedChartPath)))));
+      } catch (final IOException exception) {
+        throw new ChartResolverException(exception.getMessage(), exception);
       }
     }
     return returnValue;

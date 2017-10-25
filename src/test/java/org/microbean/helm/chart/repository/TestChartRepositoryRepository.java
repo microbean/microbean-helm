@@ -39,6 +39,8 @@ import hapi.chart.MetadataOuterClass.MetadataOrBuilder;
 
 import org.junit.Test;
 
+import org.microbean.helm.chart.resolver.ChartResolverException;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -60,7 +62,7 @@ public class TestChartRepositoryRepository {
   }
 
   @Test
-  public void testResolution() throws IOException, URISyntaxException {
+  public void testResolution() throws ChartResolverException, IOException, URISyntaxException {
     final String targetDirectory = System.getProperty("project.build.directory");
     assertNotNull(targetDirectory);
     final Path workArea = Paths.get(targetDirectory).resolve("TestChartRepositoryRepository");
