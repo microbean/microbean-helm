@@ -12,20 +12,13 @@ and [releases][9].
 Until now, Java developers had to use the `helm` command line client
 to do these operations.
 
-# Status
-
-The microbean-helm project is currently in an **alpha** state.
-
-**Version 2 and later of this project are not backwards-compatible
-with earlier versions.**
-
 # Versioning
 
 The microbean-helm project's version number tracks the Helm and Tiller
 release it works with, together with its own version semantics.  For
-example, a microbean-helm version of `2.6.2.1.1.16` means that the Helm
-version it tracks is `2.6.2` and the (SemVer-compatible) version of
-the non-generated code that is part of _this_ project is `1.1.16`.
+example, a microbean-helm version of `2.7.0.1.0.0` means that the Helm
+version it tracks is `2.7.0` and the (SemVer-compatible) version of
+the non-generated code that is part of _this_ project is `1.0.0`.
 
 # Installation
 
@@ -37,7 +30,7 @@ like this:
       <groupId>org.microbean</groupId>
       <artifactId>microbean-helm</artifactId>
       <!-- See http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.microbean%22%20AND%20a%3A%22microbean-helm%22 for available releases. -->
-      <version>2.6.2.1.1.16</version>
+      <version>2.7.0.1.0.0</version>
       <type>jar</type>
     </dependency>
     
