@@ -16,10 +16,9 @@
  */
 package org.microbean.helm.chart.repository;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.io.IOException;
-import java.io.Reader;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -52,8 +51,8 @@ public class TestChartRepositoryRepository {
 
   @Test
   public void testFromYaml() throws IOException, URISyntaxException {
-    try (final Reader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResource("TestChartRepositoryRepository/repositories.yaml").openStream(), StandardCharsets.UTF_8))) {
-      final ChartRepositoryRepository repositories = ChartRepositoryRepository.fromYaml(reader);
+    try (final InputStream inputStream = new BufferedInputStream(Thread.currentThread().getContextClassLoader().getResource("TestChartRepositoryRepository/repositories.yaml").openStream())) {
+      final ChartRepositoryRepository repositories = ChartRepositoryRepository.fromYaml(inputStream);
       assertNotNull(repositories);
       final Set<? extends ChartRepository> chartRepositories = repositories.getChartRepositories();
       assertNotNull(chartRepositories);
@@ -73,8 +72,8 @@ public class TestChartRepositoryRepository {
     final Path archiveCacheDirectory = workArea.resolve("archives");
     assertNotNull(archiveCacheDirectory);
     Files.createDirectories(archiveCacheDirectory);
-    try (final Reader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResource("TestChartRepositoryRepository/repositories.yaml").openStream(), StandardCharsets.UTF_8))) {
-      final ChartRepositoryRepository repo = ChartRepositoryRepository.fromYaml(reader, archiveCacheDirectory, indexCacheDirectory);
+    try (final InputStream inputStream = new BufferedInputStream(Thread.currentThread().getContextClassLoader().getResource("TestChartRepositoryRepository/repositories.yaml").openStream())) {
+      final ChartRepositoryRepository repo = ChartRepositoryRepository.fromYaml(inputStream, archiveCacheDirectory, indexCacheDirectory);
       assertNotNull(repo);
       final Chart.Builder redis = repo.resolve("stable", "redis", "0.10.1");
       assertNotNull(redis);

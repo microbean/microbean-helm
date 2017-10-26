@@ -68,10 +68,11 @@ final class Configs {
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * <p>This method calls the {@link #toValuesMap(ChartOrBuilder,
-   * ConfigOrBuilder)} with {@code chart} as its first argument and
-   * {@code null} as its second argument and returns its return
-   * value.</p>
+   * <p>This method calls the {@link
+   * #toValuesMap(ChartOuterClass.ChartOrBuilder,
+   * ConfigOuterClass.ConfigOrBuilder)} with {@code chart} as its
+   * first argument and {@code null} as its second argument and
+   * returns its return value.</p>
    *
    * <p>The {@link Map} returned by this method may have nested {@link
    * Map Map&lt;String, Object&gt;}s as its values.  It is, in other
@@ -87,7 +88,7 @@ final class Configs {
    * InstallReleaseRequest.Builder#setValues(Config)}; never {@code
    * null}
    *
-   * @see #toValuesMap(ChartOrBuilder, ConfigOrBuilder)
+   * @see #toValuesMap(ChartOuterClass.ChartOrBuilder, ConfigOuterClass.ConfigOrBuilder)
    */
   static final Map<String, Object> toDefaultValuesMap(final ChartOrBuilder chart) {
     return toValuesMap(chart, (ConfigOrBuilder)null);
@@ -154,7 +155,7 @@ final class Configs {
    * {@link Yaml#loadAs(String, Class)} method, and then passes that
    * {@link Map} as the first parameter&mdash;and the {@code
    * targetMap} as the second parameter&mdash;to the {@link
-   * #coalesceMaps(Map, Map)} method and returns its result.
+   * Values#coalesceMaps(Map, Map)} method and returns its result.
    *
    * <p>This method never returns {@code null}.</p>
    *
@@ -171,7 +172,7 @@ final class Configs {
    * @return {@code targetMap}, with possibly changed contents, if it
    * is non-{@code null}, or a new {@link Map}
    *
-   * @see #coalesceMaps(Map, Map)
+   * @see Values#coalesceMaps(Map, Map)
    *
    * @see ChartOrBuilder#getValues()
    *
@@ -212,24 +213,27 @@ final class Configs {
    * {@link Map} of typically user-supplied values with the
    * {@linkplain ChartOrBuilder#getValues() default values present in
    * the supplied <code>ChartOrBuilder</code>}, and then calls {@link
-   * #coalesceDependencies(ChartOrBuilder, Map)} on the results.
+   * #coalesceDependencies(ChartOuterClass.ChartOrBuilder, Map)} on
+   * the results.
    *
-   * <p>This method first calls {@link #computeEffectiveValues(ChartOrBuilder,
-   * Map)}, producing a {@link Map} that combines user-specified and
-   * default values, and then passes the supplied {@code chart} and
-   * the values {@link Map} to the {@link
-   * #coalesceDependencies(ChartOrBuilder, Map)} method and returns
-   * its result.
+   * <p>This method first calls {@link
+   * #computeEffectiveValues(ChartOuterClass.ChartOrBuilder, Map)},
+   * producing a {@link Map} that combines user-specified and default
+   * values, and then passes the supplied {@code chart} and the values
+   * {@link Map} to the {@link
+   * #coalesceDependencies(ChartOuterClass.ChartOrBuilder, Map)}
+   * method and returns its result.
    *
    * @param chart a {@link ChartOrBuilder}
    *
-   * @param suppliedValues the {@link Map} that will ultimately be modified and returned
+   * @param suppliedValues the {@link Map} that will ultimately be
+   * modified and returned
    *
    * @return {@code suppliedValues}
    *
-   * @see #coalesceDependencies(ChartOrBuilder, Map)
+   * @see #coalesceDependencies(ChartOuterClass.ChartOrBuilder, Map)
    *
-   * @see #computeEffectiveValues(ChartOrBuilder, Map)
+   * @see #computeEffectiveValues(ChartOuterClass.ChartOrBuilder, Map)
    */
   private static final Map<String, Object> toValuesMap(final ChartOrBuilder chart, Map<String, Object> suppliedValues) {
     final Map<String, Object> effectiveValues = computeEffectiveValues(chart, suppliedValues);
@@ -268,12 +272,6 @@ final class Configs {
    * this subchart&mdash;or a {@link Map} (or an {@link
    * IllegalArgumentException} will be thrown).</p>
    *
-   * <p>Normally you would pass the return value of {@link
-   * #toValuesMap(Map, Map)} as the second argument to this method.
-   * That method establishes a firm base of typically user-supplied
-   * values that should trump any other values discovered along the
-   * way.</p>
-   *
    * @param subcharts an {@link Iterable} of {@link ChartOrBuilder}
    * instances, each element of which represents a <em>subchart</em>
    * in a larger Helm chart; may be {@code null}
@@ -286,11 +284,9 @@ final class Configs {
    * before together with the flattened default values from the
    * supplied subcharts; never {@code null}
    *
-   * @see #coalesceGlobals(Map, Map)
+   * @see Values#coalesceGlobals(Map, Map)
    *
-   * @see #toValuesMap(ChartOrBuilder, Map)
-   *
-   * @see #toValuesMap(Map, Map)
+   * @see #toValuesMap(ChartOuterClass.ChartOrBuilder, Map)
    */
   private static final Map<String, Object> coalesceDependencies(final Iterable<? extends ChartOrBuilder> subcharts, Map<String, Object> returnValue) {
     if (returnValue == null) {
