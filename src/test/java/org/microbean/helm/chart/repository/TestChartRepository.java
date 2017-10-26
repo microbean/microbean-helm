@@ -42,7 +42,7 @@ public class TestChartRepository {
   public void testLoadIndex() throws IOException, URISyntaxException {
     final Path indexPath = Paths.get(Thread.currentThread().getContextClassLoader().getResource("TestChartRepository/stable-index.yaml").getPath());
     assertNotNull(indexPath);
-    final ChartRepository chartRepository = new ChartRepository("stable", new URI("https://kubernetes-charts.storage.googleapis.com/"), indexPath, null, null, null);
+    final ChartRepository chartRepository = new ChartRepository("stable", new URI("https://kubernetes-charts.storage.googleapis.com/"), indexPath);
     final ChartRepository.Index index = chartRepository.loadIndex();
     assertNotNull(index);
     final Map<String, SortedSet<ChartRepository.Index.Entry>> entries = index.getEntries();

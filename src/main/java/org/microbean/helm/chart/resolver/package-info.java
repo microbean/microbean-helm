@@ -16,10 +16,14 @@
  */
 
 /**
- * Provides classes and interfaces for resolving Helm charts given
- * chart coordinates.
+ * Provides classes and interfaces for resolving <a
+ * href="https://docs.helm.sh/developing_charts/#charts">Helm
+ * charts</a> given chart coordinates of some kind.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
+ *
+ * @see org.microbean.helm.chart.resolver.AbstractChartResolver
  */
+@org.microbean.development.annotation.Experimental
 package org.microbean.helm.chart.resolver;

@@ -16,8 +16,9 @@
  */
 package org.microbean.helm.chart.repository;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,35 +45,68 @@ import org.microbean.development.annotation.Experimental;
 
 import org.yaml.snakeyaml.Yaml;
 
-import org.microbean.helm.chart.resolver.ChartResolver;
+import org.microbean.helm.chart.resolver.AbstractChartResolver;
 import org.microbean.helm.chart.resolver.ChartResolverException;
 
+/**
+ * A repository of {@link ChartRepository} instances, normally built
+ * from a Helm {@code repositories.yaml} file.
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ */
 @Experimental
-public class ChartRepositoryRepository extends ChartResolver {
+public class ChartRepositoryRepository extends AbstractChartResolver {
 
+
+  /*
+   * Static fields.
+   */
+
+
+  /**
+   * A {@link Pattern} that matches a single solidus ("{@code /}").
+   *
+   * <p>This field is never {@code null}.</p>
+   */
   private static final Pattern slashPattern = Pattern.compile("/");
-  
-  private final String apiVersion;
-  
-  private final Instant generationInstant;
 
+
+  /*
+   * Instance fields.
+   */
+
+
+  /**
+   * The ({@linkplain Collections#unmodifiableSet(Set) immutable})
+   * {@link Set} of {@link ChartRepository} instances managed by this
+   * {@link ChartRepositoryRepository}.
+   *
+   * <p>This field is never {@code null}.</p>
+   *
+   * @see #ChartRepositoryRepository(Set)
+   *
+   * @see #getChartRepositories()
+   */
   private final Set<ChartRepository> chartRepositories;
 
+
+  /*
+   * Constructors.
+   */
+
+
+  /**
+   * Creates a new {@link ChartRepositoryRepository}.
+   *
+   * @param chartRepositories the {@link Set} of {@link
+   * ChartRepository} instances to be managed by this {@link
+   * ChartRepositoryRepository}; may be {@code null}; copied by value
+   *
+   * @see #getChartRepositories()
+   */
   public ChartRepositoryRepository(final Set<? extends ChartRepository> chartRepositories) {
     super();
-    this.apiVersion = null;
-    this.generationInstant = null;
-    if (chartRepositories == null || chartRepositories.isEmpty()) {
-      this.chartRepositories = Collections.emptySet();
-    } else {
-      this.chartRepositories = Collections.unmodifiableSet(new LinkedHashSet<>(chartRepositories));
-    }
-  }
-  
-  public ChartRepositoryRepository(final String apiVersion, final Instant generationInstant, final Set<? extends ChartRepository> chartRepositories) {
-    super();
-    this.apiVersion = Objects.requireNonNull(apiVersion);
-    this.generationInstant = generationInstant;
     if (chartRepositories == null || chartRepositories.isEmpty()) {
       this.chartRepositories = Collections.emptySet();
     } else {
@@ -80,18 +114,41 @@ public class ChartRepositoryRepository extends ChartResolver {
     }
   }
 
-  public final String getApiVersion() {
-    return this.apiVersion;
-  }
 
-  public final Instant getGenerationInstant() {
-    return this.generationInstant;
-  }
-  
+  /*
+   * Instance methods.
+   */
+
+
+  /**
+   * Returns the non-{@code null} {@linkplain
+   * Collections#unmodifiableSet(Set) immutable} {@link Set} of {@link
+   * ChartRepository} instances managed by this {@link
+   * ChartRepositoryRepository}.
+   *
+   * @return the non-{@code null} {@linkplain
+   * Collections#unmodifiableSet(Set) immutable} {@link Set} of {@link
+   * ChartRepository} instances managed by this {@link
+   * ChartRepositoryRepository}
+   */
   public final Set<ChartRepository> getChartRepositories() {
     return this.chartRepositories;
   }
 
+  /**
+   * Returns the {@link ChartRepository} managed by this {@link
+   * ChartRepositoryRepository} with the supplied {@code name}, or
+   * {@code null} if there is no such {@link ChartRepository}.
+   *
+   * @param name the {@linkplain ChartRepository#getName() name} of
+   * the {@link ChartRepository} to return; must not be {@code null}
+   *
+   * @return the {@link ChartRepository} managed by this {@link
+   * ChartRepositoryRepository} with the supplied {@code name}, or
+   * {@code null}
+   *
+   * @exception NullPointerException if {@code name} is {@code null}
+   */
   public ChartRepository getChartRepository(final String name) {
     Objects.requireNonNull(name);
     ChartRepository returnValue = null;
@@ -106,6 +163,29 @@ public class ChartRepositoryRepository extends ChartResolver {
     return returnValue;
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>This implementation splits the supplied slash-delimited {@code
+   * chartName} into a <em>chart repository name</em> and a <em>chart
+   * name</em>, uses the chart repository name to {@linkplain
+   * #getChartRepository(String) locate a suitable
+   * <code>ChartRepository</code>}, and then calls {@link
+   * ChartRepository#resolve(String, String)} with the chart name and
+   * the supplied {@code chartVersion}, and returns the result.</p>
+   *
+   * @param chartName a slash-separated {@link String} whose first
+   * component is a {@linkplain ChartRepository#getName() chart
+   * repository name} and whose second component is a Helm chart name;
+   * must not be {@code null}
+   *
+   * @param chartVersion the version of the chart to resolve; may be
+   * {@code null} in which case "latest" semantics are implied
+   *
+   * @return a {@link Chart.Builder}, or {@code null}
+   *
+   * @see #resolve(String, String, String)
+   */
   @Override
   public Chart.Builder resolve(final String chartName, final String chartVersion) throws ChartResolverException {
     Objects.requireNonNull(chartName);
@@ -117,6 +197,39 @@ public class ChartRepositoryRepository extends ChartResolver {
     return returnValue;
   }
 
+  /**
+   * Uses the supplied {@code repositoryName}, {@code chartName} and
+   * {@code chartVersion} parameters to find an appropriate Helm chart
+   * and returns it in the form of a {@link Chart.Builder} object.
+   *
+   * <p>This implementation uses the supplied {@code repositoryName}
+   * to {@linkplain #getChartRepository(String) locate a suitable
+   * <code>ChartRepository</code>}, and then calls {@link
+   * ChartRepository#resolve(String, String)} with the chart name and
+   * the supplied {@code chartVersion}, and returns the result.</p>
+   *
+   * @param repositoryName a {@linkplain ChartRepository#getName()
+   * chart repository name}; must not be {@code null}
+   *
+   * @param chartName a Helm chart name; must not be {@code null}
+   *
+   * @param chartVersion the version of the Helm chart to select; may
+   * be {@code null} in which case "latest" semantics are implied
+   *
+   * @return a {@link Chart.Builder}, or {@code null}
+   *
+   * @exception ChartResolverException if there was a problem with
+   * resolution
+   *
+   * @exception NullPointerException if {@code repositoryName} or
+   * {@code chartName} is {@code null}
+   *
+   * @see #getChartRepository(String)
+   *
+   * @see ChartRepository#getName()
+   *
+   * @see ChartRepository#resolve(String, String)
+   */
   public Chart.Builder resolve(final String repositoryName, final String chartName, final String chartVersion) throws ChartResolverException {
     Objects.requireNonNull(repositoryName);
     Objects.requireNonNull(chartName);
@@ -131,18 +244,90 @@ public class ChartRepositoryRepository extends ChartResolver {
     return returnValue;
   }
 
+
+  /*
+   * Static methods.
+   */
+
+  
+  /**
+   * Creates and returns a new {@link ChartRepositoryRepository} from
+   * the contents of a {@code repositories.yaml} file typically
+   * located in the {@code ~/.helm/repository} directory.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * @return a new {@link ChartRepositoryRepository}; never {@code
+   * null}
+   *
+   * @exception IOException if there was a problem reading the file
+   *
+   * @exception URISyntaxException if there was an invalid URI in the
+   * file
+   *
+   * @see #fromYaml(InputStream, Path, Path)
+   */
   public static final ChartRepositoryRepository fromHelmRepositoriesYaml() throws IOException, URISyntaxException {
-    try (final Reader reader = Files.newBufferedReader(ChartRepository.getHelmHome().resolve("repository/repositories.yaml"))) {
-      return fromYaml(reader);
+    try (final InputStream stream = new BufferedInputStream(Files.newInputStream(ChartRepository.getHelmHome().resolve("repository/repositories.yaml")))) {
+      return fromYaml(stream);
     }
   }
 
-  public static final ChartRepositoryRepository fromYaml(final Reader reader) throws IOException, URISyntaxException {
-    return fromYaml(reader, null, null);
+  /**
+   * Creates and returns a new {@link ChartRepositoryRepository} from
+   * the contents of a {@code repositories.yaml} file represented by
+   * the supplied {@link InputStream}.
+   *
+   * @param stream the {@link InputStream} to read from; must not be
+   * {@code null}
+   *
+   * @return a new {@link ChartRepositoryRepository}; never {@code
+   * null}
+   *
+   * @exception IOException if there was a problem reading the file
+   *
+   * @exception URISyntaxException if there was an invalid URI in the
+   * file
+   *
+   * @see #fromYaml(InputStream, Path, Path)
+   */
+  public static final ChartRepositoryRepository fromYaml(final InputStream stream) throws IOException, URISyntaxException {
+    return fromYaml(stream, null, null);
   }
-  
-  public static final ChartRepositoryRepository fromYaml(final Reader reader, Path archiveCacheDirectory, Path indexCacheDirectory) throws IOException, URISyntaxException {
-    Objects.requireNonNull(reader);
+
+  /**
+   * Creates and returns a new {@link ChartRepositoryRepository} from
+   * the contents of a {@code repositories.yaml} file represented by
+   * the supplied {@link InputStream}.
+   *
+   * @param stream the {@link InputStream} to read from; must not be
+   * {@code null}
+   *
+   * @param archiveCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory where Helm chart
+   * archives may be stored; if {@code null} then a {@link Path}
+   * beginning with the absolute directory represented by the value of
+   * the {@code helm.home} system property, or the value of the {@code
+   * HELM_HOME} environment variable, appended with {@code
+   * cache/archive} will be used instead
+   *
+   * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory that the supplied
+   * {@code cachedIndexPath} parameter value will be considered to be
+   * relative to; will be ignored and hence may be {@code null} if the
+   * supplied {@code cachedIndexPath} parameter value {@linkplain
+   * Path#isAbsolute()}
+   *
+   * @return a new {@link ChartRepositoryRepository}; never {@code
+   * null}
+   *
+   * @exception IOException if there was a problem reading the file
+   *
+   * @exception URISyntaxException if there was an invalid URI in the
+   * file
+   */
+  public static final ChartRepositoryRepository fromYaml(final InputStream stream, Path archiveCacheDirectory, Path indexCacheDirectory) throws IOException, URISyntaxException {
+    Objects.requireNonNull(stream);
     Path helmHome = null;
     if (archiveCacheDirectory == null) {
       helmHome = ChartRepository.getHelmHome();
@@ -164,14 +349,10 @@ public class ChartRepositoryRepository extends ChartResolver {
     if (!Files.isDirectory(indexCacheDirectory)) {
       throw new IllegalArgumentException("!Files.isDirectory(indexCacheDirectory): " + indexCacheDirectory);
     }
-    final Map<?, ?> map = new Yaml().loadAs(reader, Map.class);
+    final Map<?, ?> map = new Yaml().loadAs(stream, Map.class);
     if (map == null || map.isEmpty()) {
-      throw new IllegalArgumentException("No data readable from reader: " + reader);
+      throw new IllegalArgumentException("No data readable from stream: " + stream);
     }
-    final String apiVersion = (String)Objects.requireNonNull(map.get("apiVersion"));
-
-    final Date generationDate = (Date)map.get("generated");
-    final Instant generationInstant = generationDate == null ? null : generationDate.toInstant();
     final Set<ChartRepository> chartRepositories;
     @SuppressWarnings("unchecked")      
     final Collection<? extends Map<?, ?>> repositories = (Collection<? extends Map<?, ?>>)map.get("repositories");
@@ -188,36 +369,13 @@ public class ChartRepositoryRepository extends ChartResolver {
             cache = indexCacheDirectory.resolve(cache);
             assert cache.isAbsolute();
           }
-          final String caFileString = (String)map.get("caFile");
-          final Path caFile;
-          if (caFileString == null || caFileString.isEmpty()) {
-            caFile = null;
-          } else {
-            caFile = Paths.get(caFileString);
-          }
           
-          final String certFileString = (String)map.get("certFile");
-          final Path certFile;
-          if (certFileString == null || certFileString.isEmpty()) {
-            certFile = null;
-          } else {
-            certFile = Paths.get(certFileString);
-          }
-          
-          final String keyFileString = (String)map.get("keyFile");
-          final Path keyFile;
-          if (keyFileString == null || keyFileString.isEmpty()) {
-            keyFile = null;
-          } else {
-            keyFile = Paths.get(keyFileString);
-          }
-          
-          final ChartRepository chartRepository = new ChartRepository(name, uri, archiveCacheDirectory, indexCacheDirectory, cache, caFile, certFile, keyFile);
+          final ChartRepository chartRepository = new ChartRepository(name, uri, archiveCacheDirectory, indexCacheDirectory, cache);
           chartRepositories.add(chartRepository);
         }      
       }
     }
-    return new ChartRepositoryRepository(apiVersion, generationInstant, chartRepositories);
+    return new ChartRepositoryRepository(chartRepositories);
   }
  
 }

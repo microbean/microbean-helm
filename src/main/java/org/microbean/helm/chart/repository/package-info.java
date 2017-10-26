@@ -17,9 +17,16 @@
 
 /**
  * Provides classes and interfaces implementing chart resolution in
- * terms of chart repositories.
+ * terms of <a
+ * href="https://docs.helm.sh/developing_charts/#create-a-chart-repository">chart
+ * repositories</a>.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
+ *
+ * @see org.microbean.helm.chart.repository.ChartRepository
+ *
+ * @see org.microbean.helm.chart.repository.ChartRepositoryRepository
  */
+@org.microbean.development.annotation.Experimental
 package org.microbean.helm.chart.repository;

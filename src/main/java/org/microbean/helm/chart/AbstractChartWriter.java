@@ -145,11 +145,11 @@ public abstract class AbstractChartWriter implements Closeable {
    *
    * @see #beginWrite(Context, ChartOuterClass.ChartOrBuilder, ChartOuterClass.ChartOrBuilder)
    *
-   * @see #writeMetadata(Context, MetadataOrBuilder)
+   * @see #writeMetadata(Context, MetadataOuterClass.MetadataOrBuilder)
    *
-   * @see #writeConfig(Context, ConfigOrBuilder)
+   * @see #writeConfig(Context, ConfigOuterClass.ConfigOrBuilder)
    *
-   * @see #writeTemplate(Context, TemplateOrBuilder)
+   * @see #writeTemplate(Context, TemplateOuterClass.TemplateOrBuilder)
    *
    * @see #writeFile(Context, AnyOrBuilder)
    *
