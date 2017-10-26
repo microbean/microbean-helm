@@ -5,3 +5,5 @@ hapi.services.tiller
 hapi.version
 org.microbean.helm
 org.microbean.helm.chart
+org.microbean.helm.chart.repository
+org.microbean.helm.chart.resolver

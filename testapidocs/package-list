@@ -1,2 +1,3 @@
 org.microbean.helm
 org.microbean.helm.chart
+org.microbean.helm.chart.repository
