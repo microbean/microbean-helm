@@ -131,7 +131,13 @@ public abstract class AbstractArchiveChartWriter extends AbstractChartWriter {
     Objects.requireNonNull(context);
     
     if (config != null) {
-      final String yaml = this.toYAML(context, config);
+      final String raw = config.getRaw();
+      final String yaml;
+      if (raw == null || raw.isEmpty()) {
+        yaml = "";
+      } else {
+        yaml = this.toYAML(context, raw);
+      }
       this.writeEntry(context, "values.yaml", yaml);
     }
   }
