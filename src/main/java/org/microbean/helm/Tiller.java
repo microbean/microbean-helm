@@ -19,6 +19,7 @@ package org.microbean.helm;
 import java.io.Closeable;
 import java.io.IOException;
 
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 
 import java.util.Collections;
@@ -48,6 +49,8 @@ import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
 
 import okhttp3.OkHttpClient;
+
+import org.microbean.development.annotation.Issue;
 
 import org.microbean.kubernetes.Pods;
 
@@ -365,9 +368,24 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    *
    * @exception NullPointerException if {@code portForward} is {@code
    * null}
+   *
+   * @exception IllegalArgumentException if {@code portForward}'s
+   * {@link LocalPortForward#getLocalAddress()} method returns {@code
+   * null}
    */
+  @Issue(id = "42", uri = "https://github.com/microbean/microbean-helm/issues/42")
   protected ManagedChannel buildChannel(final LocalPortForward portForward) {
-    return ManagedChannelBuilder.forAddress(portForward.getLocalAddress().getHostAddress(), portForward.getLocalPort()).usePlaintext(true).build();
+    Objects.requireNonNull(portForward);
+    @Issue(id = "43", uri = "https://github.com/microbean/microbean-helm/issues/43")
+    final InetAddress localAddress = portForward.getLocalAddress();
+    if (localAddress == null) {
+      throw new IllegalArgumentException("portForward", new IllegalStateException("portForward.getLocalAddress() == null"));
+    }
+    final String hostAddress = localAddress.getHostAddress();
+    if (hostAddress == null) {
+      throw new IllegalArgumentException("portForward", new IllegalStateException("portForward.getLocalAddress().getHostAddress() == null"));
+    }
+    return ManagedChannelBuilder.forAddress(hostAddress, portForward.getLocalPort()).usePlaintext(true).build();
   }
 
   /**
