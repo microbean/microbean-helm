@@ -25,11 +25,56 @@ public final class Metadatas {
 
   public static final void populateMetadataBuilder(Metadata.Builder metadataBuilder, final Map<?, ?> yamlMap) {
     if (metadataBuilder != null && yamlMap != null && !yamlMap.isEmpty()) {
+
+      @SuppressWarnings("unchecked")
+      final Map<String, String> annotationsMap = (Map<String, String>)yamlMap.get("annotations");
+      if (annotationsMap != null) {
+        metadataBuilder.putAllAnnotations(annotationsMap);
+      }
+      
+      final String apiVersion = (String)yamlMap.get("apiVersion");
+      if (apiVersion != null) {
+        metadataBuilder.setApiVersion(apiVersion);
+      }
+      
+      final String appVersion = (String)yamlMap.get("appVersion");
+      if (appVersion != null) {
+        metadataBuilder.setAppVersion(appVersion);
+      }
+
+      final String condition = (String)yamlMap.get("condition");
+      if (condition != null) {
+        metadataBuilder.setCondition(condition);
+      }
+      
+      metadataBuilder.setDeprecated("true".equals(String.valueOf(yamlMap.get("deprecated"))));
+      
+      final String description = (String)yamlMap.get("description");
+      if (description != null) {
+        metadataBuilder.setDescription(description);
+      }
+      
+      final String engine = (String)yamlMap.get("engine");
+      if (engine != null) {
+        metadataBuilder.setEngine(engine);
+      }
+
+      final String home = (String)yamlMap.get("home");
+      if (home != null) {
+        metadataBuilder.setHome(home);
+      }
+      
+      final String icon = (String)yamlMap.get("icon");
+      if (icon != null) {
+        metadataBuilder.setIcon(icon);
+      }
+      
       @SuppressWarnings("unchecked")
       final Iterable<String> keywords = (Iterable<String>)yamlMap.get("keywords");
       if (keywords != null) {
         metadataBuilder.addAllKeywords(keywords);
       }
+      
       @SuppressWarnings("unchecked")
       final Iterable<? extends Map<?, ?>> maintainers = (Iterable<? extends Map<?, ?>>)yamlMap.get("maintainers");
       if (maintainers != null) {
@@ -48,40 +93,34 @@ public final class Metadatas {
           }
         }
       }
+
+      final String name = (String)yamlMap.get("name");
+      if (name != null) {
+        metadataBuilder.setName(name);
+      }
+      
       @SuppressWarnings("unchecked")
       final Iterable<String> sources = (Iterable<String>)yamlMap.get("sources");
       if (sources != null) {
         metadataBuilder.addAllSources(sources);
       }
-      final String name = (String)yamlMap.get("name");
-      if (name != null) {
-        metadataBuilder.setName(name);
+
+      final String tags = (String)yamlMap.get("tags");
+      if (tags != null) {
+        metadataBuilder.setTags(tags);
       }
-      final String version = (String)yamlMap.get("version");
-      if (version != null) {
-        metadataBuilder.setVersion(version);
-      }
-      final String description = (String)yamlMap.get("description");
-      if (description != null) {
-        metadataBuilder.setDescription(description);
-      }
-      final String engine = (String)yamlMap.get("engine");
-      if (engine != null) {
-        metadataBuilder.setEngine(engine);
-      }
-      final String icon = (String)yamlMap.get("icon");
-      if (icon != null) {
-        metadataBuilder.setIcon(icon);
-      }
-      final String appVersion = (String)yamlMap.get("appVersion");
-      if (appVersion != null) {
-        metadataBuilder.setAppVersion(appVersion);
-      }
+
       final String tillerVersion = (String)yamlMap.get("tillerVersion");
       if (tillerVersion != null) {
         metadataBuilder.setTillerVersion(tillerVersion);
       }
-      metadataBuilder.setDeprecated("true".equals(String.valueOf(yamlMap.get("deprecated"))));
+      
+      final String version = (String)yamlMap.get("version");
+      if (version != null) {
+        metadataBuilder.setVersion(version);
+      }
+      
+
     }
   }
   
