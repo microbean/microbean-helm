@@ -136,7 +136,7 @@ public abstract class AbstractArchiveChartWriter extends AbstractChartWriter {
       if (raw == null || raw.isEmpty()) {
         yaml = "";
       } else {
-        yaml = this.toYAML(context, raw);
+        yaml = raw;
       }
       this.writeEntry(context, "values.yaml", yaml);
     }
