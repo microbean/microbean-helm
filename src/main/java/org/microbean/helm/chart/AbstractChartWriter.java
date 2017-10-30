@@ -262,6 +262,24 @@ public abstract class AbstractChartWriter implements Closeable {
    * <p>This method never returns {@code null}.</p>
    *
    * <p>This method may call the {@link #createYaml()} method.</p>
+   *
+   * @param context the {@link Context} representing the write
+   * operation; must not be {@code null}
+   *
+   * @param data the {@link Object} to convert to its YAML
+   * representation; may be {@code null}
+   *
+   * @return a non-{@code null} {@link String} consisting of the
+   * appropriate YAML represesentation of the supplied {@code data}
+   *
+   * @exception IOException if a YAML serialization error occurs
+   *
+   * @exception NullPointerException if {@code context} is {@code
+   * null}
+   *
+   * @see #createYaml()
+   *
+   * @see Yaml#dumpAsMap(Object)
    */
   protected final String toYAML(final Context context, final Object data) throws IOException {
     Objects.requireNonNull(context);
