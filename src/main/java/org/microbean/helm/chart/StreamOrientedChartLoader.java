@@ -47,6 +47,8 @@ import hapi.chart.TemplateOuterClass.Template;
 
 import org.kamranzafar.jtar.TarInputStream;
 
+import org.microbean.development.annotation.Issue;
+
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -100,7 +102,8 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
   
   private static final Pattern templateFileNamePattern = Pattern.compile("^.+/(templates/[^/]+)$");
 
-  private static final Pattern subchartFileNamePattern = Pattern.compile("^.+/charts/[^._][^/]+/(.+)$");
+  @Issue(uri = "https://github.com/microbean/microbean-helm/issues/63")
+  private static final Pattern subchartFileNamePattern = Pattern.compile("^.+/charts/([^._][^/]+/?(.*))$");
 
   /**
    * <p>Please note that the lack of anchors ({@code ^} or {@code $})
@@ -111,7 +114,8 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
 
   private static final Pattern chartNamePattern = Pattern.compile("^.+/charts/([^/]+).*$");
 
-  private static final Pattern basenamePattern = Pattern.compile("^.*/?(.*)$");
+  @Issue(uri = "https://github.com/microbean/microbean-helm/issues/63")
+  private static final Pattern basenamePattern = Pattern.compile("^.*?([^/]+)$");
 
 
   /*
@@ -366,7 +370,20 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
       final Matcher subchartMatcher = subchartFileNamePattern.matcher(path);
       assert subchartMatcher != null;
       if (subchartMatcher.find()) {
-        returnValue = subchartMatcher.group(1);
+        // in foo/charts/bork/blatz.txt:
+        //   group 1 is bork/blatz.txt
+        //   group 2 is blatz.txt
+        // in foo/charts/blatz.tgz:
+        //   group 1 is blatz.tgz
+        //   group 2 is (empty string)
+        final String group2 = subchartMatcher.group(2);
+        assert group2 != null;
+        if (group2.isEmpty()) {
+          returnValue = subchartMatcher.group(1);
+          assert returnValue != null;
+        } else {
+          returnValue = group2;
+        }
       }
     }
     return returnValue;
