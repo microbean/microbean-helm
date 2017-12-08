@@ -4,7 +4,7 @@
 
   <groupId>org.microbean</groupId>
   <artifactId>microbean-helm</artifactId>
-  <version>2.7.0.1.0.28-SNAPSHOT</version>
+  <version>2.7.0.1.0.28</version>
 
   <parent>
     <groupId>org.microbean</groupId>
@@ -21,7 +21,7 @@
     <connection>scm:git:git@github.com:microbean/${project.artifactId}.git</connection>
     <developerConnection>scm:git:git@github.com:microbean/${project.artifactId}.git</developerConnection>
     <url>https://github.com/microbean/${project.artifactId}/</url>
-    <tag>HEAD</tag>
+    <tag>v2.7.0.1.0.28</tag>
   </scm>
 
   <issueManagement>
