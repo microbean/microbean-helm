@@ -1,0 +1,5 @@
+apiVersion: v1
+name: chart-with-subcharts
+version: 0.0.1
+description: For testing issue 63
+
