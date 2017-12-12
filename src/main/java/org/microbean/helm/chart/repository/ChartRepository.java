@@ -24,7 +24,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import java.nio.file.CopyOption; // for javadoc only
 import java.nio.file.LinkOption; // for javadoc only
 import java.nio.file.StandardCopyOption;
 import java.nio.file.Files;
@@ -806,7 +805,7 @@ public class ChartRepository extends AbstractChartResolver {
       if (entries == null || entries.isEmpty()) {
         this.entries = Collections.emptySortedMap();
       } else {
-        this.entries = Collections.unmodifiableSortedMap(new TreeMap<>(entries));
+        this.entries = Collections.unmodifiableSortedMap(deepCopy(entries));
       }
     }
 
@@ -815,18 +814,6 @@ public class ChartRepository extends AbstractChartResolver {
      * Instance methods.
      */
 
-    /*
-      func (i *IndexFile) Merge(f *IndexFile) {
-        for _, cvs := range f.Entries {
-          for _, cv := range cvs {
-			      if !i.Has(cv.Name, cv.Version) {
-              e := i.Entries[cv.Name]
-              i.Entries[cv.Name] = append(e, cv)
-			      }
-          }
-        }
-      }
-    */
 
     /**
      * Creates and returns a new {@link Index} consisting of all this
@@ -857,8 +844,32 @@ public class ChartRepository extends AbstractChartResolver {
       } else if (myEntries == null || myEntries.isEmpty()) {
         returnValue = new Index(otherEntries);
       } else {
-        final Map<String, SortedSet<Entry>> mergedEntries = new TreeMap<>(otherEntries);
-        mergedEntries.putAll(myEntries);
+        final Map<String, SortedSet<Entry>> mergedEntries = deepCopy(myEntries);
+        final Set<Map.Entry<String, SortedSet<Entry>>> otherEntrySet = otherEntries.entrySet();
+        if (otherEntrySet != null && !otherEntrySet.isEmpty()) {
+          for (final Map.Entry<? extends String, ? extends SortedSet<Entry>> otherEntrySetElement : otherEntrySet) {
+            if (otherEntrySetElement != null) {
+              final SortedSet<Entry> otherValues = otherEntrySetElement.getValue();
+              if (otherValues != null && !otherValues.isEmpty()) {
+                for (final Entry otherEntry : otherValues) {
+                  if (otherEntry != null) {
+                    final String otherEntryName = otherEntry.getName();
+                    final Entry myCorrespondingEntry = this.getEntry(otherEntryName, otherEntry.getVersion());
+                    if (myCorrespondingEntry == null) {
+                      SortedSet<Entry> myRelatedEntries = mergedEntries.get(otherEntryName);
+                      if (myRelatedEntries == null) {
+                        myRelatedEntries = new TreeSet<>(Collections.reverseOrder());
+                        mergedEntries.put(otherEntryName, myRelatedEntries);
+                      }
+                      assert !myRelatedEntries.contains(otherEntry);
+                      myRelatedEntries.add(otherEntry);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
         returnValue = new Index(mergedEntries);
       }
       return returnValue;
@@ -1033,6 +1044,48 @@ public class ChartRepository extends AbstractChartResolver {
       return returnValue;
     }
 
+    /**
+     * Performs a deep copy of the supplied {@link Map} such that the
+     * {@link SortedMap} returned has copies of the supplied {@link
+     * Map}'s {@linkplain Map#values() values}.
+     *
+     * <p>This method may return {@code null} if {@code source} is
+     * {@code null}.</p>
+     *
+     * <p>The {@link SortedMap} returned by this method is
+     * mutable.</p>
+     *
+     * @param source the {@link Map} to copy; may be {@code null} in
+     * which case {@code null} will be returned
+     *
+     * @return a mutable {@link SortedMap}, or {@code null}
+     */
+    private static final SortedMap<String, SortedSet<Entry>> deepCopy(final Map<? extends String, ? extends SortedSet<Entry>> source) {
+      final SortedMap<String, SortedSet<Entry>> returnValue;
+      if (source == null) {
+        returnValue = null;
+      } else if (source.isEmpty()) {
+        returnValue = Collections.emptySortedMap();
+      } else {
+        returnValue = new TreeMap<>();
+        final Collection<? extends Map.Entry<? extends String, ? extends SortedSet<Entry>>> entrySet = source.entrySet();
+        if (entrySet != null && !entrySet.isEmpty()) {
+          for (final Map.Entry<? extends String, ? extends SortedSet<Entry>> entry : entrySet) {
+            final String key = entry.getKey();
+            final SortedSet<Entry> value = entry.getValue();
+            if (value == null) {
+              returnValue.put(key, null);
+            } else {
+              final SortedSet<Entry> newValue = new TreeSet<>(value.comparator());
+              newValue.addAll(value);
+              returnValue.put(key, newValue);
+            }
+          }
+        }
+      }
+      return returnValue;
+    }
+    
 
     /*
      * Inner and nested classes.
