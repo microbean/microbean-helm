@@ -17,12 +17,15 @@
 package org.microbean.helm.chart.repository;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+
+import java.nio.ByteBuffer;
 
 import java.nio.file.LinkOption; // for javadoc only
 import java.nio.file.StandardCopyOption;
@@ -31,6 +34,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.nio.file.attribute.FileAttribute; // for javadoc only
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -45,6 +51,8 @@ import java.util.TreeSet;
 import java.util.TreeMap;
 
 import java.util.zip.GZIPInputStream;
+
+import javax.xml.bind.DatatypeConverter;
 
 import com.github.zafarkhaja.semver.ParseException;
 import com.github.zafarkhaja.semver.Version;
@@ -1025,12 +1033,13 @@ public class ChartRepository extends AbstractChartResolver {
                             }
                           }
                         }
+                        final String digest = (String)entryMap.get("digest");
                         SortedSet<Index.Entry> entryObjects = sortedEntryMap.get(entryName);
                         if (entryObjects == null) {
                           entryObjects = new TreeSet<>(Collections.reverseOrder());
                           sortedEntryMap.put(entryName, entryObjects);
                         }
-                        entryObjects.add(new Index.Entry(metadataBuilder, uris));
+                        entryObjects.add(new Index.Entry(metadataBuilder, uris, digest));
                       }
                     }
                   }
@@ -1127,6 +1136,8 @@ public class ChartRepository extends AbstractChartResolver {
        */
       private final Set<URI> uris;
 
+      
+      private final String digest;
 
       /*
        * Constructors.
@@ -1146,8 +1157,31 @@ public class ChartRepository extends AbstractChartResolver {
        *
        * @exception NullPointerException if {@code metadata} is {@code
        * null}
+       *
+       * @see #Entry(MetadataOrBuilder, Collection, String)
        */
       Entry(final MetadataOrBuilder metadata, final Collection<? extends URI> uris) {
+        this(metadata, uris, null);
+      }
+
+      /**
+       * Creates a new {@link Entry}.
+       *
+       * @param metadata a {@link MetadataOrBuilder} representing most
+       * of the contents of the entry; must not be {@code null}
+       *
+       * @param uris a {@link Collection} of {@link URI}s describing
+       * where the particular Helm chart described by this {@link
+       * Entry} may be downloaded from; may be {@code null}; copied by
+       * value
+       *
+       * @param digest a SHA-256 message digest to be associated with
+       * this {@link Entry}; may be {@code null}
+       *
+       * @exception NullPointerException if {@code metadata} is {@code
+       * null}
+       */
+      Entry(final MetadataOrBuilder metadata, final Collection<? extends URI> uris, final String digest) {
         super();
         this.metadata = Objects.requireNonNull(metadata);
         if (uris == null || uris.isEmpty()) {
@@ -1155,6 +1189,7 @@ public class ChartRepository extends AbstractChartResolver {
         } else {
           this.uris = new LinkedHashSet<>(uris);
         }
+        this.digest = digest;
       }
 
 
@@ -1423,6 +1458,20 @@ public class ChartRepository extends AbstractChartResolver {
       }
 
       /**
+       * Returns the SHA-256 message digest, in hexadecimal-encoded
+       * {@link String} form, associated with this {@link Entry}.
+       *
+       * <p>This method may return {@code null}.</p>
+       *
+       * @return the SHA-256 message digest, in hexadecimal-encoded
+       * {@link String} form, associated with this {@link Entry}, or
+       * {@code null}
+       */
+      public final String getDigest() {
+        return this.digest;
+      }
+
+      /**
        * Returns a non-{@code null} {@link String} representation of
        * this {@link Entry}.
        *
@@ -1437,6 +1486,93 @@ public class ChartRepository extends AbstractChartResolver {
         }
         return new StringBuilder(name).append(" ").append(this.getVersion()).toString();
       }
+
+      /**
+       * Computes a SHA-256 message digest of the bytes readable from
+       * the supplied {@link InputStream} and returns the result of
+       * {@linkplain DatatypeConverter#printHexBinary(byte[])
+       * hexadecimal-encoding it}.
+       *
+       * <p>This method never returns {@code null}.</p>
+       *
+       * @param inputStream the {@link InputStream} to read from; must
+       * not be {@code null}
+       *
+       * @return a {@linkplain
+       * DatatypeConverter#printHexBinary(byte[]) hexadecimal-encoded}
+       * SHA-256 message digest; never {@code null}
+       *
+       * @exception NullPointerException if {@code inputStream} is
+       * {@code null}
+       *
+       * @exception IOException if an input or output error occurs
+       */
+      @Experimental
+      public static final String getDigest(final InputStream inputStream) throws IOException {
+        Objects.requireNonNull(inputStream);
+        MessageDigest md = null;
+        try {
+          md = MessageDigest.getInstance("SHA-256");
+        } catch (final NoSuchAlgorithmException noSuchAlgorithmException) {
+          // SHA-256 is guaranteed to exist.
+          throw new InternalError(noSuchAlgorithmException);
+        }
+        assert md != null;
+        final ByteBuffer buffer = toByteBuffer(inputStream);
+        assert buffer != null;
+        md.update(buffer);
+        return DatatypeConverter.printHexBinary(md.digest());
+      }
+
+      /**
+       * Returns a {@link ByteBuffer} representing the supplied {@link
+       * InputStream}.
+       *
+       * <p>This method never returns {@code null}.</p>
+       *
+       * @param stream the {@link InputStream} to represent; may be
+       * {@code null}
+       *
+       * @return a non-{@code null} {@link ByteBuffer}
+       *
+       * @exception IOException if an input or output error occurs
+       */
+      private static final ByteBuffer toByteBuffer(final InputStream stream) throws IOException {
+        return ByteBuffer.wrap(read(stream));
+      }
+
+      /**
+       * Fully reads the supplied {@link InputStream} into a {@code
+       * byte} array and returns it.
+       *
+       * <p>This method never returns {@code null}.</p>
+       *
+       * @param stream the {@link InputStream} to read; may be {@code
+       * null}
+       *
+       * @return a non-{@code null} {@code byte} array containing the
+       * readable contents of the supplied {@link InputStream}
+       *
+       * @exception IOException if an input or output error occurs
+       */
+      private static final byte[] read(final InputStream stream) throws IOException {
+        byte[] returnValue = null;
+        if (stream == null) {
+          returnValue = new byte[0];
+        } else {
+          try (final ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            int bytesRead;
+            final byte[] byteArray = new byte[4096];
+            while ((bytesRead = stream.read(byteArray, 0, byteArray.length)) != -1) {
+              buffer.write(byteArray, 0, bytesRead);
+            }
+            buffer.flush();
+            returnValue = buffer.toByteArray();
+          }
+        }
+        return returnValue;
+      }
+  
       
     }
     
