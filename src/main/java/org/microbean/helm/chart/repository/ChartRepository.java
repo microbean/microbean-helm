@@ -815,6 +815,54 @@ public class ChartRepository extends AbstractChartResolver {
      * Instance methods.
      */
 
+    /*
+      func (i *IndexFile) Merge(f *IndexFile) {
+        for _, cvs := range f.Entries {
+          for _, cv := range cvs {
+			      if !i.Has(cv.Name, cv.Version) {
+              e := i.Entries[cv.Name]
+              i.Entries[cv.Name] = append(e, cv)
+			      }
+          }
+        }
+      }
+    */
+
+    /**
+     * Creates and returns a new {@link Index} consisting of all this
+     * {@link Index} instance's {@linkplain #getEntries() entries}
+     * augmented with those entries from the supplied {@link Index}
+     * that this {@link Index} instance did not already contain.
+     *
+     * @param other the {@link Index} to merge in; may be {@code null}
+     *
+     * @return a new {@link Index} reflecting the merge operation
+     */
+    @Experimental
+    public final Index merge(final Index other) {
+      final Index returnValue;
+      final Map<String, SortedSet<Entry>> myEntries = this.getEntries();
+      final Map<String, SortedSet<Entry>> otherEntries;
+      if (other == null) {
+        otherEntries = null;
+      } else {
+        otherEntries = other.getEntries();
+      }
+      if (otherEntries == null || otherEntries.isEmpty()) {
+        if (myEntries == null || myEntries.isEmpty()) {
+          returnValue = new Index(null);
+        } else {
+          returnValue = new Index(myEntries);
+        }
+      } else if (myEntries == null || myEntries.isEmpty()) {
+        returnValue = new Index(otherEntries);
+      } else {
+        final Map<String, SortedSet<Entry>> mergedEntries = new TreeMap<>(otherEntries);
+        mergedEntries.putAll(myEntries);
+        returnValue = new Index(mergedEntries);
+      }
+      return returnValue;
+    }
 
     /**
      * Returns a non-{@code null}, {@linkplain
