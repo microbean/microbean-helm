@@ -4,7 +4,7 @@
 
   <groupId>org.microbean</groupId>
   <artifactId>microbean-helm</artifactId>
-  <version>2.7.0.1.0.29-SNAPSHOT</version>
+  <version>2.7.0.1.0.39-SNAPSHOT</version>
 
   <parent>
     <groupId>org.microbean</groupId>
