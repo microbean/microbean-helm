@@ -1,7 +1,6 @@
 # microbean-helm
 
 [![Build Status](https://travis-ci.org/microbean/microbean-helm.svg?branch=master)](https://travis-ci.org/microbean/microbean-helm)
-[![Javadocs](https://javadoc.io/badge/org.microbean/microbean-helm.svg)](https://javadoc.io/doc/org.microbean/microbean-helm)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.microbean/microbean-helm/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.microbean/microbean-helm)
 
 
