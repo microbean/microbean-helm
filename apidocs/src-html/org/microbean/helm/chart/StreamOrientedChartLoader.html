@@ -153,637 +153,659 @@
 <span class="sourceLineNo">145</span>   * &lt;p&gt;Implementations of this method must not return {@code<a name="line.145"></a>
 <span class="sourceLineNo">146</span>   * null}.&lt;/p&gt;<a name="line.146"></a>
 <span class="sourceLineNo">147</span>   *<a name="line.147"></a>
-<span class="sourceLineNo">148</span>   * @param source the source to convert; must not be {@code null}<a name="line.148"></a>
-<span class="sourceLineNo">149</span>   *<a name="line.149"></a>
-<span class="sourceLineNo">150</span>   * @return an {@link Iterable} of suitable {@link Entry} instances;<a name="line.150"></a>
-<span class="sourceLineNo">151</span>   * never {@code null}<a name="line.151"></a>
-<span class="sourceLineNo">152</span>   *<a name="line.152"></a>
-<span class="sourceLineNo">153</span>   * @exception NullPointerException if {@code source} is {@code null}<a name="line.153"></a>
-<span class="sourceLineNo">154</span>   *<a name="line.154"></a>
-<span class="sourceLineNo">155</span>   * @exception IOException if an error occurs while converting<a name="line.155"></a>
-<span class="sourceLineNo">156</span>   */<a name="line.156"></a>
-<span class="sourceLineNo">157</span>  protected abstract Iterable&lt;? extends Entry&lt;? extends String, ? extends InputStream&gt;&gt; toNamedInputStreamEntries(final T source) throws IOException;<a name="line.157"></a>
-<span class="sourceLineNo">158</span><a name="line.158"></a>
-<span class="sourceLineNo">159</span>  /**<a name="line.159"></a>
-<span class="sourceLineNo">160</span>   * Creates a new {@link Chart} from the supplied {@code source} in<a name="line.160"></a>
-<span class="sourceLineNo">161</span>   * some manner and returns it.<a name="line.161"></a>
-<span class="sourceLineNo">162</span>   *<a name="line.162"></a>
-<span class="sourceLineNo">163</span>   * &lt;p&gt;This method never returns {@code null}.<a name="line.163"></a>
-<span class="sourceLineNo">164</span>   *<a name="line.164"></a>
-<span class="sourceLineNo">165</span>   * &lt;p&gt;This method calls the {@link<a name="line.165"></a>
-<span class="sourceLineNo">166</span>   * #load(hapi.chart.ChartOuterClass.Chart.Builder, Iterable)} method<a name="line.166"></a>
-<span class="sourceLineNo">167</span>   * with the return value of the {@link<a name="line.167"></a>
-<span class="sourceLineNo">168</span>   * #toNamedInputStreamEntries(Object)} method.&lt;/p&gt;<a name="line.168"></a>
-<span class="sourceLineNo">169</span>   *<a name="line.169"></a>
-<span class="sourceLineNo">170</span>   * @param source the source object from which to load a new {@link<a name="line.170"></a>
-<span class="sourceLineNo">171</span>   * Chart}; must not be {@code null}<a name="line.171"></a>
-<span class="sourceLineNo">172</span>   *<a name="line.172"></a>
-<span class="sourceLineNo">173</span>   * @return a new {@link Chart}; never {@code null}<a name="line.173"></a>
-<span class="sourceLineNo">174</span>   *<a name="line.174"></a>
-<span class="sourceLineNo">175</span>   * @exception NullPointerException if {@code source} is {@code null}<a name="line.175"></a>
-<span class="sourceLineNo">176</span>   *<a name="line.176"></a>
-<span class="sourceLineNo">177</span>   * @exception IllegalStateException if the {@link<a name="line.177"></a>
-<span class="sourceLineNo">178</span>   * #load(hapi.chart.ChartOuterClass.Chart.Builder, Iterable)} method<a name="line.178"></a>
-<span class="sourceLineNo">179</span>   * returns {@code null}<a name="line.179"></a>
+<span class="sourceLineNo">148</span>   * &lt;p&gt;The {@link Iterable} of {@link Entry} instances returned by<a name="line.148"></a>
+<span class="sourceLineNo">149</span>   * implementations of this method must {@linkplain<a name="line.149"></a>
+<span class="sourceLineNo">150</span>   * Iterable#iterator() produce an &lt;code&gt;Iterator&lt;/code&gt;} that will<a name="line.150"></a>
+<span class="sourceLineNo">151</span>   * never return {@code null} from any invocation of its {@link<a name="line.151"></a>
+<span class="sourceLineNo">152</span>   * Iterator#next()} method when, on the same thread, the return<a name="line.152"></a>
+<span class="sourceLineNo">153</span>   * value of an invocation of its {@link Iterator#hasNext()} method<a name="line.153"></a>
+<span class="sourceLineNo">154</span>   * has previously returned {@code true}.&lt;/p&gt;<a name="line.154"></a>
+<span class="sourceLineNo">155</span>   *<a name="line.155"></a>
+<span class="sourceLineNo">156</span>   * &lt;p&gt;{@link Entry} instances returned by {@link Iterator} instances<a name="line.156"></a>
+<span class="sourceLineNo">157</span>   * {@linkplain Iterable#iterator() produced by} the {@link Iterable}<a name="line.157"></a>
+<span class="sourceLineNo">158</span>   * returned by this method must never return {@code null} from their<a name="line.158"></a>
+<span class="sourceLineNo">159</span>   * {@link Entry#getKey()} method.  They are permitted to return<a name="line.159"></a>
+<span class="sourceLineNo">160</span>   * {@code null} from their {@link Entry#getValue()} method, and this<a name="line.160"></a>
+<span class="sourceLineNo">161</span>   * feature can be used, for example, to indicate that a particular<a name="line.161"></a>
+<span class="sourceLineNo">162</span>   * entry is a directory.&lt;/p&gt;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>   *<a name="line.163"></a>
+<span class="sourceLineNo">164</span>   * @param source the source to convert; must not be {@code null}<a name="line.164"></a>
+<span class="sourceLineNo">165</span>   *<a name="line.165"></a>
+<span class="sourceLineNo">166</span>   * @return an {@link Iterable} of suitable {@link Entry} instances;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>   * never {@code null}<a name="line.167"></a>
+<span class="sourceLineNo">168</span>   *<a name="line.168"></a>
+<span class="sourceLineNo">169</span>   * @exception NullPointerException if {@code source} is {@code null}<a name="line.169"></a>
+<span class="sourceLineNo">170</span>   *<a name="line.170"></a>
+<span class="sourceLineNo">171</span>   * @exception IOException if an error occurs while converting<a name="line.171"></a>
+<span class="sourceLineNo">172</span>   */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>  protected abstract Iterable&lt;? extends Entry&lt;? extends String, ? extends InputStream&gt;&gt; toNamedInputStreamEntries(final T source) throws IOException;<a name="line.173"></a>
+<span class="sourceLineNo">174</span><a name="line.174"></a>
+<span class="sourceLineNo">175</span>  /**<a name="line.175"></a>
+<span class="sourceLineNo">176</span>   * Creates a new {@link Chart} from the supplied {@code source} in<a name="line.176"></a>
+<span class="sourceLineNo">177</span>   * some manner and returns it.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>   *<a name="line.178"></a>
+<span class="sourceLineNo">179</span>   * &lt;p&gt;This method never returns {@code null}.<a name="line.179"></a>
 <span class="sourceLineNo">180</span>   *<a name="line.180"></a>
-<span class="sourceLineNo">181</span>   * @exception IOException if a problem is encountered while creating<a name="line.181"></a>
-<span class="sourceLineNo">182</span>   * the {@link Chart} to return<a name="line.182"></a>
-<span class="sourceLineNo">183</span>   *<a name="line.183"></a>
-<span class="sourceLineNo">184</span>   * @see #toNamedInputStreamEntries(Object)<a name="line.184"></a>
+<span class="sourceLineNo">181</span>   * &lt;p&gt;This method calls the {@link<a name="line.181"></a>
+<span class="sourceLineNo">182</span>   * #load(hapi.chart.ChartOuterClass.Chart.Builder, Iterable)} method<a name="line.182"></a>
+<span class="sourceLineNo">183</span>   * with the return value of the {@link<a name="line.183"></a>
+<span class="sourceLineNo">184</span>   * #toNamedInputStreamEntries(Object)} method.&lt;/p&gt;<a name="line.184"></a>
 <span class="sourceLineNo">185</span>   *<a name="line.185"></a>
-<span class="sourceLineNo">186</span>   * @see #load(hapi.chart.ChartOuterClass.Chart.Builder, Iterable)<a name="line.186"></a>
-<span class="sourceLineNo">187</span>   */<a name="line.187"></a>
-<span class="sourceLineNo">188</span>  @Override<a name="line.188"></a>
-<span class="sourceLineNo">189</span>  public Chart.Builder load(final Chart.Builder parent, final T source) throws IOException {<a name="line.189"></a>
-<span class="sourceLineNo">190</span>    Objects.requireNonNull(source);<a name="line.190"></a>
-<span class="sourceLineNo">191</span>    final Chart.Builder returnValue = this.load(parent, toNamedInputStreamEntries(source));<a name="line.191"></a>
-<span class="sourceLineNo">192</span>    if (returnValue == null) {<a name="line.192"></a>
-<span class="sourceLineNo">193</span>      throw new IllegalStateException("load(toNamedInputStreamEntries(source)) == null; source: " + source);<a name="line.193"></a>
-<span class="sourceLineNo">194</span>    }<a name="line.194"></a>
-<span class="sourceLineNo">195</span>    return returnValue;<a name="line.195"></a>
-<span class="sourceLineNo">196</span>  }<a name="line.196"></a>
-<span class="sourceLineNo">197</span><a name="line.197"></a>
-<span class="sourceLineNo">198</span>  /**<a name="line.198"></a>
-<span class="sourceLineNo">199</span>   * Creates a new {@link Chart} from the supplied notional set of<a name="line.199"></a>
-<span class="sourceLineNo">200</span>   * named {@link InputStream}s and returns it.<a name="line.200"></a>
+<span class="sourceLineNo">186</span>   * @param source the source object from which to load a new {@link<a name="line.186"></a>
+<span class="sourceLineNo">187</span>   * Chart}; must not be {@code null}<a name="line.187"></a>
+<span class="sourceLineNo">188</span>   *<a name="line.188"></a>
+<span class="sourceLineNo">189</span>   * @return a new {@link Chart}; never {@code null}<a name="line.189"></a>
+<span class="sourceLineNo">190</span>   *<a name="line.190"></a>
+<span class="sourceLineNo">191</span>   * @exception NullPointerException if {@code source} is {@code null}<a name="line.191"></a>
+<span class="sourceLineNo">192</span>   *<a name="line.192"></a>
+<span class="sourceLineNo">193</span>   * @exception IllegalStateException if the {@link<a name="line.193"></a>
+<span class="sourceLineNo">194</span>   * #load(hapi.chart.ChartOuterClass.Chart.Builder, Iterable)} method<a name="line.194"></a>
+<span class="sourceLineNo">195</span>   * returns {@code null}<a name="line.195"></a>
+<span class="sourceLineNo">196</span>   *<a name="line.196"></a>
+<span class="sourceLineNo">197</span>   * @exception IOException if a problem is encountered while creating<a name="line.197"></a>
+<span class="sourceLineNo">198</span>   * the {@link Chart} to return<a name="line.198"></a>
+<span class="sourceLineNo">199</span>   *<a name="line.199"></a>
+<span class="sourceLineNo">200</span>   * @see #toNamedInputStreamEntries(Object)<a name="line.200"></a>
 <span class="sourceLineNo">201</span>   *<a name="line.201"></a>
-<span class="sourceLineNo">202</span>   * &lt;p&gt;This method never returns {@code null}.<a name="line.202"></a>
-<span class="sourceLineNo">203</span>   *<a name="line.203"></a>
-<span class="sourceLineNo">204</span>   * &lt;p&gt;This method is called by the {@link #load(Object)} method.&lt;/p&gt;<a name="line.204"></a>
-<span class="sourceLineNo">205</span>   *<a name="line.205"></a>
-<span class="sourceLineNo">206</span>   * @param entrySet the {@link Iterable} of {@link Entry} instances<a name="line.206"></a>
-<span class="sourceLineNo">207</span>   * normally returned by the {@link<a name="line.207"></a>
-<span class="sourceLineNo">208</span>   * #toNamedInputStreamEntries(Object)} method; must not be {@code<a name="line.208"></a>
-<span class="sourceLineNo">209</span>   * null}<a name="line.209"></a>
-<span class="sourceLineNo">210</span>   *<a name="line.210"></a>
-<span class="sourceLineNo">211</span>   * @return a new {@link Chart}; never {@code null}<a name="line.211"></a>
-<span class="sourceLineNo">212</span>   *<a name="line.212"></a>
-<span class="sourceLineNo">213</span>   * @exception NullPointerException if {@code entrySet} is {@code<a name="line.213"></a>
-<span class="sourceLineNo">214</span>   * null}<a name="line.214"></a>
-<span class="sourceLineNo">215</span>   *<a name="line.215"></a>
-<span class="sourceLineNo">216</span>   * @exception IOException if a problem is encountered while creating<a name="line.216"></a>
-<span class="sourceLineNo">217</span>   * the {@link Chart} to return<a name="line.217"></a>
-<span class="sourceLineNo">218</span>   *<a name="line.218"></a>
-<span class="sourceLineNo">219</span>   * @see #toNamedInputStreamEntries(Object)<a name="line.219"></a>
-<span class="sourceLineNo">220</span>   *<a name="line.220"></a>
-<span class="sourceLineNo">221</span>   * @see #load(Object)<a name="line.221"></a>
-<span class="sourceLineNo">222</span>   */<a name="line.222"></a>
-<span class="sourceLineNo">223</span>  public Chart.Builder load(final Chart.Builder parent, final Iterable&lt;? extends Entry&lt;? extends String, ? extends InputStream&gt;&gt; entrySet) throws IOException {<a name="line.223"></a>
-<span class="sourceLineNo">224</span>    Objects.requireNonNull(entrySet);<a name="line.224"></a>
-<span class="sourceLineNo">225</span>    final Chart.Builder rootBuilder;<a name="line.225"></a>
-<span class="sourceLineNo">226</span>    if (parent == null) {<a name="line.226"></a>
-<span class="sourceLineNo">227</span>      rootBuilder = Chart.newBuilder();<a name="line.227"></a>
-<span class="sourceLineNo">228</span>    } else {<a name="line.228"></a>
-<span class="sourceLineNo">229</span>      rootBuilder = parent;<a name="line.229"></a>
-<span class="sourceLineNo">230</span>    }<a name="line.230"></a>
-<span class="sourceLineNo">231</span>    assert rootBuilder != null;<a name="line.231"></a>
-<span class="sourceLineNo">232</span>    final NavigableMap&lt;String, Chart.Builder&gt; chartBuilders = new TreeMap&lt;&gt;(new ChartPathComparator());<a name="line.232"></a>
-<span class="sourceLineNo">233</span>    // XXX TODO FIXME: do we really want to say the root is null?<a name="line.233"></a>
-<span class="sourceLineNo">234</span>    // Or should it always be a path named after the chart?<a name="line.234"></a>
-<span class="sourceLineNo">235</span>    chartBuilders.put(null, rootBuilder);<a name="line.235"></a>
-<span class="sourceLineNo">236</span>    for (final Entry&lt;? extends String, ? extends InputStream&gt; entry : entrySet) {<a name="line.236"></a>
-<span class="sourceLineNo">237</span>      if (entry != null) {<a name="line.237"></a>
-<span class="sourceLineNo">238</span>        this.addFile(chartBuilders, entry.getKey(), entry.getValue());<a name="line.238"></a>
-<span class="sourceLineNo">239</span>      }<a name="line.239"></a>
-<span class="sourceLineNo">240</span>    }<a name="line.240"></a>
-<span class="sourceLineNo">241</span>    return rootBuilder;<a name="line.241"></a>
-<span class="sourceLineNo">242</span>  }<a name="line.242"></a>
-<span class="sourceLineNo">243</span>  <a name="line.243"></a>
-<span class="sourceLineNo">244</span>  private final void addFile(final NavigableMap&lt;String, Chart.Builder&gt; chartBuilders, final String path, final InputStream stream) throws IOException {<a name="line.244"></a>
-<span class="sourceLineNo">245</span>    Objects.requireNonNull(chartBuilders);<a name="line.245"></a>
-<span class="sourceLineNo">246</span>    Objects.requireNonNull(path);<a name="line.246"></a>
-<span class="sourceLineNo">247</span>    Objects.requireNonNull(stream);<a name="line.247"></a>
-<span class="sourceLineNo">248</span>    <a name="line.248"></a>
-<span class="sourceLineNo">249</span>    final Chart.Builder builder = getChartBuilder(chartBuilders, path);<a name="line.249"></a>
-<span class="sourceLineNo">250</span>    if (builder == null) {<a name="line.250"></a>
-<span class="sourceLineNo">251</span>      throw new IllegalStateException();<a name="line.251"></a>
-<span class="sourceLineNo">252</span>    }<a name="line.252"></a>
-<span class="sourceLineNo">253</span>    <a name="line.253"></a>
-<span class="sourceLineNo">254</span>    final Object templateBuilder;<a name="line.254"></a>
-<span class="sourceLineNo">255</span>    final boolean subchartFile;<a name="line.255"></a>
-<span class="sourceLineNo">256</span>    String fileName = getTemplateFileName(path);<a name="line.256"></a>
-<span class="sourceLineNo">257</span>    if (fileName == null) {<a name="line.257"></a>
-<span class="sourceLineNo">258</span>      // Not a template file, not even in a subchart.<a name="line.258"></a>
-<span class="sourceLineNo">259</span>      templateBuilder = null;      <a name="line.259"></a>
-<span class="sourceLineNo">260</span>      fileName = getSubchartFileName(path);<a name="line.260"></a>
-<span class="sourceLineNo">261</span>      if (fileName == null) {<a name="line.261"></a>
-<span class="sourceLineNo">262</span>        // Not a subchart file or a template file so add it to the<a name="line.262"></a>
-<span class="sourceLineNo">263</span>        // root builder.<a name="line.263"></a>
-<span class="sourceLineNo">264</span>        subchartFile = false;<a name="line.264"></a>
-<span class="sourceLineNo">265</span>        fileName = getOrdinaryFileName(path);<a name="line.265"></a>
-<span class="sourceLineNo">266</span>      } else {<a name="line.266"></a>
-<span class="sourceLineNo">267</span>        subchartFile = true;<a name="line.267"></a>
-<span class="sourceLineNo">268</span>      }<a name="line.268"></a>
-<span class="sourceLineNo">269</span>    } else {<a name="line.269"></a>
-<span class="sourceLineNo">270</span>      subchartFile = false;<a name="line.270"></a>
-<span class="sourceLineNo">271</span>      templateBuilder = this.createTemplateBuilder(builder, stream, fileName);<a name="line.271"></a>
-<span class="sourceLineNo">272</span>    }<a name="line.272"></a>
-<span class="sourceLineNo">273</span>    assert fileName != null;<a name="line.273"></a>
-<span class="sourceLineNo">274</span>    if (templateBuilder == null) {<a name="line.274"></a>
-<span class="sourceLineNo">275</span>      switch (fileName) {<a name="line.275"></a>
-<span class="sourceLineNo">276</span>      case "Chart.yaml":<a name="line.276"></a>
-<span class="sourceLineNo">277</span>        this.installMetadata(builder, stream);<a name="line.277"></a>
-<span class="sourceLineNo">278</span>        break;<a name="line.278"></a>
-<span class="sourceLineNo">279</span>      case "values.yaml":<a name="line.279"></a>
-<span class="sourceLineNo">280</span>        this.installConfig(builder, stream);<a name="line.280"></a>
-<span class="sourceLineNo">281</span>        break;<a name="line.281"></a>
-<span class="sourceLineNo">282</span>      default:<a name="line.282"></a>
-<span class="sourceLineNo">283</span>        if (subchartFile) {<a name="line.283"></a>
-<span class="sourceLineNo">284</span>          if (fileName.endsWith(".prov")) {<a name="line.284"></a>
-<span class="sourceLineNo">285</span>            // The intent in the Go code, despite its implementation,<a name="line.285"></a>
-<span class="sourceLineNo">286</span>            // seems to be that a charts/foo.prov file should be<a name="line.286"></a>
-<span class="sourceLineNo">287</span>            // treated as an ordinary file whose name is, well,<a name="line.287"></a>
-<span class="sourceLineNo">288</span>            // charts/foo.prov, no matter how deep that directory<a name="line.288"></a>
-<span class="sourceLineNo">289</span>            // hierarchy is, and despite that fact that the .prov file<a name="line.289"></a>
-<span class="sourceLineNo">290</span>            // appears in a charts directory, which normally indicates<a name="line.290"></a>
-<span class="sourceLineNo">291</span>            // the presence of a subchart.<a name="line.291"></a>
-<span class="sourceLineNo">292</span>            // <a name="line.292"></a>
-<span class="sourceLineNo">293</span>            // So ordinarily we'd be in a subchart here.  Let's say we're:<a name="line.293"></a>
-<span class="sourceLineNo">294</span>            //<a name="line.294"></a>
-<span class="sourceLineNo">295</span>            //   wordpress/charts/argle/charts/foo/charts/bar/grob/foobish/.blatz.prov.<a name="line.295"></a>
-<span class="sourceLineNo">296</span>            //<a name="line.296"></a>
-<span class="sourceLineNo">297</span>            // We don't want the Chart.Builder associated with<a name="line.297"></a>
-<span class="sourceLineNo">298</span>            // wordpress/charts/argle/charts/foo/charts/bar.  We want<a name="line.298"></a>
-<span class="sourceLineNo">299</span>            // the Chart.Builder associated with<a name="line.299"></a>
-<span class="sourceLineNo">300</span>            // wordpress/charts/argle/charts/foo.  And we want the<a name="line.300"></a>
-<span class="sourceLineNo">301</span>            // filename added to that builder to be<a name="line.301"></a>
-<span class="sourceLineNo">302</span>            // charts/bar/grob/foobish/.blatz.prov.  Let's take<a name="line.302"></a>
-<span class="sourceLineNo">303</span>            // advantage of the sorted nature of the chartBuilders Map<a name="line.303"></a>
-<span class="sourceLineNo">304</span>            // and look for our parent that way.<a name="line.304"></a>
-<span class="sourceLineNo">305</span>            final Entry&lt;String, Chart.Builder&gt; parentChartBuilderEntry = chartBuilders.lowerEntry(path);<a name="line.305"></a>
-<span class="sourceLineNo">306</span>            if (parentChartBuilderEntry == null) {<a name="line.306"></a>
-<span class="sourceLineNo">307</span>              throw new IllegalStateException("chartBuilders.lowerEntry(path) == null; path: " + path);<a name="line.307"></a>
-<span class="sourceLineNo">308</span>            }<a name="line.308"></a>
-<span class="sourceLineNo">309</span>            final String parentChartPath = parentChartBuilderEntry.getKey();<a name="line.309"></a>
-<span class="sourceLineNo">310</span>            final Chart.Builder parentChartBuilder = parentChartBuilderEntry.getValue();<a name="line.310"></a>
-<span class="sourceLineNo">311</span>            if (parentChartBuilder == null) {<a name="line.311"></a>
-<span class="sourceLineNo">312</span>              throw new IllegalStateException("chartBuilders.lowerEntry(path).getValue() == null; path: " + path);<a name="line.312"></a>
-<span class="sourceLineNo">313</span>            }<a name="line.313"></a>
-<span class="sourceLineNo">314</span>            final int prefixLength = ((parentChartPath == null ? "" : parentChartPath) + "/").length();<a name="line.314"></a>
-<span class="sourceLineNo">315</span>            assert path.length() &gt; prefixLength;<a name="line.315"></a>
-<span class="sourceLineNo">316</span>            this.installAny(parentChartBuilder, stream, path.substring(prefixLength));<a name="line.316"></a>
-<span class="sourceLineNo">317</span>          } else if (!(fileName.startsWith("_") || fileName.startsWith(".")) &amp;&amp;<a name="line.317"></a>
-<span class="sourceLineNo">318</span>                     fileName.endsWith(".tgz") &amp;&amp;<a name="line.318"></a>
-<span class="sourceLineNo">319</span>                     fileName.equals(basename(fileName))) {<a name="line.319"></a>
-<span class="sourceLineNo">320</span>            assert fileName.indexOf('/') &lt; 0;<a name="line.320"></a>
-<span class="sourceLineNo">321</span>            // A subchart *file* (i.e. not a directory) that is not a<a name="line.321"></a>
-<span class="sourceLineNo">322</span>            // .prov file, that is immediately beneath charts, that<a name="line.322"></a>
-<span class="sourceLineNo">323</span>            // doesn't start with '.' or '_', and that ends with .tgz.<a name="line.323"></a>
-<span class="sourceLineNo">324</span>            // Treat it as a tarball.<a name="line.324"></a>
-<span class="sourceLineNo">325</span>            //<a name="line.325"></a>
-<span class="sourceLineNo">326</span>            // So:  wordpress/charts/foo.tgz<a name="line.326"></a>
-<span class="sourceLineNo">327</span>            // Not: wordpress/charts/.foo.tgz<a name="line.327"></a>
-<span class="sourceLineNo">328</span>            // Not: wordpress/charts/_foo.tgz<a name="line.328"></a>
-<span class="sourceLineNo">329</span>            // Not: wordpress/charts/foo<a name="line.329"></a>
-<span class="sourceLineNo">330</span>            // Not: wordpress/charts/bar/foo.tgz<a name="line.330"></a>
-<span class="sourceLineNo">331</span>            // Not: wordpress/charts/_bar/foo.tgz<a name="line.331"></a>
-<span class="sourceLineNo">332</span>            Chart.Builder subchartBuilder = null;<a name="line.332"></a>
-<span class="sourceLineNo">333</span>            try (final TarInputStream tarInputStream = new TarInputStream(new GZIPInputStream(new NonClosingInputStream(stream)))) {<a name="line.333"></a>
-<span class="sourceLineNo">334</span>              subchartBuilder = new TapeArchiveChartLoader().load(builder, tarInputStream);<a name="line.334"></a>
+<span class="sourceLineNo">202</span>   * @see #load(hapi.chart.ChartOuterClass.Chart.Builder, Iterable)<a name="line.202"></a>
+<span class="sourceLineNo">203</span>   */<a name="line.203"></a>
+<span class="sourceLineNo">204</span>  @Override<a name="line.204"></a>
+<span class="sourceLineNo">205</span>  public Chart.Builder load(final Chart.Builder parent, final T source) throws IOException {<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    Objects.requireNonNull(source);<a name="line.206"></a>
+<span class="sourceLineNo">207</span>    final Chart.Builder returnValue = this.load(parent, toNamedInputStreamEntries(source));<a name="line.207"></a>
+<span class="sourceLineNo">208</span>    if (returnValue == null) {<a name="line.208"></a>
+<span class="sourceLineNo">209</span>      throw new IllegalStateException("load(toNamedInputStreamEntries(source)) == null; source: " + source);<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    }<a name="line.210"></a>
+<span class="sourceLineNo">211</span>    return returnValue;<a name="line.211"></a>
+<span class="sourceLineNo">212</span>  }<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>  /**<a name="line.214"></a>
+<span class="sourceLineNo">215</span>   * Creates a new {@link Chart} from the supplied notional set of<a name="line.215"></a>
+<span class="sourceLineNo">216</span>   * named {@link InputStream}s and returns it.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>   *<a name="line.217"></a>
+<span class="sourceLineNo">218</span>   * &lt;p&gt;This method never returns {@code null}.<a name="line.218"></a>
+<span class="sourceLineNo">219</span>   *<a name="line.219"></a>
+<span class="sourceLineNo">220</span>   * &lt;p&gt;This method is called by the {@link #load(Object)} method.&lt;/p&gt;<a name="line.220"></a>
+<span class="sourceLineNo">221</span>   *<a name="line.221"></a>
+<span class="sourceLineNo">222</span>   * @param entrySet the {@link Iterable} of {@link Entry} instances<a name="line.222"></a>
+<span class="sourceLineNo">223</span>   * normally returned by the {@link<a name="line.223"></a>
+<span class="sourceLineNo">224</span>   * #toNamedInputStreamEntries(Object)} method; must not be {@code<a name="line.224"></a>
+<span class="sourceLineNo">225</span>   * null}<a name="line.225"></a>
+<span class="sourceLineNo">226</span>   *<a name="line.226"></a>
+<span class="sourceLineNo">227</span>   * @return a new {@link Chart}; never {@code null}<a name="line.227"></a>
+<span class="sourceLineNo">228</span>   *<a name="line.228"></a>
+<span class="sourceLineNo">229</span>   * @exception NullPointerException if {@code entrySet} is {@code<a name="line.229"></a>
+<span class="sourceLineNo">230</span>   * null}<a name="line.230"></a>
+<span class="sourceLineNo">231</span>   *<a name="line.231"></a>
+<span class="sourceLineNo">232</span>   * @exception IOException if a problem is encountered while creating<a name="line.232"></a>
+<span class="sourceLineNo">233</span>   * the {@link Chart} to return<a name="line.233"></a>
+<span class="sourceLineNo">234</span>   *<a name="line.234"></a>
+<span class="sourceLineNo">235</span>   * @see #toNamedInputStreamEntries(Object)<a name="line.235"></a>
+<span class="sourceLineNo">236</span>   *<a name="line.236"></a>
+<span class="sourceLineNo">237</span>   * @see #load(Object)<a name="line.237"></a>
+<span class="sourceLineNo">238</span>   */<a name="line.238"></a>
+<span class="sourceLineNo">239</span>  public Chart.Builder load(final Chart.Builder parent, final Iterable&lt;? extends Entry&lt;? extends String, ? extends InputStream&gt;&gt; entrySet) throws IOException {<a name="line.239"></a>
+<span class="sourceLineNo">240</span>    Objects.requireNonNull(entrySet);<a name="line.240"></a>
+<span class="sourceLineNo">241</span>    final Chart.Builder rootBuilder;<a name="line.241"></a>
+<span class="sourceLineNo">242</span>    if (parent == null) {<a name="line.242"></a>
+<span class="sourceLineNo">243</span>      rootBuilder = Chart.newBuilder();<a name="line.243"></a>
+<span class="sourceLineNo">244</span>    } else {<a name="line.244"></a>
+<span class="sourceLineNo">245</span>      rootBuilder = parent;<a name="line.245"></a>
+<span class="sourceLineNo">246</span>    }<a name="line.246"></a>
+<span class="sourceLineNo">247</span>    assert rootBuilder != null;<a name="line.247"></a>
+<span class="sourceLineNo">248</span>    final NavigableMap&lt;String, Chart.Builder&gt; chartBuilders = new TreeMap&lt;&gt;(new ChartPathComparator());<a name="line.248"></a>
+<span class="sourceLineNo">249</span>    // XXX TODO FIXME: do we really want to say the root is null?<a name="line.249"></a>
+<span class="sourceLineNo">250</span>    // Or should it always be a path named after the chart?<a name="line.250"></a>
+<span class="sourceLineNo">251</span>    chartBuilders.put(null, rootBuilder);<a name="line.251"></a>
+<span class="sourceLineNo">252</span>    for (final Entry&lt;? extends String, ? extends InputStream&gt; entry : entrySet) {<a name="line.252"></a>
+<span class="sourceLineNo">253</span>      if (entry != null) {<a name="line.253"></a>
+<span class="sourceLineNo">254</span>        final String key = entry.getKey();<a name="line.254"></a>
+<span class="sourceLineNo">255</span>        if (key != null) {<a name="line.255"></a>
+<span class="sourceLineNo">256</span>          final InputStream value = entry.getValue();<a name="line.256"></a>
+<span class="sourceLineNo">257</span>          if (value != null) {<a name="line.257"></a>
+<span class="sourceLineNo">258</span>            this.addFile(chartBuilders, key, value);<a name="line.258"></a>
+<span class="sourceLineNo">259</span>          }<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        }<a name="line.260"></a>
+<span class="sourceLineNo">261</span>      }<a name="line.261"></a>
+<span class="sourceLineNo">262</span>    }<a name="line.262"></a>
+<span class="sourceLineNo">263</span>    return rootBuilder;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>  }<a name="line.264"></a>
+<span class="sourceLineNo">265</span>  <a name="line.265"></a>
+<span class="sourceLineNo">266</span>  private final void addFile(final NavigableMap&lt;String, Chart.Builder&gt; chartBuilders, final String path, final InputStream stream) throws IOException {<a name="line.266"></a>
+<span class="sourceLineNo">267</span>    Objects.requireNonNull(chartBuilders);<a name="line.267"></a>
+<span class="sourceLineNo">268</span>    Objects.requireNonNull(path);<a name="line.268"></a>
+<span class="sourceLineNo">269</span>    Objects.requireNonNull(stream);<a name="line.269"></a>
+<span class="sourceLineNo">270</span>    <a name="line.270"></a>
+<span class="sourceLineNo">271</span>    final Chart.Builder builder = getChartBuilder(chartBuilders, path);<a name="line.271"></a>
+<span class="sourceLineNo">272</span>    if (builder == null) {<a name="line.272"></a>
+<span class="sourceLineNo">273</span>      throw new IllegalStateException();<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    }<a name="line.274"></a>
+<span class="sourceLineNo">275</span>    <a name="line.275"></a>
+<span class="sourceLineNo">276</span>    final Object templateBuilder;<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    final boolean subchartFile;<a name="line.277"></a>
+<span class="sourceLineNo">278</span>    String fileName = getTemplateFileName(path);<a name="line.278"></a>
+<span class="sourceLineNo">279</span>    if (fileName == null) {<a name="line.279"></a>
+<span class="sourceLineNo">280</span>      // Not a template file, not even in a subchart.<a name="line.280"></a>
+<span class="sourceLineNo">281</span>      templateBuilder = null;      <a name="line.281"></a>
+<span class="sourceLineNo">282</span>      fileName = getSubchartFileName(path);<a name="line.282"></a>
+<span class="sourceLineNo">283</span>      if (fileName == null) {<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        // Not a subchart file or a template file so add it to the<a name="line.284"></a>
+<span class="sourceLineNo">285</span>        // root builder.<a name="line.285"></a>
+<span class="sourceLineNo">286</span>        subchartFile = false;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>        fileName = getOrdinaryFileName(path);<a name="line.287"></a>
+<span class="sourceLineNo">288</span>      } else {<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        subchartFile = true;<a name="line.289"></a>
+<span class="sourceLineNo">290</span>      }<a name="line.290"></a>
+<span class="sourceLineNo">291</span>    } else {<a name="line.291"></a>
+<span class="sourceLineNo">292</span>      subchartFile = false;<a name="line.292"></a>
+<span class="sourceLineNo">293</span>      templateBuilder = this.createTemplateBuilder(builder, stream, fileName);<a name="line.293"></a>
+<span class="sourceLineNo">294</span>    }<a name="line.294"></a>
+<span class="sourceLineNo">295</span>    assert fileName != null;<a name="line.295"></a>
+<span class="sourceLineNo">296</span>    if (templateBuilder == null) {<a name="line.296"></a>
+<span class="sourceLineNo">297</span>      switch (fileName) {<a name="line.297"></a>
+<span class="sourceLineNo">298</span>      case "Chart.yaml":<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        this.installMetadata(builder, stream);<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        break;<a name="line.300"></a>
+<span class="sourceLineNo">301</span>      case "values.yaml":<a name="line.301"></a>
+<span class="sourceLineNo">302</span>        this.installConfig(builder, stream);<a name="line.302"></a>
+<span class="sourceLineNo">303</span>        break;<a name="line.303"></a>
+<span class="sourceLineNo">304</span>      default:<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        if (subchartFile) {<a name="line.305"></a>
+<span class="sourceLineNo">306</span>          if (fileName.endsWith(".prov")) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            // The intent in the Go code, despite its implementation,<a name="line.307"></a>
+<span class="sourceLineNo">308</span>            // seems to be that a charts/foo.prov file should be<a name="line.308"></a>
+<span class="sourceLineNo">309</span>            // treated as an ordinary file whose name is, well,<a name="line.309"></a>
+<span class="sourceLineNo">310</span>            // charts/foo.prov, no matter how deep that directory<a name="line.310"></a>
+<span class="sourceLineNo">311</span>            // hierarchy is, and despite that fact that the .prov file<a name="line.311"></a>
+<span class="sourceLineNo">312</span>            // appears in a charts directory, which normally indicates<a name="line.312"></a>
+<span class="sourceLineNo">313</span>            // the presence of a subchart.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>            // <a name="line.314"></a>
+<span class="sourceLineNo">315</span>            // So ordinarily we'd be in a subchart here.  Let's say we're:<a name="line.315"></a>
+<span class="sourceLineNo">316</span>            //<a name="line.316"></a>
+<span class="sourceLineNo">317</span>            //   wordpress/charts/argle/charts/foo/charts/bar/grob/foobish/.blatz.prov.<a name="line.317"></a>
+<span class="sourceLineNo">318</span>            //<a name="line.318"></a>
+<span class="sourceLineNo">319</span>            // We don't want the Chart.Builder associated with<a name="line.319"></a>
+<span class="sourceLineNo">320</span>            // wordpress/charts/argle/charts/foo/charts/bar.  We want<a name="line.320"></a>
+<span class="sourceLineNo">321</span>            // the Chart.Builder associated with<a name="line.321"></a>
+<span class="sourceLineNo">322</span>            // wordpress/charts/argle/charts/foo.  And we want the<a name="line.322"></a>
+<span class="sourceLineNo">323</span>            // filename added to that builder to be<a name="line.323"></a>
+<span class="sourceLineNo">324</span>            // charts/bar/grob/foobish/.blatz.prov.  Let's take<a name="line.324"></a>
+<span class="sourceLineNo">325</span>            // advantage of the sorted nature of the chartBuilders Map<a name="line.325"></a>
+<span class="sourceLineNo">326</span>            // and look for our parent that way.<a name="line.326"></a>
+<span class="sourceLineNo">327</span>            final Entry&lt;String, Chart.Builder&gt; parentChartBuilderEntry = chartBuilders.lowerEntry(path);<a name="line.327"></a>
+<span class="sourceLineNo">328</span>            if (parentChartBuilderEntry == null) {<a name="line.328"></a>
+<span class="sourceLineNo">329</span>              throw new IllegalStateException("chartBuilders.lowerEntry(path) == null; path: " + path);<a name="line.329"></a>
+<span class="sourceLineNo">330</span>            }<a name="line.330"></a>
+<span class="sourceLineNo">331</span>            final String parentChartPath = parentChartBuilderEntry.getKey();<a name="line.331"></a>
+<span class="sourceLineNo">332</span>            final Chart.Builder parentChartBuilder = parentChartBuilderEntry.getValue();<a name="line.332"></a>
+<span class="sourceLineNo">333</span>            if (parentChartBuilder == null) {<a name="line.333"></a>
+<span class="sourceLineNo">334</span>              throw new IllegalStateException("chartBuilders.lowerEntry(path).getValue() == null; path: " + path);<a name="line.334"></a>
 <span class="sourceLineNo">335</span>            }<a name="line.335"></a>
-<span class="sourceLineNo">336</span>            if (subchartBuilder == null) {<a name="line.336"></a>
-<span class="sourceLineNo">337</span>              throw new IllegalStateException("load(builder, tarInputStream) == null; path: " + path);<a name="line.337"></a>
-<span class="sourceLineNo">338</span>            }<a name="line.338"></a>
-<span class="sourceLineNo">339</span>            // builder.addDependencies(subchart);<a name="line.339"></a>
-<span class="sourceLineNo">340</span>          } else {<a name="line.340"></a>
-<span class="sourceLineNo">341</span>            // Not a .prov file under charts, nor a .tgz file, just a<a name="line.341"></a>
-<span class="sourceLineNo">342</span>            // regular subchart file.<a name="line.342"></a>
-<span class="sourceLineNo">343</span>            this.installAny(builder, stream, fileName);<a name="line.343"></a>
-<span class="sourceLineNo">344</span>          }<a name="line.344"></a>
-<span class="sourceLineNo">345</span>        } else {<a name="line.345"></a>
-<span class="sourceLineNo">346</span>          assert !subchartFile;<a name="line.346"></a>
-<span class="sourceLineNo">347</span>          // Not a subchart file or a template<a name="line.347"></a>
-<span class="sourceLineNo">348</span>          this.installAny(builder, stream, fileName);<a name="line.348"></a>
-<span class="sourceLineNo">349</span>        }<a name="line.349"></a>
-<span class="sourceLineNo">350</span>        break;<a name="line.350"></a>
-<span class="sourceLineNo">351</span>      }<a name="line.351"></a>
-<span class="sourceLineNo">352</span>    }<a name="line.352"></a>
-<span class="sourceLineNo">353</span>  }<a name="line.353"></a>
-<span class="sourceLineNo">354</span>  <a name="line.354"></a>
-<span class="sourceLineNo">355</span>  static final String getOrdinaryFileName(final String path) {<a name="line.355"></a>
-<span class="sourceLineNo">356</span>    String returnValue = null;<a name="line.356"></a>
-<span class="sourceLineNo">357</span>    if (path != null) {<a name="line.357"></a>
-<span class="sourceLineNo">358</span>      final Matcher fileMatcher = fileNamePattern.matcher(path);<a name="line.358"></a>
-<span class="sourceLineNo">359</span>      assert fileMatcher != null;<a name="line.359"></a>
-<span class="sourceLineNo">360</span>      if (fileMatcher.find()) {<a name="line.360"></a>
-<span class="sourceLineNo">361</span>        returnValue = fileMatcher.group(1);<a name="line.361"></a>
-<span class="sourceLineNo">362</span>      }<a name="line.362"></a>
-<span class="sourceLineNo">363</span>    }<a name="line.363"></a>
-<span class="sourceLineNo">364</span>    return returnValue;<a name="line.364"></a>
-<span class="sourceLineNo">365</span>  }<a name="line.365"></a>
-<span class="sourceLineNo">366</span>  <a name="line.366"></a>
-<span class="sourceLineNo">367</span>  static final String getSubchartFileName(final String path) {<a name="line.367"></a>
-<span class="sourceLineNo">368</span>    String returnValue = null;<a name="line.368"></a>
-<span class="sourceLineNo">369</span>    if (path != null) {<a name="line.369"></a>
-<span class="sourceLineNo">370</span>      final Matcher subchartMatcher = subchartFileNamePattern.matcher(path);<a name="line.370"></a>
-<span class="sourceLineNo">371</span>      assert subchartMatcher != null;<a name="line.371"></a>
-<span class="sourceLineNo">372</span>      if (subchartMatcher.find()) {<a name="line.372"></a>
-<span class="sourceLineNo">373</span>        // in foo/charts/bork/blatz.txt:<a name="line.373"></a>
-<span class="sourceLineNo">374</span>        //   group 1 is bork/blatz.txt<a name="line.374"></a>
-<span class="sourceLineNo">375</span>        //   group 2 is blatz.txt<a name="line.375"></a>
-<span class="sourceLineNo">376</span>        // in foo/charts/blatz.tgz:<a name="line.376"></a>
-<span class="sourceLineNo">377</span>        //   group 1 is blatz.tgz<a name="line.377"></a>
-<span class="sourceLineNo">378</span>        //   group 2 is (empty string)<a name="line.378"></a>
-<span class="sourceLineNo">379</span>        final String group2 = subchartMatcher.group(2);<a name="line.379"></a>
-<span class="sourceLineNo">380</span>        assert group2 != null;<a name="line.380"></a>
-<span class="sourceLineNo">381</span>        if (group2.isEmpty()) {<a name="line.381"></a>
-<span class="sourceLineNo">382</span>          returnValue = subchartMatcher.group(1);<a name="line.382"></a>
-<span class="sourceLineNo">383</span>          assert returnValue != null;<a name="line.383"></a>
-<span class="sourceLineNo">384</span>        } else {<a name="line.384"></a>
-<span class="sourceLineNo">385</span>          returnValue = group2;<a name="line.385"></a>
-<span class="sourceLineNo">386</span>        }<a name="line.386"></a>
-<span class="sourceLineNo">387</span>      }<a name="line.387"></a>
-<span class="sourceLineNo">388</span>    }<a name="line.388"></a>
-<span class="sourceLineNo">389</span>    return returnValue;<a name="line.389"></a>
-<span class="sourceLineNo">390</span><a name="line.390"></a>
-<span class="sourceLineNo">391</span>  }<a name="line.391"></a>
-<span class="sourceLineNo">392</span>  <a name="line.392"></a>
-<span class="sourceLineNo">393</span>  static final String getTemplateFileName(final String path) {<a name="line.393"></a>
-<span class="sourceLineNo">394</span>    String returnValue = null;<a name="line.394"></a>
-<span class="sourceLineNo">395</span>    if (path != null) {<a name="line.395"></a>
-<span class="sourceLineNo">396</span>      final Matcher templateMatcher = templateFileNamePattern.matcher(path);<a name="line.396"></a>
-<span class="sourceLineNo">397</span>      assert templateMatcher != null;<a name="line.397"></a>
-<span class="sourceLineNo">398</span>      if (templateMatcher.find()) {<a name="line.398"></a>
-<span class="sourceLineNo">399</span>        returnValue = templateMatcher.group(1);<a name="line.399"></a>
-<span class="sourceLineNo">400</span>      }<a name="line.400"></a>
-<span class="sourceLineNo">401</span>    }<a name="line.401"></a>
-<span class="sourceLineNo">402</span>    return returnValue;<a name="line.402"></a>
-<span class="sourceLineNo">403</span>  }<a name="line.403"></a>
-<span class="sourceLineNo">404</span><a name="line.404"></a>
-<span class="sourceLineNo">405</span>  /**<a name="line.405"></a>
-<span class="sourceLineNo">406</span>   * Given a semantic solidus-separated {@code chartPath} representing<a name="line.406"></a>
-<span class="sourceLineNo">407</span>   * a file or logical directory within a chart, returns the proper<a name="line.407"></a>
-<span class="sourceLineNo">408</span>   * {@link Chart.Builder} corresponding to that path.<a name="line.408"></a>
-<span class="sourceLineNo">409</span>   *<a name="line.409"></a>
-<span class="sourceLineNo">410</span>   * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.410"></a>
-<span class="sourceLineNo">411</span>   *<a name="line.411"></a>
-<span class="sourceLineNo">412</span>   * &lt;p&gt;Any intermediate {@link Chart.Builder}s will also be created<a name="line.412"></a>
-<span class="sourceLineNo">413</span>   * and properly parented.&lt;/p&gt;<a name="line.413"></a>
-<span class="sourceLineNo">414</span>   *<a name="line.414"></a>
-<span class="sourceLineNo">415</span>   * @param chartBuilders a {@link Map} of {@link Chart.Builder}<a name="line.415"></a>
-<span class="sourceLineNo">416</span>   * instances indexed by paths; must not be {@code null}; may be<a name="line.416"></a>
-<span class="sourceLineNo">417</span>   * updated by this method<a name="line.417"></a>
-<span class="sourceLineNo">418</span>   *<a name="line.418"></a>
-<span class="sourceLineNo">419</span>   * @param chartPath a solidus-separated {@link String} representing<a name="line.419"></a>
-<span class="sourceLineNo">420</span>   * a file or directory within a chart; must not be {@code null}<a name="line.420"></a>
-<span class="sourceLineNo">421</span>   *<a name="line.421"></a>
-<span class="sourceLineNo">422</span>   * @return a {@link Chart.Builder}; never {@code null}<a name="line.422"></a>
-<span class="sourceLineNo">423</span>   *<a name="line.423"></a>
-<span class="sourceLineNo">424</span>   * @exception NullPointerException if either {@code chartBuilders}<a name="line.424"></a>
-<span class="sourceLineNo">425</span>   * or {@code chartPath} is {@code null}<a name="line.425"></a>
-<span class="sourceLineNo">426</span>   */<a name="line.426"></a>
-<span class="sourceLineNo">427</span>  private static final Chart.Builder getChartBuilder(final Map&lt;String, Chart.Builder&gt; chartBuilders, final String chartPath) {<a name="line.427"></a>
-<span class="sourceLineNo">428</span>    Objects.requireNonNull(chartBuilders);<a name="line.428"></a>
-<span class="sourceLineNo">429</span>    Objects.requireNonNull(chartPath);<a name="line.429"></a>
-<span class="sourceLineNo">430</span>    Chart.Builder rootBuilder = chartBuilders.get(null);<a name="line.430"></a>
-<span class="sourceLineNo">431</span>    if (rootBuilder == null) {<a name="line.431"></a>
-<span class="sourceLineNo">432</span>      rootBuilder = Chart.newBuilder();<a name="line.432"></a>
-<span class="sourceLineNo">433</span>      chartBuilders.put(null, rootBuilder);<a name="line.433"></a>
-<span class="sourceLineNo">434</span>    }<a name="line.434"></a>
-<span class="sourceLineNo">435</span>    assert rootBuilder != null;<a name="line.435"></a>
-<span class="sourceLineNo">436</span>    Chart.Builder returnValue = rootBuilder;<a name="line.436"></a>
-<span class="sourceLineNo">437</span>    final Collection&lt;? extends String&gt; chartPaths = toSubcharts(chartPath);<a name="line.437"></a>
-<span class="sourceLineNo">438</span>    if (chartPaths != null &amp;&amp; !chartPaths.isEmpty()) {<a name="line.438"></a>
-<span class="sourceLineNo">439</span>      for (final String path : chartPaths) {<a name="line.439"></a>
-<span class="sourceLineNo">440</span>        // By contract, shallowest path comes first, so<a name="line.440"></a>
-<span class="sourceLineNo">441</span>        // foobar/charts/wordpress comes before, say,<a name="line.441"></a>
-<span class="sourceLineNo">442</span>        // foobar/charts/wordpress/charts/mysql<a name="line.442"></a>
-<span class="sourceLineNo">443</span>        Chart.Builder builder = chartBuilders.get(path);<a name="line.443"></a>
-<span class="sourceLineNo">444</span>        if (builder == null) {<a name="line.444"></a>
-<span class="sourceLineNo">445</span>          builder = createSubchartBuilder(returnValue, path);<a name="line.445"></a>
-<span class="sourceLineNo">446</span>          assert builder != null;<a name="line.446"></a>
-<span class="sourceLineNo">447</span>          chartBuilders.put(path, builder);<a name="line.447"></a>
-<span class="sourceLineNo">448</span>        }<a name="line.448"></a>
-<span class="sourceLineNo">449</span>        assert builder != null;<a name="line.449"></a>
-<span class="sourceLineNo">450</span>        returnValue = builder;<a name="line.450"></a>
-<span class="sourceLineNo">451</span>      }<a name="line.451"></a>
-<span class="sourceLineNo">452</span>    }<a name="line.452"></a>
-<span class="sourceLineNo">453</span>    assert returnValue != null;<a name="line.453"></a>
-<span class="sourceLineNo">454</span>    return returnValue;<a name="line.454"></a>
-<span class="sourceLineNo">455</span>  }<a name="line.455"></a>
-<span class="sourceLineNo">456</span><a name="line.456"></a>
-<span class="sourceLineNo">457</span>  /**<a name="line.457"></a>
-<span class="sourceLineNo">458</span>   * Given, e.g., {@code wordpress/charts/argle/charts/frob/foo.txt},<a name="line.458"></a>
-<span class="sourceLineNo">459</span>   * yield {@code [ wordpress/charts/argle,<a name="line.459"></a>
-<span class="sourceLineNo">460</span>   * wordpress/charts/argle/charts/frob ]}.<a name="line.460"></a>
-<span class="sourceLineNo">461</span>   *<a name="line.461"></a>
-<span class="sourceLineNo">462</span>   * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.462"></a>
-<span class="sourceLineNo">463</span>   *<a name="line.463"></a>
-<span class="sourceLineNo">464</span>   * @param chartPath the "relative" solidus-separated path<a name="line.464"></a>
-<span class="sourceLineNo">465</span>   * identifying some chart resource; must not be {@code null}<a name="line.465"></a>
-<span class="sourceLineNo">466</span>   *<a name="line.466"></a>
-<span class="sourceLineNo">467</span>   * @return a {@link NavigableSet} of chart paths in ascending<a name="line.467"></a>
-<span class="sourceLineNo">468</span>   * subchart hierarchy order; never {@code null}<a name="line.468"></a>
-<span class="sourceLineNo">469</span>   */<a name="line.469"></a>
-<span class="sourceLineNo">470</span>  static final NavigableSet&lt;String&gt; toSubcharts(final String chartPath) {<a name="line.470"></a>
-<span class="sourceLineNo">471</span>    Objects.requireNonNull(chartPath);<a name="line.471"></a>
-<span class="sourceLineNo">472</span>    final NavigableSet&lt;String&gt; returnValue = new TreeSet&lt;&gt;(new ChartPathComparator());<a name="line.472"></a>
-<span class="sourceLineNo">473</span>    final Matcher matcher = nonGreedySubchartsPattern.matcher(chartPath);<a name="line.473"></a>
-<span class="sourceLineNo">474</span>    if (matcher != null) {<a name="line.474"></a>
-<span class="sourceLineNo">475</span>      while (matcher.find()) {<a name="line.475"></a>
-<span class="sourceLineNo">476</span>        returnValue.add(chartPath.substring(0, matcher.end()));<a name="line.476"></a>
-<span class="sourceLineNo">477</span>      }<a name="line.477"></a>
-<span class="sourceLineNo">478</span>    }<a name="line.478"></a>
-<span class="sourceLineNo">479</span>    return returnValue;<a name="line.479"></a>
-<span class="sourceLineNo">480</span>  }<a name="line.480"></a>
-<span class="sourceLineNo">481</span><a name="line.481"></a>
-<span class="sourceLineNo">482</span>  private static final Chart.Builder createSubchartBuilder(final Chart.Builder parentBuilder, final String chartPath) {<a name="line.482"></a>
-<span class="sourceLineNo">483</span>    Objects.requireNonNull(parentBuilder);<a name="line.483"></a>
-<span class="sourceLineNo">484</span>    Chart.Builder returnValue = null;<a name="line.484"></a>
-<span class="sourceLineNo">485</span>    final String chartName = getChartName(chartPath);<a name="line.485"></a>
-<span class="sourceLineNo">486</span>    if (chartName != null) {<a name="line.486"></a>
-<span class="sourceLineNo">487</span>      returnValue = parentBuilder.addDependenciesBuilder();<a name="line.487"></a>
-<span class="sourceLineNo">488</span>      assert returnValue != null;<a name="line.488"></a>
-<span class="sourceLineNo">489</span>      final Metadata.Builder builder = returnValue.getMetadataBuilder();<a name="line.489"></a>
-<span class="sourceLineNo">490</span>      assert builder != null;<a name="line.490"></a>
-<span class="sourceLineNo">491</span>      builder.setName(chartName);<a name="line.491"></a>
-<span class="sourceLineNo">492</span>    }<a name="line.492"></a>
-<span class="sourceLineNo">493</span>    return returnValue;<a name="line.493"></a>
-<span class="sourceLineNo">494</span>  }<a name="line.494"></a>
-<span class="sourceLineNo">495</span>  <a name="line.495"></a>
-<span class="sourceLineNo">496</span>  private static final String getChartName(final String chartPath) {<a name="line.496"></a>
-<span class="sourceLineNo">497</span>    String returnValue = null;<a name="line.497"></a>
-<span class="sourceLineNo">498</span>    if (chartPath != null) {<a name="line.498"></a>
-<span class="sourceLineNo">499</span>      final Matcher matcher = chartNamePattern.matcher(chartPath);<a name="line.499"></a>
-<span class="sourceLineNo">500</span>      assert matcher != null;<a name="line.500"></a>
-<span class="sourceLineNo">501</span>      if (matcher.find()) {<a name="line.501"></a>
-<span class="sourceLineNo">502</span>        returnValue = matcher.group(1);<a name="line.502"></a>
-<span class="sourceLineNo">503</span>      }<a name="line.503"></a>
-<span class="sourceLineNo">504</span>    }<a name="line.504"></a>
-<span class="sourceLineNo">505</span>    return returnValue;<a name="line.505"></a>
-<span class="sourceLineNo">506</span>  }<a name="line.506"></a>
-<span class="sourceLineNo">507</span><a name="line.507"></a>
-<span class="sourceLineNo">508</span>  private static final String basename(final String path) {<a name="line.508"></a>
-<span class="sourceLineNo">509</span>    String returnValue = null;<a name="line.509"></a>
-<span class="sourceLineNo">510</span>    if (path != null) {<a name="line.510"></a>
-<span class="sourceLineNo">511</span>      final Matcher matcher = basenamePattern.matcher(path);<a name="line.511"></a>
-<span class="sourceLineNo">512</span>      assert matcher != null;<a name="line.512"></a>
-<span class="sourceLineNo">513</span>      if (matcher.find()) {<a name="line.513"></a>
-<span class="sourceLineNo">514</span>        returnValue = matcher.group(1);<a name="line.514"></a>
-<span class="sourceLineNo">515</span>      }<a name="line.515"></a>
-<span class="sourceLineNo">516</span>    }<a name="line.516"></a>
-<span class="sourceLineNo">517</span>    return returnValue;<a name="line.517"></a>
-<span class="sourceLineNo">518</span>  }<a name="line.518"></a>
-<span class="sourceLineNo">519</span>  <a name="line.519"></a>
-<span class="sourceLineNo">520</span><a name="line.520"></a>
-<span class="sourceLineNo">521</span>  /*<a name="line.521"></a>
-<span class="sourceLineNo">522</span>   * Utility methods.<a name="line.522"></a>
-<span class="sourceLineNo">523</span>   */<a name="line.523"></a>
-<span class="sourceLineNo">524</span>  <a name="line.524"></a>
-<span class="sourceLineNo">525</span><a name="line.525"></a>
-<span class="sourceLineNo">526</span>  /**<a name="line.526"></a>
-<span class="sourceLineNo">527</span>   * Installs a {@link Config} object, represented by the supplied<a name="line.527"></a>
-<span class="sourceLineNo">528</span>   * {@link InputStream}, into the supplied {@link<a name="line.528"></a>
-<span class="sourceLineNo">529</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder}.<a name="line.529"></a>
-<span class="sourceLineNo">530</span>   *<a name="line.530"></a>
-<span class="sourceLineNo">531</span>   * @param chartBuilder the {@link<a name="line.531"></a>
-<span class="sourceLineNo">532</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder} to<a name="line.532"></a>
-<span class="sourceLineNo">533</span>   * affect; must not be {@code null}<a name="line.533"></a>
-<span class="sourceLineNo">534</span>   *<a name="line.534"></a>
-<span class="sourceLineNo">535</span>   * @param stream an {@link InputStream} representing &lt;a<a name="line.535"></a>
-<span class="sourceLineNo">536</span>   * href="https://docs.helm.sh/developing_charts/#values-files"&gt;valid<a name="line.536"></a>
-<span class="sourceLineNo">537</span>   * values file contents&lt;/a&gt; as defined by &lt;a<a name="line.537"></a>
-<span class="sourceLineNo">538</span>   * href="https://docs.helm.sh/developing_charts/#values-files"&gt;the<a name="line.538"></a>
-<span class="sourceLineNo">539</span>   * chart specification&lt;/a&gt;; must not be {@code null}<a name="line.539"></a>
-<span class="sourceLineNo">540</span>   *<a name="line.540"></a>
-<span class="sourceLineNo">541</span>   * @exception NullPointerException if {@code chartBuilder} or {@code<a name="line.541"></a>
-<span class="sourceLineNo">542</span>   * stream} is {@code null}<a name="line.542"></a>
-<span class="sourceLineNo">543</span>   *<a name="line.543"></a>
-<span class="sourceLineNo">544</span>   * @exception IOException if there was a problem reading from the<a name="line.544"></a>
-<span class="sourceLineNo">545</span>   * supplied {@link InputStream}<a name="line.545"></a>
-<span class="sourceLineNo">546</span>   *<a name="line.546"></a>
-<span class="sourceLineNo">547</span>   * @see hapi.chart.ChartOuterClass.Chart.Builder#getValuesBuilder()<a name="line.547"></a>
-<span class="sourceLineNo">548</span>   *<a name="line.548"></a>
-<span class="sourceLineNo">549</span>   * @see hapi.chart.ConfigOuterClass.Config.Builder#setRawBytes(ByteString)<a name="line.549"></a>
-<span class="sourceLineNo">550</span>   */<a name="line.550"></a>
-<span class="sourceLineNo">551</span>  protected void installConfig(final Chart.Builder chartBuilder, final InputStream stream) throws IOException {<a name="line.551"></a>
-<span class="sourceLineNo">552</span>    Objects.requireNonNull(chartBuilder);<a name="line.552"></a>
-<span class="sourceLineNo">553</span>    Objects.requireNonNull(stream);<a name="line.553"></a>
-<span class="sourceLineNo">554</span>    Config returnValue = null;<a name="line.554"></a>
-<span class="sourceLineNo">555</span>    final Config.Builder builder = chartBuilder.getValuesBuilder();<a name="line.555"></a>
-<span class="sourceLineNo">556</span>    assert builder != null;<a name="line.556"></a>
-<span class="sourceLineNo">557</span>    final ByteString rawBytes = ByteString.readFrom(stream);<a name="line.557"></a>
-<span class="sourceLineNo">558</span>    assert rawBytes != null;<a name="line.558"></a>
-<span class="sourceLineNo">559</span>    builder.setRawBytes(rawBytes);<a name="line.559"></a>
-<span class="sourceLineNo">560</span>  }<a name="line.560"></a>
-<span class="sourceLineNo">561</span><a name="line.561"></a>
-<span class="sourceLineNo">562</span>  /**<a name="line.562"></a>
-<span class="sourceLineNo">563</span>   * Installs a {@link Metadata} object, represented by the supplied<a name="line.563"></a>
-<span class="sourceLineNo">564</span>   * {@link InputStream}, into the supplied {@link<a name="line.564"></a>
-<span class="sourceLineNo">565</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder}.<a name="line.565"></a>
-<span class="sourceLineNo">566</span>   *<a name="line.566"></a>
-<span class="sourceLineNo">567</span>   * @param chartBuilder the {@link<a name="line.567"></a>
-<span class="sourceLineNo">568</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder} to<a name="line.568"></a>
-<span class="sourceLineNo">569</span>   * affect; must not be {@code null}<a name="line.569"></a>
+<span class="sourceLineNo">336</span>            final int prefixLength = ((parentChartPath == null ? "" : parentChartPath) + "/").length();<a name="line.336"></a>
+<span class="sourceLineNo">337</span>            assert path.length() &gt; prefixLength;<a name="line.337"></a>
+<span class="sourceLineNo">338</span>            this.installAny(parentChartBuilder, stream, path.substring(prefixLength));<a name="line.338"></a>
+<span class="sourceLineNo">339</span>          } else if (!(fileName.startsWith("_") || fileName.startsWith(".")) &amp;&amp;<a name="line.339"></a>
+<span class="sourceLineNo">340</span>                     fileName.endsWith(".tgz") &amp;&amp;<a name="line.340"></a>
+<span class="sourceLineNo">341</span>                     fileName.equals(basename(fileName))) {<a name="line.341"></a>
+<span class="sourceLineNo">342</span>            assert fileName.indexOf('/') &lt; 0;<a name="line.342"></a>
+<span class="sourceLineNo">343</span>            // A subchart *file* (i.e. not a directory) that is not a<a name="line.343"></a>
+<span class="sourceLineNo">344</span>            // .prov file, that is immediately beneath charts, that<a name="line.344"></a>
+<span class="sourceLineNo">345</span>            // doesn't start with '.' or '_', and that ends with .tgz.<a name="line.345"></a>
+<span class="sourceLineNo">346</span>            // Treat it as a tarball.<a name="line.346"></a>
+<span class="sourceLineNo">347</span>            //<a name="line.347"></a>
+<span class="sourceLineNo">348</span>            // So:  wordpress/charts/foo.tgz<a name="line.348"></a>
+<span class="sourceLineNo">349</span>            // Not: wordpress/charts/.foo.tgz<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            // Not: wordpress/charts/_foo.tgz<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            // Not: wordpress/charts/foo<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            // Not: wordpress/charts/bar/foo.tgz<a name="line.352"></a>
+<span class="sourceLineNo">353</span>            // Not: wordpress/charts/_bar/foo.tgz<a name="line.353"></a>
+<span class="sourceLineNo">354</span>            Chart.Builder subchartBuilder = null;<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            try (final TarInputStream tarInputStream = new TarInputStream(new GZIPInputStream(new NonClosingInputStream(stream)))) {<a name="line.355"></a>
+<span class="sourceLineNo">356</span>              subchartBuilder = new TapeArchiveChartLoader().load(builder, tarInputStream);<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            }<a name="line.357"></a>
+<span class="sourceLineNo">358</span>            if (subchartBuilder == null) {<a name="line.358"></a>
+<span class="sourceLineNo">359</span>              throw new IllegalStateException("load(builder, tarInputStream) == null; path: " + path);<a name="line.359"></a>
+<span class="sourceLineNo">360</span>            }<a name="line.360"></a>
+<span class="sourceLineNo">361</span>            // builder.addDependencies(subchart);<a name="line.361"></a>
+<span class="sourceLineNo">362</span>          } else {<a name="line.362"></a>
+<span class="sourceLineNo">363</span>            // Not a .prov file under charts, nor a .tgz file, just a<a name="line.363"></a>
+<span class="sourceLineNo">364</span>            // regular subchart file.<a name="line.364"></a>
+<span class="sourceLineNo">365</span>            this.installAny(builder, stream, fileName);<a name="line.365"></a>
+<span class="sourceLineNo">366</span>          }<a name="line.366"></a>
+<span class="sourceLineNo">367</span>        } else {<a name="line.367"></a>
+<span class="sourceLineNo">368</span>          assert !subchartFile;<a name="line.368"></a>
+<span class="sourceLineNo">369</span>          // Not a subchart file or a template<a name="line.369"></a>
+<span class="sourceLineNo">370</span>          this.installAny(builder, stream, fileName);<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        }<a name="line.371"></a>
+<span class="sourceLineNo">372</span>        break;<a name="line.372"></a>
+<span class="sourceLineNo">373</span>      }<a name="line.373"></a>
+<span class="sourceLineNo">374</span>    }<a name="line.374"></a>
+<span class="sourceLineNo">375</span>  }<a name="line.375"></a>
+<span class="sourceLineNo">376</span>  <a name="line.376"></a>
+<span class="sourceLineNo">377</span>  static final String getOrdinaryFileName(final String path) {<a name="line.377"></a>
+<span class="sourceLineNo">378</span>    String returnValue = null;<a name="line.378"></a>
+<span class="sourceLineNo">379</span>    if (path != null) {<a name="line.379"></a>
+<span class="sourceLineNo">380</span>      final Matcher fileMatcher = fileNamePattern.matcher(path);<a name="line.380"></a>
+<span class="sourceLineNo">381</span>      assert fileMatcher != null;<a name="line.381"></a>
+<span class="sourceLineNo">382</span>      if (fileMatcher.find()) {<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        returnValue = fileMatcher.group(1);<a name="line.383"></a>
+<span class="sourceLineNo">384</span>      }<a name="line.384"></a>
+<span class="sourceLineNo">385</span>    }<a name="line.385"></a>
+<span class="sourceLineNo">386</span>    return returnValue;<a name="line.386"></a>
+<span class="sourceLineNo">387</span>  }<a name="line.387"></a>
+<span class="sourceLineNo">388</span>  <a name="line.388"></a>
+<span class="sourceLineNo">389</span>  static final String getSubchartFileName(final String path) {<a name="line.389"></a>
+<span class="sourceLineNo">390</span>    String returnValue = null;<a name="line.390"></a>
+<span class="sourceLineNo">391</span>    if (path != null) {<a name="line.391"></a>
+<span class="sourceLineNo">392</span>      final Matcher subchartMatcher = subchartFileNamePattern.matcher(path);<a name="line.392"></a>
+<span class="sourceLineNo">393</span>      assert subchartMatcher != null;<a name="line.393"></a>
+<span class="sourceLineNo">394</span>      if (subchartMatcher.find()) {<a name="line.394"></a>
+<span class="sourceLineNo">395</span>        // in foo/charts/bork/blatz.txt:<a name="line.395"></a>
+<span class="sourceLineNo">396</span>        //   group 1 is bork/blatz.txt<a name="line.396"></a>
+<span class="sourceLineNo">397</span>        //   group 2 is blatz.txt<a name="line.397"></a>
+<span class="sourceLineNo">398</span>        // in foo/charts/blatz.tgz:<a name="line.398"></a>
+<span class="sourceLineNo">399</span>        //   group 1 is blatz.tgz<a name="line.399"></a>
+<span class="sourceLineNo">400</span>        //   group 2 is (empty string)<a name="line.400"></a>
+<span class="sourceLineNo">401</span>        final String group2 = subchartMatcher.group(2);<a name="line.401"></a>
+<span class="sourceLineNo">402</span>        assert group2 != null;<a name="line.402"></a>
+<span class="sourceLineNo">403</span>        if (group2.isEmpty()) {<a name="line.403"></a>
+<span class="sourceLineNo">404</span>          returnValue = subchartMatcher.group(1);<a name="line.404"></a>
+<span class="sourceLineNo">405</span>          assert returnValue != null;<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        } else {<a name="line.406"></a>
+<span class="sourceLineNo">407</span>          returnValue = group2;<a name="line.407"></a>
+<span class="sourceLineNo">408</span>        }<a name="line.408"></a>
+<span class="sourceLineNo">409</span>      }<a name="line.409"></a>
+<span class="sourceLineNo">410</span>    }<a name="line.410"></a>
+<span class="sourceLineNo">411</span>    return returnValue;<a name="line.411"></a>
+<span class="sourceLineNo">412</span><a name="line.412"></a>
+<span class="sourceLineNo">413</span>  }<a name="line.413"></a>
+<span class="sourceLineNo">414</span>  <a name="line.414"></a>
+<span class="sourceLineNo">415</span>  static final String getTemplateFileName(final String path) {<a name="line.415"></a>
+<span class="sourceLineNo">416</span>    String returnValue = null;<a name="line.416"></a>
+<span class="sourceLineNo">417</span>    if (path != null) {<a name="line.417"></a>
+<span class="sourceLineNo">418</span>      final Matcher templateMatcher = templateFileNamePattern.matcher(path);<a name="line.418"></a>
+<span class="sourceLineNo">419</span>      assert templateMatcher != null;<a name="line.419"></a>
+<span class="sourceLineNo">420</span>      if (templateMatcher.find()) {<a name="line.420"></a>
+<span class="sourceLineNo">421</span>        returnValue = templateMatcher.group(1);<a name="line.421"></a>
+<span class="sourceLineNo">422</span>      }<a name="line.422"></a>
+<span class="sourceLineNo">423</span>    }<a name="line.423"></a>
+<span class="sourceLineNo">424</span>    return returnValue;<a name="line.424"></a>
+<span class="sourceLineNo">425</span>  }<a name="line.425"></a>
+<span class="sourceLineNo">426</span><a name="line.426"></a>
+<span class="sourceLineNo">427</span>  /**<a name="line.427"></a>
+<span class="sourceLineNo">428</span>   * Given a semantic solidus-separated {@code chartPath} representing<a name="line.428"></a>
+<span class="sourceLineNo">429</span>   * a file or logical directory within a chart, returns the proper<a name="line.429"></a>
+<span class="sourceLineNo">430</span>   * {@link Chart.Builder} corresponding to that path.<a name="line.430"></a>
+<span class="sourceLineNo">431</span>   *<a name="line.431"></a>
+<span class="sourceLineNo">432</span>   * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.432"></a>
+<span class="sourceLineNo">433</span>   *<a name="line.433"></a>
+<span class="sourceLineNo">434</span>   * &lt;p&gt;Any intermediate {@link Chart.Builder}s will also be created<a name="line.434"></a>
+<span class="sourceLineNo">435</span>   * and properly parented.&lt;/p&gt;<a name="line.435"></a>
+<span class="sourceLineNo">436</span>   *<a name="line.436"></a>
+<span class="sourceLineNo">437</span>   * @param chartBuilders a {@link Map} of {@link Chart.Builder}<a name="line.437"></a>
+<span class="sourceLineNo">438</span>   * instances indexed by paths; must not be {@code null}; may be<a name="line.438"></a>
+<span class="sourceLineNo">439</span>   * updated by this method<a name="line.439"></a>
+<span class="sourceLineNo">440</span>   *<a name="line.440"></a>
+<span class="sourceLineNo">441</span>   * @param chartPath a solidus-separated {@link String} representing<a name="line.441"></a>
+<span class="sourceLineNo">442</span>   * a file or directory within a chart; must not be {@code null}<a name="line.442"></a>
+<span class="sourceLineNo">443</span>   *<a name="line.443"></a>
+<span class="sourceLineNo">444</span>   * @return a {@link Chart.Builder}; never {@code null}<a name="line.444"></a>
+<span class="sourceLineNo">445</span>   *<a name="line.445"></a>
+<span class="sourceLineNo">446</span>   * @exception NullPointerException if either {@code chartBuilders}<a name="line.446"></a>
+<span class="sourceLineNo">447</span>   * or {@code chartPath} is {@code null}<a name="line.447"></a>
+<span class="sourceLineNo">448</span>   */<a name="line.448"></a>
+<span class="sourceLineNo">449</span>  private static final Chart.Builder getChartBuilder(final Map&lt;String, Chart.Builder&gt; chartBuilders, final String chartPath) {<a name="line.449"></a>
+<span class="sourceLineNo">450</span>    Objects.requireNonNull(chartBuilders);<a name="line.450"></a>
+<span class="sourceLineNo">451</span>    Objects.requireNonNull(chartPath);<a name="line.451"></a>
+<span class="sourceLineNo">452</span>    Chart.Builder rootBuilder = chartBuilders.get(null);<a name="line.452"></a>
+<span class="sourceLineNo">453</span>    if (rootBuilder == null) {<a name="line.453"></a>
+<span class="sourceLineNo">454</span>      rootBuilder = Chart.newBuilder();<a name="line.454"></a>
+<span class="sourceLineNo">455</span>      chartBuilders.put(null, rootBuilder);<a name="line.455"></a>
+<span class="sourceLineNo">456</span>    }<a name="line.456"></a>
+<span class="sourceLineNo">457</span>    assert rootBuilder != null;<a name="line.457"></a>
+<span class="sourceLineNo">458</span>    Chart.Builder returnValue = rootBuilder;<a name="line.458"></a>
+<span class="sourceLineNo">459</span>    final Collection&lt;? extends String&gt; chartPaths = toSubcharts(chartPath);<a name="line.459"></a>
+<span class="sourceLineNo">460</span>    if (chartPaths != null &amp;&amp; !chartPaths.isEmpty()) {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>      for (final String path : chartPaths) {<a name="line.461"></a>
+<span class="sourceLineNo">462</span>        // By contract, shallowest path comes first, so<a name="line.462"></a>
+<span class="sourceLineNo">463</span>        // foobar/charts/wordpress comes before, say,<a name="line.463"></a>
+<span class="sourceLineNo">464</span>        // foobar/charts/wordpress/charts/mysql<a name="line.464"></a>
+<span class="sourceLineNo">465</span>        Chart.Builder builder = chartBuilders.get(path);<a name="line.465"></a>
+<span class="sourceLineNo">466</span>        if (builder == null) {<a name="line.466"></a>
+<span class="sourceLineNo">467</span>          builder = createSubchartBuilder(returnValue, path);<a name="line.467"></a>
+<span class="sourceLineNo">468</span>          assert builder != null;<a name="line.468"></a>
+<span class="sourceLineNo">469</span>          chartBuilders.put(path, builder);<a name="line.469"></a>
+<span class="sourceLineNo">470</span>        }<a name="line.470"></a>
+<span class="sourceLineNo">471</span>        assert builder != null;<a name="line.471"></a>
+<span class="sourceLineNo">472</span>        returnValue = builder;<a name="line.472"></a>
+<span class="sourceLineNo">473</span>      }<a name="line.473"></a>
+<span class="sourceLineNo">474</span>    }<a name="line.474"></a>
+<span class="sourceLineNo">475</span>    assert returnValue != null;<a name="line.475"></a>
+<span class="sourceLineNo">476</span>    return returnValue;<a name="line.476"></a>
+<span class="sourceLineNo">477</span>  }<a name="line.477"></a>
+<span class="sourceLineNo">478</span><a name="line.478"></a>
+<span class="sourceLineNo">479</span>  /**<a name="line.479"></a>
+<span class="sourceLineNo">480</span>   * Given, e.g., {@code wordpress/charts/argle/charts/frob/foo.txt},<a name="line.480"></a>
+<span class="sourceLineNo">481</span>   * yield {@code [ wordpress/charts/argle,<a name="line.481"></a>
+<span class="sourceLineNo">482</span>   * wordpress/charts/argle/charts/frob ]}.<a name="line.482"></a>
+<span class="sourceLineNo">483</span>   *<a name="line.483"></a>
+<span class="sourceLineNo">484</span>   * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.484"></a>
+<span class="sourceLineNo">485</span>   *<a name="line.485"></a>
+<span class="sourceLineNo">486</span>   * @param chartPath the "relative" solidus-separated path<a name="line.486"></a>
+<span class="sourceLineNo">487</span>   * identifying some chart resource; must not be {@code null}<a name="line.487"></a>
+<span class="sourceLineNo">488</span>   *<a name="line.488"></a>
+<span class="sourceLineNo">489</span>   * @return a {@link NavigableSet} of chart paths in ascending<a name="line.489"></a>
+<span class="sourceLineNo">490</span>   * subchart hierarchy order; never {@code null}<a name="line.490"></a>
+<span class="sourceLineNo">491</span>   */<a name="line.491"></a>
+<span class="sourceLineNo">492</span>  static final NavigableSet&lt;String&gt; toSubcharts(final String chartPath) {<a name="line.492"></a>
+<span class="sourceLineNo">493</span>    Objects.requireNonNull(chartPath);<a name="line.493"></a>
+<span class="sourceLineNo">494</span>    final NavigableSet&lt;String&gt; returnValue = new TreeSet&lt;&gt;(new ChartPathComparator());<a name="line.494"></a>
+<span class="sourceLineNo">495</span>    final Matcher matcher = nonGreedySubchartsPattern.matcher(chartPath);<a name="line.495"></a>
+<span class="sourceLineNo">496</span>    if (matcher != null) {<a name="line.496"></a>
+<span class="sourceLineNo">497</span>      while (matcher.find()) {<a name="line.497"></a>
+<span class="sourceLineNo">498</span>        returnValue.add(chartPath.substring(0, matcher.end()));<a name="line.498"></a>
+<span class="sourceLineNo">499</span>      }<a name="line.499"></a>
+<span class="sourceLineNo">500</span>    }<a name="line.500"></a>
+<span class="sourceLineNo">501</span>    return returnValue;<a name="line.501"></a>
+<span class="sourceLineNo">502</span>  }<a name="line.502"></a>
+<span class="sourceLineNo">503</span><a name="line.503"></a>
+<span class="sourceLineNo">504</span>  private static final Chart.Builder createSubchartBuilder(final Chart.Builder parentBuilder, final String chartPath) {<a name="line.504"></a>
+<span class="sourceLineNo">505</span>    Objects.requireNonNull(parentBuilder);<a name="line.505"></a>
+<span class="sourceLineNo">506</span>    Chart.Builder returnValue = null;<a name="line.506"></a>
+<span class="sourceLineNo">507</span>    final String chartName = getChartName(chartPath);<a name="line.507"></a>
+<span class="sourceLineNo">508</span>    if (chartName != null) {<a name="line.508"></a>
+<span class="sourceLineNo">509</span>      returnValue = parentBuilder.addDependenciesBuilder();<a name="line.509"></a>
+<span class="sourceLineNo">510</span>      assert returnValue != null;<a name="line.510"></a>
+<span class="sourceLineNo">511</span>      final Metadata.Builder builder = returnValue.getMetadataBuilder();<a name="line.511"></a>
+<span class="sourceLineNo">512</span>      assert builder != null;<a name="line.512"></a>
+<span class="sourceLineNo">513</span>      builder.setName(chartName);<a name="line.513"></a>
+<span class="sourceLineNo">514</span>    }<a name="line.514"></a>
+<span class="sourceLineNo">515</span>    return returnValue;<a name="line.515"></a>
+<span class="sourceLineNo">516</span>  }<a name="line.516"></a>
+<span class="sourceLineNo">517</span>  <a name="line.517"></a>
+<span class="sourceLineNo">518</span>  private static final String getChartName(final String chartPath) {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>    String returnValue = null;<a name="line.519"></a>
+<span class="sourceLineNo">520</span>    if (chartPath != null) {<a name="line.520"></a>
+<span class="sourceLineNo">521</span>      final Matcher matcher = chartNamePattern.matcher(chartPath);<a name="line.521"></a>
+<span class="sourceLineNo">522</span>      assert matcher != null;<a name="line.522"></a>
+<span class="sourceLineNo">523</span>      if (matcher.find()) {<a name="line.523"></a>
+<span class="sourceLineNo">524</span>        returnValue = matcher.group(1);<a name="line.524"></a>
+<span class="sourceLineNo">525</span>      }<a name="line.525"></a>
+<span class="sourceLineNo">526</span>    }<a name="line.526"></a>
+<span class="sourceLineNo">527</span>    return returnValue;<a name="line.527"></a>
+<span class="sourceLineNo">528</span>  }<a name="line.528"></a>
+<span class="sourceLineNo">529</span><a name="line.529"></a>
+<span class="sourceLineNo">530</span>  private static final String basename(final String path) {<a name="line.530"></a>
+<span class="sourceLineNo">531</span>    String returnValue = null;<a name="line.531"></a>
+<span class="sourceLineNo">532</span>    if (path != null) {<a name="line.532"></a>
+<span class="sourceLineNo">533</span>      final Matcher matcher = basenamePattern.matcher(path);<a name="line.533"></a>
+<span class="sourceLineNo">534</span>      assert matcher != null;<a name="line.534"></a>
+<span class="sourceLineNo">535</span>      if (matcher.find()) {<a name="line.535"></a>
+<span class="sourceLineNo">536</span>        returnValue = matcher.group(1);<a name="line.536"></a>
+<span class="sourceLineNo">537</span>      }<a name="line.537"></a>
+<span class="sourceLineNo">538</span>    }<a name="line.538"></a>
+<span class="sourceLineNo">539</span>    return returnValue;<a name="line.539"></a>
+<span class="sourceLineNo">540</span>  }<a name="line.540"></a>
+<span class="sourceLineNo">541</span>  <a name="line.541"></a>
+<span class="sourceLineNo">542</span><a name="line.542"></a>
+<span class="sourceLineNo">543</span>  /*<a name="line.543"></a>
+<span class="sourceLineNo">544</span>   * Utility methods.<a name="line.544"></a>
+<span class="sourceLineNo">545</span>   */<a name="line.545"></a>
+<span class="sourceLineNo">546</span>  <a name="line.546"></a>
+<span class="sourceLineNo">547</span><a name="line.547"></a>
+<span class="sourceLineNo">548</span>  /**<a name="line.548"></a>
+<span class="sourceLineNo">549</span>   * Installs a {@link Config} object, represented by the supplied<a name="line.549"></a>
+<span class="sourceLineNo">550</span>   * {@link InputStream}, into the supplied {@link<a name="line.550"></a>
+<span class="sourceLineNo">551</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder}.<a name="line.551"></a>
+<span class="sourceLineNo">552</span>   *<a name="line.552"></a>
+<span class="sourceLineNo">553</span>   * @param chartBuilder the {@link<a name="line.553"></a>
+<span class="sourceLineNo">554</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder} to<a name="line.554"></a>
+<span class="sourceLineNo">555</span>   * affect; must not be {@code null}<a name="line.555"></a>
+<span class="sourceLineNo">556</span>   *<a name="line.556"></a>
+<span class="sourceLineNo">557</span>   * @param stream an {@link InputStream} representing &lt;a<a name="line.557"></a>
+<span class="sourceLineNo">558</span>   * href="https://docs.helm.sh/developing_charts/#values-files"&gt;valid<a name="line.558"></a>
+<span class="sourceLineNo">559</span>   * values file contents&lt;/a&gt; as defined by &lt;a<a name="line.559"></a>
+<span class="sourceLineNo">560</span>   * href="https://docs.helm.sh/developing_charts/#values-files"&gt;the<a name="line.560"></a>
+<span class="sourceLineNo">561</span>   * chart specification&lt;/a&gt;; must not be {@code null}<a name="line.561"></a>
+<span class="sourceLineNo">562</span>   *<a name="line.562"></a>
+<span class="sourceLineNo">563</span>   * @exception NullPointerException if {@code chartBuilder} or {@code<a name="line.563"></a>
+<span class="sourceLineNo">564</span>   * stream} is {@code null}<a name="line.564"></a>
+<span class="sourceLineNo">565</span>   *<a name="line.565"></a>
+<span class="sourceLineNo">566</span>   * @exception IOException if there was a problem reading from the<a name="line.566"></a>
+<span class="sourceLineNo">567</span>   * supplied {@link InputStream}<a name="line.567"></a>
+<span class="sourceLineNo">568</span>   *<a name="line.568"></a>
+<span class="sourceLineNo">569</span>   * @see hapi.chart.ChartOuterClass.Chart.Builder#getValuesBuilder()<a name="line.569"></a>
 <span class="sourceLineNo">570</span>   *<a name="line.570"></a>
-<span class="sourceLineNo">571</span>   * @param stream an {@link InputStream} representing &lt;a<a name="line.571"></a>
-<span class="sourceLineNo">572</span>   * href="https://docs.helm.sh/developing_charts/#the-chart-yaml-file"&gt;valid<a name="line.572"></a>
-<span class="sourceLineNo">573</span>   * {@code Chart.yaml} contents&lt;/a&gt; as defined by &lt;a<a name="line.573"></a>
-<span class="sourceLineNo">574</span>   * href="https://docs.helm.sh/developing_charts/#the-chart-yaml-file"&gt;the<a name="line.574"></a>
-<span class="sourceLineNo">575</span>   * chart specification&lt;/a&gt;; must not be {@code null}<a name="line.575"></a>
-<span class="sourceLineNo">576</span>   *<a name="line.576"></a>
-<span class="sourceLineNo">577</span>   * @exception NullPointerException if {@code chartBuilder} or {@code<a name="line.577"></a>
-<span class="sourceLineNo">578</span>   * stream} is {@code null}<a name="line.578"></a>
-<span class="sourceLineNo">579</span>   *<a name="line.579"></a>
-<span class="sourceLineNo">580</span>   * @exception IOException if there was a problem reading from the<a name="line.580"></a>
-<span class="sourceLineNo">581</span>   * supplied {@link InputStream}<a name="line.581"></a>
-<span class="sourceLineNo">582</span>   *<a name="line.582"></a>
-<span class="sourceLineNo">583</span>   * @see hapi.chart.ChartOuterClass.Chart.Builder#getMetadataBuilder()<a name="line.583"></a>
-<span class="sourceLineNo">584</span>   *<a name="line.584"></a>
-<span class="sourceLineNo">585</span>   * @see hapi.chart.MetadataOuterClass.Metadata.Builder<a name="line.585"></a>
-<span class="sourceLineNo">586</span>   */<a name="line.586"></a>
-<span class="sourceLineNo">587</span>  protected void installMetadata(final Chart.Builder chartBuilder, final InputStream stream) throws IOException {<a name="line.587"></a>
-<span class="sourceLineNo">588</span>    Objects.requireNonNull(chartBuilder);<a name="line.588"></a>
-<span class="sourceLineNo">589</span>    Objects.requireNonNull(stream);<a name="line.589"></a>
-<span class="sourceLineNo">590</span>    Metadata returnValue = null;<a name="line.590"></a>
-<span class="sourceLineNo">591</span>    final Map&lt;?, ?&gt; map = new Yaml().loadAs(stream, Map.class);<a name="line.591"></a>
-<span class="sourceLineNo">592</span>    assert map != null;<a name="line.592"></a>
-<span class="sourceLineNo">593</span>    final Metadata.Builder metadataBuilder = chartBuilder.getMetadataBuilder();<a name="line.593"></a>
-<span class="sourceLineNo">594</span>    assert metadataBuilder != null;<a name="line.594"></a>
-<span class="sourceLineNo">595</span>    Metadatas.populateMetadataBuilder(metadataBuilder, map);<a name="line.595"></a>
-<span class="sourceLineNo">596</span>  }<a name="line.596"></a>
-<span class="sourceLineNo">597</span><a name="line.597"></a>
-<span class="sourceLineNo">598</span>  /**<a name="line.598"></a>
-<span class="sourceLineNo">599</span>   * {@linkplain<a name="line.599"></a>
-<span class="sourceLineNo">600</span>   * hapi.chart.ChartOuterClass.Chart.Builder#addTemplatesBuilder()<a name="line.600"></a>
-<span class="sourceLineNo">601</span>   * Creates a new} {@link<a name="line.601"></a>
-<span class="sourceLineNo">602</span>   * hapi.chart.TemplateOuterClass.Template.Builder} {@linkplain<a name="line.602"></a>
-<span class="sourceLineNo">603</span>   * hapi.chart.TemplateOuterClass.Template.Builder#setData(ByteString)<a name="line.603"></a>
-<span class="sourceLineNo">604</span>   * from the contents of the supplied &lt;code&gt;InputStream&lt;/code&gt;},<a name="line.604"></a>
-<span class="sourceLineNo">605</span>   * {@linkplain<a name="line.605"></a>
-<span class="sourceLineNo">606</span>   * hapi.chart.TemplateOuterClass.Template.Builder#setName(String)<a name="line.606"></a>
-<span class="sourceLineNo">607</span>   * with the supplied &lt;code&gt;name&lt;/code&gt;}, and returns it.<a name="line.607"></a>
-<span class="sourceLineNo">608</span>   *<a name="line.608"></a>
-<span class="sourceLineNo">609</span>   * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.609"></a>
-<span class="sourceLineNo">610</span>   *<a name="line.610"></a>
-<span class="sourceLineNo">611</span>   * @param chartBuilder a {@link<a name="line.611"></a>
-<span class="sourceLineNo">612</span>   * hapi.chart.ChartOuterClass.Chart.Builder} whose {@link<a name="line.612"></a>
-<span class="sourceLineNo">613</span>   * hapi.chart.ChartOuterClass.Chart.Builder#addTemplatesBuilder()}<a name="line.613"></a>
-<span class="sourceLineNo">614</span>   * method will be called to create the new {@link<a name="line.614"></a>
-<span class="sourceLineNo">615</span>   * hapi.chart.TemplateOuterClass.Template.Builder} instance; must<a name="line.615"></a>
-<span class="sourceLineNo">616</span>   * not be {@code null}<a name="line.616"></a>
-<span class="sourceLineNo">617</span>   *<a name="line.617"></a>
-<span class="sourceLineNo">618</span>   * @param stream an {@link InputStream} containing &lt;a<a name="line.618"></a>
-<span class="sourceLineNo">619</span>   * href="https://docs.helm.sh/developing_charts/#template-files"&gt;valid<a name="line.619"></a>
-<span class="sourceLineNo">620</span>   * template contents&lt;/a&gt; as defined by the &lt;a<a name="line.620"></a>
-<span class="sourceLineNo">621</span>   * href="https://docs.helm.sh/developing_charts/#template-files"&gt;chart<a name="line.621"></a>
-<span class="sourceLineNo">622</span>   * specification&lt;/a&gt;; must not be {@code null}<a name="line.622"></a>
-<span class="sourceLineNo">623</span>   *<a name="line.623"></a>
-<span class="sourceLineNo">624</span>   * @param name the name for the new {@link Template} that will<a name="line.624"></a>
-<span class="sourceLineNo">625</span>   * ultimately reside within the chart; must not be {@code null}<a name="line.625"></a>
-<span class="sourceLineNo">626</span>   *<a name="line.626"></a>
-<span class="sourceLineNo">627</span>   * @return a new {@link<a name="line.627"></a>
-<span class="sourceLineNo">628</span>   * hapi.chart.TemplateOuterClass.Template.Builder}; never {@code<a name="line.628"></a>
-<span class="sourceLineNo">629</span>   * null}<a name="line.629"></a>
+<span class="sourceLineNo">571</span>   * @see hapi.chart.ConfigOuterClass.Config.Builder#setRawBytes(ByteString)<a name="line.571"></a>
+<span class="sourceLineNo">572</span>   */<a name="line.572"></a>
+<span class="sourceLineNo">573</span>  protected void installConfig(final Chart.Builder chartBuilder, final InputStream stream) throws IOException {<a name="line.573"></a>
+<span class="sourceLineNo">574</span>    Objects.requireNonNull(chartBuilder);<a name="line.574"></a>
+<span class="sourceLineNo">575</span>    Objects.requireNonNull(stream);<a name="line.575"></a>
+<span class="sourceLineNo">576</span>    Config returnValue = null;<a name="line.576"></a>
+<span class="sourceLineNo">577</span>    final Config.Builder builder = chartBuilder.getValuesBuilder();<a name="line.577"></a>
+<span class="sourceLineNo">578</span>    assert builder != null;<a name="line.578"></a>
+<span class="sourceLineNo">579</span>    final ByteString rawBytes = ByteString.readFrom(stream);<a name="line.579"></a>
+<span class="sourceLineNo">580</span>    assert rawBytes != null;<a name="line.580"></a>
+<span class="sourceLineNo">581</span>    builder.setRawBytes(rawBytes);<a name="line.581"></a>
+<span class="sourceLineNo">582</span>  }<a name="line.582"></a>
+<span class="sourceLineNo">583</span><a name="line.583"></a>
+<span class="sourceLineNo">584</span>  /**<a name="line.584"></a>
+<span class="sourceLineNo">585</span>   * Installs a {@link Metadata} object, represented by the supplied<a name="line.585"></a>
+<span class="sourceLineNo">586</span>   * {@link InputStream}, into the supplied {@link<a name="line.586"></a>
+<span class="sourceLineNo">587</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder}.<a name="line.587"></a>
+<span class="sourceLineNo">588</span>   *<a name="line.588"></a>
+<span class="sourceLineNo">589</span>   * @param chartBuilder the {@link<a name="line.589"></a>
+<span class="sourceLineNo">590</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder} to<a name="line.590"></a>
+<span class="sourceLineNo">591</span>   * affect; must not be {@code null}<a name="line.591"></a>
+<span class="sourceLineNo">592</span>   *<a name="line.592"></a>
+<span class="sourceLineNo">593</span>   * @param stream an {@link InputStream} representing &lt;a<a name="line.593"></a>
+<span class="sourceLineNo">594</span>   * href="https://docs.helm.sh/developing_charts/#the-chart-yaml-file"&gt;valid<a name="line.594"></a>
+<span class="sourceLineNo">595</span>   * {@code Chart.yaml} contents&lt;/a&gt; as defined by &lt;a<a name="line.595"></a>
+<span class="sourceLineNo">596</span>   * href="https://docs.helm.sh/developing_charts/#the-chart-yaml-file"&gt;the<a name="line.596"></a>
+<span class="sourceLineNo">597</span>   * chart specification&lt;/a&gt;; must not be {@code null}<a name="line.597"></a>
+<span class="sourceLineNo">598</span>   *<a name="line.598"></a>
+<span class="sourceLineNo">599</span>   * @exception NullPointerException if {@code chartBuilder} or {@code<a name="line.599"></a>
+<span class="sourceLineNo">600</span>   * stream} is {@code null}<a name="line.600"></a>
+<span class="sourceLineNo">601</span>   *<a name="line.601"></a>
+<span class="sourceLineNo">602</span>   * @exception IOException if there was a problem reading from the<a name="line.602"></a>
+<span class="sourceLineNo">603</span>   * supplied {@link InputStream}<a name="line.603"></a>
+<span class="sourceLineNo">604</span>   *<a name="line.604"></a>
+<span class="sourceLineNo">605</span>   * @see hapi.chart.ChartOuterClass.Chart.Builder#getMetadataBuilder()<a name="line.605"></a>
+<span class="sourceLineNo">606</span>   *<a name="line.606"></a>
+<span class="sourceLineNo">607</span>   * @see hapi.chart.MetadataOuterClass.Metadata.Builder<a name="line.607"></a>
+<span class="sourceLineNo">608</span>   */<a name="line.608"></a>
+<span class="sourceLineNo">609</span>  protected void installMetadata(final Chart.Builder chartBuilder, final InputStream stream) throws IOException {<a name="line.609"></a>
+<span class="sourceLineNo">610</span>    Objects.requireNonNull(chartBuilder);<a name="line.610"></a>
+<span class="sourceLineNo">611</span>    Objects.requireNonNull(stream);<a name="line.611"></a>
+<span class="sourceLineNo">612</span>    Metadata returnValue = null;<a name="line.612"></a>
+<span class="sourceLineNo">613</span>    final Map&lt;?, ?&gt; map = new Yaml().loadAs(stream, Map.class);<a name="line.613"></a>
+<span class="sourceLineNo">614</span>    assert map != null;<a name="line.614"></a>
+<span class="sourceLineNo">615</span>    final Metadata.Builder metadataBuilder = chartBuilder.getMetadataBuilder();<a name="line.615"></a>
+<span class="sourceLineNo">616</span>    assert metadataBuilder != null;<a name="line.616"></a>
+<span class="sourceLineNo">617</span>    Metadatas.populateMetadataBuilder(metadataBuilder, map);<a name="line.617"></a>
+<span class="sourceLineNo">618</span>  }<a name="line.618"></a>
+<span class="sourceLineNo">619</span><a name="line.619"></a>
+<span class="sourceLineNo">620</span>  /**<a name="line.620"></a>
+<span class="sourceLineNo">621</span>   * {@linkplain<a name="line.621"></a>
+<span class="sourceLineNo">622</span>   * hapi.chart.ChartOuterClass.Chart.Builder#addTemplatesBuilder()<a name="line.622"></a>
+<span class="sourceLineNo">623</span>   * Creates a new} {@link<a name="line.623"></a>
+<span class="sourceLineNo">624</span>   * hapi.chart.TemplateOuterClass.Template.Builder} {@linkplain<a name="line.624"></a>
+<span class="sourceLineNo">625</span>   * hapi.chart.TemplateOuterClass.Template.Builder#setData(ByteString)<a name="line.625"></a>
+<span class="sourceLineNo">626</span>   * from the contents of the supplied &lt;code&gt;InputStream&lt;/code&gt;},<a name="line.626"></a>
+<span class="sourceLineNo">627</span>   * {@linkplain<a name="line.627"></a>
+<span class="sourceLineNo">628</span>   * hapi.chart.TemplateOuterClass.Template.Builder#setName(String)<a name="line.628"></a>
+<span class="sourceLineNo">629</span>   * with the supplied &lt;code&gt;name&lt;/code&gt;}, and returns it.<a name="line.629"></a>
 <span class="sourceLineNo">630</span>   *<a name="line.630"></a>
-<span class="sourceLineNo">631</span>   * @exception NullPointerException if {@code chartBuilder}, {@code<a name="line.631"></a>
-<span class="sourceLineNo">632</span>   * stream} or {@code name} is {@code null}<a name="line.632"></a>
-<span class="sourceLineNo">633</span>   *<a name="line.633"></a>
-<span class="sourceLineNo">634</span>   * @exception IOException if there was a problem reading from the<a name="line.634"></a>
-<span class="sourceLineNo">635</span>   * supplied {@link InputStream}<a name="line.635"></a>
-<span class="sourceLineNo">636</span>   *<a name="line.636"></a>
-<span class="sourceLineNo">637</span>   * @see hapi.chart.TemplateOuterClass.Template.Builder<a name="line.637"></a>
-<span class="sourceLineNo">638</span>   */<a name="line.638"></a>
-<span class="sourceLineNo">639</span>  protected Template.Builder createTemplateBuilder(final Chart.Builder chartBuilder, final InputStream stream, final String name) throws IOException {<a name="line.639"></a>
-<span class="sourceLineNo">640</span>    Objects.requireNonNull(chartBuilder);<a name="line.640"></a>
-<span class="sourceLineNo">641</span>    Objects.requireNonNull(stream);<a name="line.641"></a>
-<span class="sourceLineNo">642</span>    Objects.requireNonNull(name);<a name="line.642"></a>
-<span class="sourceLineNo">643</span>    final Template.Builder builder = chartBuilder.addTemplatesBuilder();<a name="line.643"></a>
-<span class="sourceLineNo">644</span>    assert builder != null;<a name="line.644"></a>
-<span class="sourceLineNo">645</span>    builder.setName(name);<a name="line.645"></a>
-<span class="sourceLineNo">646</span>    final ByteString data = ByteString.readFrom(stream);<a name="line.646"></a>
-<span class="sourceLineNo">647</span>    assert data != null;<a name="line.647"></a>
-<span class="sourceLineNo">648</span>    assert data.isValidUtf8();<a name="line.648"></a>
-<span class="sourceLineNo">649</span>    builder.setData(data);<a name="line.649"></a>
-<span class="sourceLineNo">650</span>    return builder;<a name="line.650"></a>
-<span class="sourceLineNo">651</span>  }<a name="line.651"></a>
-<span class="sourceLineNo">652</span><a name="line.652"></a>
-<span class="sourceLineNo">653</span>  /**<a name="line.653"></a>
-<span class="sourceLineNo">654</span>   * Installs an {@link Any} object, representing an arbitrary chart<a name="line.654"></a>
-<span class="sourceLineNo">655</span>   * file with the supplied {@code name} and represented by the<a name="line.655"></a>
-<span class="sourceLineNo">656</span>   * supplied {@link InputStream}, into the supplied {@link<a name="line.656"></a>
-<span class="sourceLineNo">657</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder}.<a name="line.657"></a>
+<span class="sourceLineNo">631</span>   * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.631"></a>
+<span class="sourceLineNo">632</span>   *<a name="line.632"></a>
+<span class="sourceLineNo">633</span>   * @param chartBuilder a {@link<a name="line.633"></a>
+<span class="sourceLineNo">634</span>   * hapi.chart.ChartOuterClass.Chart.Builder} whose {@link<a name="line.634"></a>
+<span class="sourceLineNo">635</span>   * hapi.chart.ChartOuterClass.Chart.Builder#addTemplatesBuilder()}<a name="line.635"></a>
+<span class="sourceLineNo">636</span>   * method will be called to create the new {@link<a name="line.636"></a>
+<span class="sourceLineNo">637</span>   * hapi.chart.TemplateOuterClass.Template.Builder} instance; must<a name="line.637"></a>
+<span class="sourceLineNo">638</span>   * not be {@code null}<a name="line.638"></a>
+<span class="sourceLineNo">639</span>   *<a name="line.639"></a>
+<span class="sourceLineNo">640</span>   * @param stream an {@link InputStream} containing &lt;a<a name="line.640"></a>
+<span class="sourceLineNo">641</span>   * href="https://docs.helm.sh/developing_charts/#template-files"&gt;valid<a name="line.641"></a>
+<span class="sourceLineNo">642</span>   * template contents&lt;/a&gt; as defined by the &lt;a<a name="line.642"></a>
+<span class="sourceLineNo">643</span>   * href="https://docs.helm.sh/developing_charts/#template-files"&gt;chart<a name="line.643"></a>
+<span class="sourceLineNo">644</span>   * specification&lt;/a&gt;; must not be {@code null}<a name="line.644"></a>
+<span class="sourceLineNo">645</span>   *<a name="line.645"></a>
+<span class="sourceLineNo">646</span>   * @param name the name for the new {@link Template} that will<a name="line.646"></a>
+<span class="sourceLineNo">647</span>   * ultimately reside within the chart; must not be {@code null}<a name="line.647"></a>
+<span class="sourceLineNo">648</span>   *<a name="line.648"></a>
+<span class="sourceLineNo">649</span>   * @return a new {@link<a name="line.649"></a>
+<span class="sourceLineNo">650</span>   * hapi.chart.TemplateOuterClass.Template.Builder}; never {@code<a name="line.650"></a>
+<span class="sourceLineNo">651</span>   * null}<a name="line.651"></a>
+<span class="sourceLineNo">652</span>   *<a name="line.652"></a>
+<span class="sourceLineNo">653</span>   * @exception NullPointerException if {@code chartBuilder}, {@code<a name="line.653"></a>
+<span class="sourceLineNo">654</span>   * stream} or {@code name} is {@code null}<a name="line.654"></a>
+<span class="sourceLineNo">655</span>   *<a name="line.655"></a>
+<span class="sourceLineNo">656</span>   * @exception IOException if there was a problem reading from the<a name="line.656"></a>
+<span class="sourceLineNo">657</span>   * supplied {@link InputStream}<a name="line.657"></a>
 <span class="sourceLineNo">658</span>   *<a name="line.658"></a>
-<span class="sourceLineNo">659</span>   * @param chartBuilder the {@link<a name="line.659"></a>
-<span class="sourceLineNo">660</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder} to<a name="line.660"></a>
-<span class="sourceLineNo">661</span>   * affect; must not be {@code null}<a name="line.661"></a>
-<span class="sourceLineNo">662</span>   *<a name="line.662"></a>
-<span class="sourceLineNo">663</span>   * @param stream an {@link InputStream} representing &lt;a<a name="line.663"></a>
-<span class="sourceLineNo">664</span>   * href="https://docs.helm.sh/developing_charts/"&gt;valid chart file<a name="line.664"></a>
-<span class="sourceLineNo">665</span>   * contents&lt;/a&gt; as defined by &lt;a<a name="line.665"></a>
-<span class="sourceLineNo">666</span>   * href="https://docs.helm.sh/developing_charts/"&gt;the chart<a name="line.666"></a>
-<span class="sourceLineNo">667</span>   * specification&lt;/a&gt;; must not be {@code null}<a name="line.667"></a>
-<span class="sourceLineNo">668</span>   *<a name="line.668"></a>
-<span class="sourceLineNo">669</span>   * @param name the name of the file within the chart; must not be<a name="line.669"></a>
-<span class="sourceLineNo">670</span>   * {@code null}<a name="line.670"></a>
-<span class="sourceLineNo">671</span>   *<a name="line.671"></a>
-<span class="sourceLineNo">672</span>   * @exception NullPointerException if {@code chartBuilder} or {@code<a name="line.672"></a>
-<span class="sourceLineNo">673</span>   * stream} or {@code name} is {@code null}<a name="line.673"></a>
-<span class="sourceLineNo">674</span>   *<a name="line.674"></a>
-<span class="sourceLineNo">675</span>   * @exception IOException if there was a problem reading from the<a name="line.675"></a>
-<span class="sourceLineNo">676</span>   * supplied {@link InputStream}<a name="line.676"></a>
-<span class="sourceLineNo">677</span>   *<a name="line.677"></a>
-<span class="sourceLineNo">678</span>   * @see hapi.chart.ChartOuterClass.Chart.Builder#addFilesBuilder()<a name="line.678"></a>
-<span class="sourceLineNo">679</span>   */<a name="line.679"></a>
-<span class="sourceLineNo">680</span>  protected void installAny(final Chart.Builder chartBuilder, final InputStream stream, final String name) throws IOException {<a name="line.680"></a>
-<span class="sourceLineNo">681</span>    Objects.requireNonNull(chartBuilder);<a name="line.681"></a>
-<span class="sourceLineNo">682</span>    Objects.requireNonNull(stream);<a name="line.682"></a>
-<span class="sourceLineNo">683</span>    Objects.requireNonNull(name);<a name="line.683"></a>
-<span class="sourceLineNo">684</span>    Any returnValue = null;<a name="line.684"></a>
-<span class="sourceLineNo">685</span>    final Any.Builder builder = chartBuilder.addFilesBuilder();<a name="line.685"></a>
-<span class="sourceLineNo">686</span>    assert builder != null;<a name="line.686"></a>
-<span class="sourceLineNo">687</span>    builder.setTypeUrl(name);<a name="line.687"></a>
-<span class="sourceLineNo">688</span>    final ByteString fileContents = ByteString.readFrom(stream);<a name="line.688"></a>
-<span class="sourceLineNo">689</span>    assert fileContents != null;<a name="line.689"></a>
-<span class="sourceLineNo">690</span>    assert fileContents.isValidUtf8();<a name="line.690"></a>
-<span class="sourceLineNo">691</span>    builder.setValue(fileContents);<a name="line.691"></a>
-<span class="sourceLineNo">692</span>  }<a name="line.692"></a>
-<span class="sourceLineNo">693</span><a name="line.693"></a>
-<span class="sourceLineNo">694</span><a name="line.694"></a>
-<span class="sourceLineNo">695</span>  /*<a name="line.695"></a>
-<span class="sourceLineNo">696</span>   * Inner and nested classes.<a name="line.696"></a>
-<span class="sourceLineNo">697</span>   */<a name="line.697"></a>
-<span class="sourceLineNo">698</span><a name="line.698"></a>
-<span class="sourceLineNo">699</span><a name="line.699"></a>
-<span class="sourceLineNo">700</span>  /**<a name="line.700"></a>
-<span class="sourceLineNo">701</span>   * An {@link Iterable} implementation that {@linkplain #iterator()<a name="line.701"></a>
-<span class="sourceLineNo">702</span>   * returns an empty &lt;code&gt;Iterator&lt;/code&gt;}.<a name="line.702"></a>
-<span class="sourceLineNo">703</span>   *<a name="line.703"></a>
-<span class="sourceLineNo">704</span>   * @author &lt;a href="https://about.me/lairdnelson"<a name="line.704"></a>
-<span class="sourceLineNo">705</span>   * target="_parent"&gt;Laird Nelson&lt;/a&gt;<a name="line.705"></a>
-<span class="sourceLineNo">706</span>   */<a name="line.706"></a>
-<span class="sourceLineNo">707</span>  static final class EmptyIterable implements Iterable&lt;Entry&lt;String, InputStream&gt;&gt; {<a name="line.707"></a>
-<span class="sourceLineNo">708</span><a name="line.708"></a>
-<span class="sourceLineNo">709</span><a name="line.709"></a>
-<span class="sourceLineNo">710</span>    /*<a name="line.710"></a>
-<span class="sourceLineNo">711</span>     * Constructors.<a name="line.711"></a>
-<span class="sourceLineNo">712</span>     */<a name="line.712"></a>
-<span class="sourceLineNo">713</span><a name="line.713"></a>
-<span class="sourceLineNo">714</span><a name="line.714"></a>
-<span class="sourceLineNo">715</span>    /**<a name="line.715"></a>
-<span class="sourceLineNo">716</span>     * Creates a new {@link EmptyIterable}.<a name="line.716"></a>
-<span class="sourceLineNo">717</span>     */<a name="line.717"></a>
-<span class="sourceLineNo">718</span>    EmptyIterable() {<a name="line.718"></a>
-<span class="sourceLineNo">719</span>      super();<a name="line.719"></a>
-<span class="sourceLineNo">720</span>    }<a name="line.720"></a>
+<span class="sourceLineNo">659</span>   * @see hapi.chart.TemplateOuterClass.Template.Builder<a name="line.659"></a>
+<span class="sourceLineNo">660</span>   */<a name="line.660"></a>
+<span class="sourceLineNo">661</span>  protected Template.Builder createTemplateBuilder(final Chart.Builder chartBuilder, final InputStream stream, final String name) throws IOException {<a name="line.661"></a>
+<span class="sourceLineNo">662</span>    Objects.requireNonNull(chartBuilder);<a name="line.662"></a>
+<span class="sourceLineNo">663</span>    Objects.requireNonNull(stream);<a name="line.663"></a>
+<span class="sourceLineNo">664</span>    Objects.requireNonNull(name);<a name="line.664"></a>
+<span class="sourceLineNo">665</span>    final Template.Builder builder = chartBuilder.addTemplatesBuilder();<a name="line.665"></a>
+<span class="sourceLineNo">666</span>    assert builder != null;<a name="line.666"></a>
+<span class="sourceLineNo">667</span>    builder.setName(name);<a name="line.667"></a>
+<span class="sourceLineNo">668</span>    final ByteString data = ByteString.readFrom(stream);<a name="line.668"></a>
+<span class="sourceLineNo">669</span>    assert data != null;<a name="line.669"></a>
+<span class="sourceLineNo">670</span>    assert data.isValidUtf8();<a name="line.670"></a>
+<span class="sourceLineNo">671</span>    builder.setData(data);<a name="line.671"></a>
+<span class="sourceLineNo">672</span>    return builder;<a name="line.672"></a>
+<span class="sourceLineNo">673</span>  }<a name="line.673"></a>
+<span class="sourceLineNo">674</span><a name="line.674"></a>
+<span class="sourceLineNo">675</span>  /**<a name="line.675"></a>
+<span class="sourceLineNo">676</span>   * Installs an {@link Any} object, representing an arbitrary chart<a name="line.676"></a>
+<span class="sourceLineNo">677</span>   * file with the supplied {@code name} and represented by the<a name="line.677"></a>
+<span class="sourceLineNo">678</span>   * supplied {@link InputStream}, into the supplied {@link<a name="line.678"></a>
+<span class="sourceLineNo">679</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder}.<a name="line.679"></a>
+<span class="sourceLineNo">680</span>   *<a name="line.680"></a>
+<span class="sourceLineNo">681</span>   * @param chartBuilder the {@link<a name="line.681"></a>
+<span class="sourceLineNo">682</span>   * hapi.chart.ChartOuterClass.Chart.Builder Chart.Builder} to<a name="line.682"></a>
+<span class="sourceLineNo">683</span>   * affect; must not be {@code null}<a name="line.683"></a>
+<span class="sourceLineNo">684</span>   *<a name="line.684"></a>
+<span class="sourceLineNo">685</span>   * @param stream an {@link InputStream} representing &lt;a<a name="line.685"></a>
+<span class="sourceLineNo">686</span>   * href="https://docs.helm.sh/developing_charts/"&gt;valid chart file<a name="line.686"></a>
+<span class="sourceLineNo">687</span>   * contents&lt;/a&gt; as defined by &lt;a<a name="line.687"></a>
+<span class="sourceLineNo">688</span>   * href="https://docs.helm.sh/developing_charts/"&gt;the chart<a name="line.688"></a>
+<span class="sourceLineNo">689</span>   * specification&lt;/a&gt;; must not be {@code null}<a name="line.689"></a>
+<span class="sourceLineNo">690</span>   *<a name="line.690"></a>
+<span class="sourceLineNo">691</span>   * @param name the name of the file within the chart; must not be<a name="line.691"></a>
+<span class="sourceLineNo">692</span>   * {@code null}<a name="line.692"></a>
+<span class="sourceLineNo">693</span>   *<a name="line.693"></a>
+<span class="sourceLineNo">694</span>   * @exception NullPointerException if {@code chartBuilder} or {@code<a name="line.694"></a>
+<span class="sourceLineNo">695</span>   * stream} or {@code name} is {@code null}<a name="line.695"></a>
+<span class="sourceLineNo">696</span>   *<a name="line.696"></a>
+<span class="sourceLineNo">697</span>   * @exception IOException if there was a problem reading from the<a name="line.697"></a>
+<span class="sourceLineNo">698</span>   * supplied {@link InputStream}<a name="line.698"></a>
+<span class="sourceLineNo">699</span>   *<a name="line.699"></a>
+<span class="sourceLineNo">700</span>   * @see hapi.chart.ChartOuterClass.Chart.Builder#addFilesBuilder()<a name="line.700"></a>
+<span class="sourceLineNo">701</span>   */<a name="line.701"></a>
+<span class="sourceLineNo">702</span>  protected void installAny(final Chart.Builder chartBuilder, final InputStream stream, final String name) throws IOException {<a name="line.702"></a>
+<span class="sourceLineNo">703</span>    Objects.requireNonNull(chartBuilder);<a name="line.703"></a>
+<span class="sourceLineNo">704</span>    Objects.requireNonNull(stream);<a name="line.704"></a>
+<span class="sourceLineNo">705</span>    Objects.requireNonNull(name);<a name="line.705"></a>
+<span class="sourceLineNo">706</span>    Any returnValue = null;<a name="line.706"></a>
+<span class="sourceLineNo">707</span>    final Any.Builder builder = chartBuilder.addFilesBuilder();<a name="line.707"></a>
+<span class="sourceLineNo">708</span>    assert builder != null;<a name="line.708"></a>
+<span class="sourceLineNo">709</span>    builder.setTypeUrl(name);<a name="line.709"></a>
+<span class="sourceLineNo">710</span>    final ByteString fileContents = ByteString.readFrom(stream);<a name="line.710"></a>
+<span class="sourceLineNo">711</span>    assert fileContents != null;<a name="line.711"></a>
+<span class="sourceLineNo">712</span>    assert fileContents.isValidUtf8();<a name="line.712"></a>
+<span class="sourceLineNo">713</span>    builder.setValue(fileContents);<a name="line.713"></a>
+<span class="sourceLineNo">714</span>  }<a name="line.714"></a>
+<span class="sourceLineNo">715</span><a name="line.715"></a>
+<span class="sourceLineNo">716</span><a name="line.716"></a>
+<span class="sourceLineNo">717</span>  /*<a name="line.717"></a>
+<span class="sourceLineNo">718</span>   * Inner and nested classes.<a name="line.718"></a>
+<span class="sourceLineNo">719</span>   */<a name="line.719"></a>
+<span class="sourceLineNo">720</span><a name="line.720"></a>
 <span class="sourceLineNo">721</span><a name="line.721"></a>
-<span class="sourceLineNo">722</span><a name="line.722"></a>
-<span class="sourceLineNo">723</span>    /*<a name="line.723"></a>
-<span class="sourceLineNo">724</span>     * Instance methods.<a name="line.724"></a>
-<span class="sourceLineNo">725</span>     */<a name="line.725"></a>
-<span class="sourceLineNo">726</span>    <a name="line.726"></a>
-<span class="sourceLineNo">727</span><a name="line.727"></a>
-<span class="sourceLineNo">728</span>    /**<a name="line.728"></a>
-<span class="sourceLineNo">729</span>     * Returns the return value of the {@link<a name="line.729"></a>
-<span class="sourceLineNo">730</span>     * Collections#emptyIterator()} method when invoked.<a name="line.730"></a>
-<span class="sourceLineNo">731</span>     *<a name="line.731"></a>
-<span class="sourceLineNo">732</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.732"></a>
-<span class="sourceLineNo">733</span>     *<a name="line.733"></a>
-<span class="sourceLineNo">734</span>     * @return an empty {@link Iterator}; never {@code null}<a name="line.734"></a>
-<span class="sourceLineNo">735</span>     */<a name="line.735"></a>
-<span class="sourceLineNo">736</span>    @Override<a name="line.736"></a>
-<span class="sourceLineNo">737</span>    public final Iterator&lt;Entry&lt;String, InputStream&gt;&gt; iterator() {<a name="line.737"></a>
-<span class="sourceLineNo">738</span>      return Collections.emptyIterator();<a name="line.738"></a>
-<span class="sourceLineNo">739</span>    }<a name="line.739"></a>
-<span class="sourceLineNo">740</span>    <a name="line.740"></a>
-<span class="sourceLineNo">741</span>  }<a name="line.741"></a>
-<span class="sourceLineNo">742</span><a name="line.742"></a>
+<span class="sourceLineNo">722</span>  /**<a name="line.722"></a>
+<span class="sourceLineNo">723</span>   * An {@link Iterable} implementation that {@linkplain #iterator()<a name="line.723"></a>
+<span class="sourceLineNo">724</span>   * returns an empty &lt;code&gt;Iterator&lt;/code&gt;}.<a name="line.724"></a>
+<span class="sourceLineNo">725</span>   *<a name="line.725"></a>
+<span class="sourceLineNo">726</span>   * @author &lt;a href="https://about.me/lairdnelson"<a name="line.726"></a>
+<span class="sourceLineNo">727</span>   * target="_parent"&gt;Laird Nelson&lt;/a&gt;<a name="line.727"></a>
+<span class="sourceLineNo">728</span>   */<a name="line.728"></a>
+<span class="sourceLineNo">729</span>  static final class EmptyIterable implements Iterable&lt;Entry&lt;String, InputStream&gt;&gt; {<a name="line.729"></a>
+<span class="sourceLineNo">730</span><a name="line.730"></a>
+<span class="sourceLineNo">731</span><a name="line.731"></a>
+<span class="sourceLineNo">732</span>    /*<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     * Constructors.<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     */<a name="line.734"></a>
+<span class="sourceLineNo">735</span><a name="line.735"></a>
+<span class="sourceLineNo">736</span><a name="line.736"></a>
+<span class="sourceLineNo">737</span>    /**<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * Creates a new {@link EmptyIterable}.<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     */<a name="line.739"></a>
+<span class="sourceLineNo">740</span>    EmptyIterable() {<a name="line.740"></a>
+<span class="sourceLineNo">741</span>      super();<a name="line.741"></a>
+<span class="sourceLineNo">742</span>    }<a name="line.742"></a>
 <span class="sourceLineNo">743</span><a name="line.743"></a>
-<span class="sourceLineNo">744</span>  <a name="line.744"></a>
-<span class="sourceLineNo">745</span>  private static final class ChartPathComparator implements Comparator&lt;String&gt; {<a name="line.745"></a>
-<span class="sourceLineNo">746</span><a name="line.746"></a>
-<span class="sourceLineNo">747</span>    private ChartPathComparator() {<a name="line.747"></a>
-<span class="sourceLineNo">748</span>      super();<a name="line.748"></a>
-<span class="sourceLineNo">749</span>    }<a name="line.749"></a>
-<span class="sourceLineNo">750</span><a name="line.750"></a>
-<span class="sourceLineNo">751</span>    @Override<a name="line.751"></a>
-<span class="sourceLineNo">752</span>    public final int compare(final String chartPath1, final String chartPath2) {<a name="line.752"></a>
-<span class="sourceLineNo">753</span>      if (chartPath1 == null) {<a name="line.753"></a>
-<span class="sourceLineNo">754</span>        if (chartPath2 == null) {<a name="line.754"></a>
-<span class="sourceLineNo">755</span>          return 0;<a name="line.755"></a>
-<span class="sourceLineNo">756</span>        } else {<a name="line.756"></a>
-<span class="sourceLineNo">757</span>          return -1; // nulls go to the left<a name="line.757"></a>
-<span class="sourceLineNo">758</span>        }<a name="line.758"></a>
-<span class="sourceLineNo">759</span>      } else if (chartPath1.equals(chartPath2)) {<a name="line.759"></a>
-<span class="sourceLineNo">760</span>        return 0;<a name="line.760"></a>
-<span class="sourceLineNo">761</span>      } else if (chartPath2 == null) {<a name="line.761"></a>
-<span class="sourceLineNo">762</span>        return 1;<a name="line.762"></a>
-<span class="sourceLineNo">763</span>      } else {<a name="line.763"></a>
-<span class="sourceLineNo">764</span>        final int chartPath1Length = chartPath1.length();<a name="line.764"></a>
-<span class="sourceLineNo">765</span>        final int chartPath2Length = chartPath2.length();<a name="line.765"></a>
-<span class="sourceLineNo">766</span>        if (chartPath1Length == chartPath2Length) {<a name="line.766"></a>
-<span class="sourceLineNo">767</span>          return chartPath1.compareTo(chartPath2);<a name="line.767"></a>
-<span class="sourceLineNo">768</span>        } else if (chartPath1Length &gt; chartPath2Length) {<a name="line.768"></a>
-<span class="sourceLineNo">769</span>          return 1;<a name="line.769"></a>
-<span class="sourceLineNo">770</span>        } else {<a name="line.770"></a>
-<span class="sourceLineNo">771</span>          return -1;<a name="line.771"></a>
-<span class="sourceLineNo">772</span>        }<a name="line.772"></a>
-<span class="sourceLineNo">773</span>      }<a name="line.773"></a>
-<span class="sourceLineNo">774</span>    }<a name="line.774"></a>
-<span class="sourceLineNo">775</span>    <a name="line.775"></a>
-<span class="sourceLineNo">776</span>  }<a name="line.776"></a>
-<span class="sourceLineNo">777</span>  <a name="line.777"></a>
-<span class="sourceLineNo">778</span>}<a name="line.778"></a>
+<span class="sourceLineNo">744</span><a name="line.744"></a>
+<span class="sourceLineNo">745</span>    /*<a name="line.745"></a>
+<span class="sourceLineNo">746</span>     * Instance methods.<a name="line.746"></a>
+<span class="sourceLineNo">747</span>     */<a name="line.747"></a>
+<span class="sourceLineNo">748</span>    <a name="line.748"></a>
+<span class="sourceLineNo">749</span><a name="line.749"></a>
+<span class="sourceLineNo">750</span>    /**<a name="line.750"></a>
+<span class="sourceLineNo">751</span>     * Returns the return value of the {@link<a name="line.751"></a>
+<span class="sourceLineNo">752</span>     * Collections#emptyIterator()} method when invoked.<a name="line.752"></a>
+<span class="sourceLineNo">753</span>     *<a name="line.753"></a>
+<span class="sourceLineNo">754</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.754"></a>
+<span class="sourceLineNo">755</span>     *<a name="line.755"></a>
+<span class="sourceLineNo">756</span>     * @return an empty {@link Iterator}; never {@code null}<a name="line.756"></a>
+<span class="sourceLineNo">757</span>     */<a name="line.757"></a>
+<span class="sourceLineNo">758</span>    @Override<a name="line.758"></a>
+<span class="sourceLineNo">759</span>    public final Iterator&lt;Entry&lt;String, InputStream&gt;&gt; iterator() {<a name="line.759"></a>
+<span class="sourceLineNo">760</span>      return Collections.emptyIterator();<a name="line.760"></a>
+<span class="sourceLineNo">761</span>    }<a name="line.761"></a>
+<span class="sourceLineNo">762</span>    <a name="line.762"></a>
+<span class="sourceLineNo">763</span>  }<a name="line.763"></a>
+<span class="sourceLineNo">764</span><a name="line.764"></a>
+<span class="sourceLineNo">765</span><a name="line.765"></a>
+<span class="sourceLineNo">766</span>  <a name="line.766"></a>
+<span class="sourceLineNo">767</span>  private static final class ChartPathComparator implements Comparator&lt;String&gt; {<a name="line.767"></a>
+<span class="sourceLineNo">768</span><a name="line.768"></a>
+<span class="sourceLineNo">769</span>    private ChartPathComparator() {<a name="line.769"></a>
+<span class="sourceLineNo">770</span>      super();<a name="line.770"></a>
+<span class="sourceLineNo">771</span>    }<a name="line.771"></a>
+<span class="sourceLineNo">772</span><a name="line.772"></a>
+<span class="sourceLineNo">773</span>    @Override<a name="line.773"></a>
+<span class="sourceLineNo">774</span>    public final int compare(final String chartPath1, final String chartPath2) {<a name="line.774"></a>
+<span class="sourceLineNo">775</span>      if (chartPath1 == null) {<a name="line.775"></a>
+<span class="sourceLineNo">776</span>        if (chartPath2 == null) {<a name="line.776"></a>
+<span class="sourceLineNo">777</span>          return 0;<a name="line.777"></a>
+<span class="sourceLineNo">778</span>        } else {<a name="line.778"></a>
+<span class="sourceLineNo">779</span>          return -1; // nulls go to the left<a name="line.779"></a>
+<span class="sourceLineNo">780</span>        }<a name="line.780"></a>
+<span class="sourceLineNo">781</span>      } else if (chartPath1.equals(chartPath2)) {<a name="line.781"></a>
+<span class="sourceLineNo">782</span>        return 0;<a name="line.782"></a>
+<span class="sourceLineNo">783</span>      } else if (chartPath2 == null) {<a name="line.783"></a>
+<span class="sourceLineNo">784</span>        return 1;<a name="line.784"></a>
+<span class="sourceLineNo">785</span>      } else {<a name="line.785"></a>
+<span class="sourceLineNo">786</span>        final int chartPath1Length = chartPath1.length();<a name="line.786"></a>
+<span class="sourceLineNo">787</span>        final int chartPath2Length = chartPath2.length();<a name="line.787"></a>
+<span class="sourceLineNo">788</span>        if (chartPath1Length == chartPath2Length) {<a name="line.788"></a>
+<span class="sourceLineNo">789</span>          return chartPath1.compareTo(chartPath2);<a name="line.789"></a>
+<span class="sourceLineNo">790</span>        } else if (chartPath1Length &gt; chartPath2Length) {<a name="line.790"></a>
+<span class="sourceLineNo">791</span>          return 1;<a name="line.791"></a>
+<span class="sourceLineNo">792</span>        } else {<a name="line.792"></a>
+<span class="sourceLineNo">793</span>          return -1;<a name="line.793"></a>
+<span class="sourceLineNo">794</span>        }<a name="line.794"></a>
+<span class="sourceLineNo">795</span>      }<a name="line.795"></a>
+<span class="sourceLineNo">796</span>    }<a name="line.796"></a>
+<span class="sourceLineNo">797</span>    <a name="line.797"></a>
+<span class="sourceLineNo">798</span>  }<a name="line.798"></a>
+<span class="sourceLineNo">799</span>  <a name="line.799"></a>
+<span class="sourceLineNo">800</span>}<a name="line.800"></a>
 
 
 
