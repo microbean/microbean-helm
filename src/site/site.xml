@@ -6,7 +6,11 @@
                         http://maven.apache.org/xsd/decoration-1.7.0.xsd"
     name="${project.name}"
     combine.self="merge">
-
+  <bannerRight>
+    <name>μb ${project.artifactId}</name>
+    <src>https://avatars0.githubusercontent.com/u/25515632?s=60</src>
+    <href>${project.url}</href>
+  </bannerRight>
   <version position="right"/>
   <skin>
     <groupId>org.apache.maven.skins</groupId>
@@ -15,7 +19,7 @@
   </skin>
 
   <body>
-    <menu name="Usage Documentation">
+    <menu name="Documentation">
       <item name="Overview" href="index.html"/>
       <item name="JavaDocs" href="apidocs/index.html"/>
       <item name="Github Repository" href="${project.scm.url}"/>
