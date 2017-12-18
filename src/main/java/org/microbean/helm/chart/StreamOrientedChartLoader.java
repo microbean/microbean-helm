@@ -145,6 +145,22 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
    * <p>Implementations of this method must not return {@code
    * null}.</p>
    *
+   * <p>The {@link Iterable} of {@link Entry} instances returned by
+   * implementations of this method must {@linkplain
+   * Iterable#iterator() produce an <code>Iterator</code>} that will
+   * never return {@code null} from any invocation of its {@link
+   * Iterator#next()} method when, on the same thread, the return
+   * value of an invocation of its {@link Iterator#hasNext()} method
+   * has previously returned {@code true}.</p>
+   *
+   * <p>{@link Entry} instances returned by {@link Iterator} instances
+   * {@linkplain Iterable#iterator() produced by} the {@link Iterable}
+   * returned by this method must never return {@code null} from their
+   * {@link Entry#getKey()} method.  They are permitted to return
+   * {@code null} from their {@link Entry#getValue()} method, and this
+   * feature can be used, for example, to indicate that a particular
+   * entry is a directory.</p>
+   *
    * @param source the source to convert; must not be {@code null}
    *
    * @return an {@link Iterable} of suitable {@link Entry} instances;
@@ -235,7 +251,13 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
     chartBuilders.put(null, rootBuilder);
     for (final Entry<? extends String, ? extends InputStream> entry : entrySet) {
       if (entry != null) {
-        this.addFile(chartBuilders, entry.getKey(), entry.getValue());
+        final String key = entry.getKey();
+        if (key != null) {
+          final InputStream value = entry.getValue();
+          if (value != null) {
+            this.addFile(chartBuilders, key, value);
+          }
+        }
       }
     }
     return rootBuilder;

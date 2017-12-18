@@ -114,19 +114,24 @@ public class TapeArchiveChartLoader extends StreamOrientedChartLoader<TarInputSt
               if (this.currentEntry == null) {
                 throw new NoSuchElementException();
               }
-              ByteArrayInputStream bais = null;
-              try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                int bytesRead = 0;
-                final byte bytes[] = new byte[4096];
-                while((bytesRead = stream.read(bytes)) >= 0) {
-                  baos.write(bytes, 0, bytesRead);
+              final Entry<String, InputStream> returnValue;
+              if (this.currentEntry.isDirectory()) {
+                returnValue = new SimpleImmutableEntry<>(this.currentEntry.getName(), null);
+              } else {
+                ByteArrayInputStream bais = null;
+                try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                  int bytesRead = 0;
+                  final byte bytes[] = new byte[4096];
+                  while((bytesRead = stream.read(bytes)) >= 0) {
+                    baos.write(bytes, 0, bytesRead);
+                  }
+                  baos.flush();
+                  bais = new ByteArrayInputStream(baos.toByteArray());
+                } catch (final IOException wrapMe) {
+                  throw (NoSuchElementException)new NoSuchElementException(wrapMe.getMessage()).initCause(wrapMe);
                 }
-                baos.flush();
-                bais = new ByteArrayInputStream(baos.toByteArray());
-              } catch (final IOException wrapMe) {
-                throw (NoSuchElementException)new NoSuchElementException(wrapMe.getMessage()).initCause(wrapMe);
+                returnValue = new SimpleImmutableEntry<>(this.currentEntry.getName(), bais);
               }
-              final Entry<String, InputStream> returnValue = new SimpleImmutableEntry<>(this.currentEntry.getName(), bais);
               try {
                 this.currentEntry = stream.getNextEntry();
               } catch (final IOException ignore) {
