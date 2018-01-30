@@ -302,6 +302,7 @@ public class ChartRepository extends AbstractChartResolver {
       helmHome = getHelmHome();
       assert helmHome != null;
       this.archiveCacheDirectory = helmHome.resolve("cache/archive");
+      assert this.archiveCacheDirectory != null;
       assert this.archiveCacheDirectory.isAbsolute();
     } else if (archiveCacheDirectory.toString().isEmpty()) {
       throw new IllegalArgumentException("archiveCacheDirectory.toString().isEmpty(): " + archiveCacheDirectory);
@@ -317,6 +318,7 @@ public class ChartRepository extends AbstractChartResolver {
     if (cachedIndexPath == null || cachedIndexPath.toString().isEmpty()) {
       cachedIndexPath = Paths.get(new StringBuilder(name).append("-index.yaml").toString());
     }
+    assert cachedIndexPath != null;
     this.cachedIndexPath = cachedIndexPath;
 
     if (cachedIndexPath.isAbsolute()) {
@@ -334,8 +336,8 @@ public class ChartRepository extends AbstractChartResolver {
       } else {
         this.indexCacheDirectory = indexCacheDirectory;
       }
-      if (!Files.isDirectory(indexCacheDirectory)) {
-        throw new IllegalArgumentException("!Files.isDirectory(indexCacheDirectory): " + indexCacheDirectory);
+      if (!Files.isDirectory(this.indexCacheDirectory)) {
+        throw new IllegalArgumentException("!Files.isDirectory(this.indexCacheDirectory): " + this.indexCacheDirectory);
       }
     }
     
