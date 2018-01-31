@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -376,8 +376,11 @@ public class ChartRepository extends AbstractChartResolver {
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * @return the non-{@code null} {@link URI} of the root of this
-   * {@link ChartRepository}
+   * <p>The {@link URI} returned by this method is guaranteed to be
+   * {@linkplain URI#isAbsolute() absolute}.</p>
+   *
+   * @return the non-{@code null}, {@linkplain URI#isAbsolute()
+   * absolute} {@link URI} of the root of this {@link ChartRepository}
    */
   public final URI getUri() {
     return this.uri;
@@ -693,8 +696,19 @@ public class ChartRepository extends AbstractChartResolver {
         assert index != null;
         final Index.Entry entry = index.getEntry(chartName, chartVersion);
         if (entry != null) {
-          final URI chartUri = entry.getFirstUri();
+          URI chartUri = entry.getFirstUri();
           if (chartUri != null) {
+
+            // See https://github.com/kubernetes/helm/issues/3057
+            if (!chartUri.isAbsolute()) {
+              final URI chartRepositoryUri = this.getUri();
+              assert chartRepositoryUri != null;
+              assert chartRepositoryUri.isAbsolute();
+              chartUri = chartRepositoryUri.resolve(chartUri);
+              assert chartUri != null;
+              assert chartUri.isAbsolute();
+            }
+            
             final URL chartUrl = chartUri.toURL();
             assert chartUrl != null;
             final Path temporaryPath = Files.createTempFile(chartKey.append("-").toString(), ".tgz");
