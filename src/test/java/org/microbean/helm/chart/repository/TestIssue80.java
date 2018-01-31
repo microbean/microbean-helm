@@ -42,7 +42,7 @@ public class TestIssue80 {
     assertNotNull(helmHome);
     assumeTrue(Files.isDirectory(helmHome));
     final ChartRepository chartRepository = new ChartRepository("stable", new URI("https://kubernetes-charts.storage.googleapis.com/"));
-    final ChartRepository.Index index = chartRepository.loadIndex();
+    final ChartRepository.Index index = chartRepository.getIndex();
     assertNotNull(index);
   }
   
