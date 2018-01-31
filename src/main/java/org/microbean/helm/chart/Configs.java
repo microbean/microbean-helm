@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
  */
 package org.microbean.helm.chart;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import hapi.chart.ChartOuterClass.ChartOrBuilder;
 import hapi.chart.ConfigOuterClass.Config;
 import hapi.chart.ConfigOuterClass.ConfigOrBuilder;
+import hapi.chart.ConfigOuterClass.ValueOrBuilder;
 import hapi.chart.MetadataOuterClass.Metadata;
 
 import hapi.services.tiller.Tiller.InstallReleaseRequest; // for javadoc only
@@ -60,8 +63,9 @@ final class Configs {
   /*
    * Static methods.
    */
+
   
- /**
+  /**
    * Given a {@link ChartOrBuilder}, flattens its
    * {@linkplain ChartOrBuilder#getValues() default values} into
    * a {@link Map}.
@@ -126,14 +130,7 @@ final class Configs {
     if (config == null) {
       configAsMap = null;
     } else {
-      final String raw = config.getRaw();
-      if (raw == null || raw.isEmpty()) {
-        configAsMap = null;
-      } else {
-        @SuppressWarnings("unchecked")
-        final Map<String, Object> temp = (Map<String, Object>)new Yaml().loadAs(raw, Map.class);
-        configAsMap = temp;
-      }
+      configAsMap = toMap(config);
     }
     final Map<String, Object> map = toValuesMap(chart, configAsMap);
     assert map != null;
@@ -193,17 +190,46 @@ final class Configs {
     return targetMap;
   }
 
+  static final Map<String, Object> toMap(final ConfigOrBuilder config) {
+    return computeEffectiveValues(config, null);
+  }
+  
   private static final Map<String, Object> computeEffectiveValues(final ConfigOrBuilder config, Map<String, Object> targetMap) {
     if (targetMap == null) {
       targetMap = new HashMap<>();
     }
     if (config != null) {
+      final Map<String, Object> sourceMap;
       final String raw = config.getRaw();
-      if (raw != null && !raw.isEmpty()) {
+      if (raw == null || raw.isEmpty()) {
+        final Map<? extends String, ? extends ValueOrBuilder> valuesMap = config.getValuesMap();
+        if (valuesMap == null || valuesMap.isEmpty()) {
+          sourceMap = null;
+        } else {
+          sourceMap = new HashMap<>();
+          final Collection<? extends Entry<? extends String, ? extends ValueOrBuilder>> entrySet = valuesMap.entrySet();
+          assert entrySet != null;
+          assert !entrySet.isEmpty();
+          for (final Entry<? extends String, ? extends ValueOrBuilder> entry : entrySet) {
+            if (entry != null) {
+              final String name = entry.getKey();
+              if (name != null) {
+                final ValueOrBuilder value = entry.getValue();
+                if (value == null) {
+                  sourceMap.put(name, null);
+                } else {
+                  sourceMap.put(name, value.getValue());
+                }
+              }
+            }
+          }
+        }
+      } else {
         @SuppressWarnings("unchecked")
-        final Map<String, Object> sourceMap = new Yaml().loadAs(raw, Map.class);
-        targetMap = Values.coalesceMaps(sourceMap, targetMap);
+        final Map<String, Object> temp = new Yaml().loadAs(raw, Map.class);
+        sourceMap = temp;
       }
+      targetMap = Values.coalesceMaps(sourceMap, targetMap);
     }
     return targetMap;
   }
