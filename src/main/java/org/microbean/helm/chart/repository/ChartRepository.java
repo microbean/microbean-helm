@@ -260,9 +260,9 @@ public class ChartRepository extends AbstractChartResolver {
    * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
    * absolute} {@link Path} representing a directory that the supplied
    * {@code cachedIndexPath} parameter value will be considered to be
-   * relative to; will be ignored and hence may be {@code null} if the
-   * supplied {@code cachedIndexPath} parameter value {@linkplain
-   * Path#isAbsolute()}
+   * relative to; <strong>will be ignored and hence may be {@code
+   * null}</strong> if the supplied {@code cachedIndexPath} parameter
+   * value {@linkplain Path#isAbsolute()}
    *
    * @param cachedIndexPath a {@link Path} naming the file that will
    * store a copy of the chart repository's {@code index.yaml} file;
@@ -278,7 +278,9 @@ public class ChartRepository extends AbstractChartResolver {
    *
    * @exception IllegalArgumentException if {@code uri} is {@linkplain
    * URI#isAbsolute() not absolute}, or if there is no existing "Helm
-   * home" directory
+   * home" directory, or if {@code archiveCacheDirectory} is
+   * non-{@code null} and either empty or not {@linkplain
+   * Path#isAbsolute()}
    *
    * @see #ChartRepository(String, URI, Path, Path, Path)
    *
@@ -311,6 +313,8 @@ public class ChartRepository extends AbstractChartResolver {
     } else {
       this.archiveCacheDirectory = archiveCacheDirectory;
     }
+    assert this.archiveCacheDirectory != null;
+    assert this.archiveCacheDirectory.isAbsolute();
     if (!Files.isDirectory(this.archiveCacheDirectory)) {
       throw new IllegalArgumentException("!Files.isDirectory(this.archiveCacheDirectory): " + this.archiveCacheDirectory);
     }
@@ -319,10 +323,10 @@ public class ChartRepository extends AbstractChartResolver {
       cachedIndexPath = Paths.get(new StringBuilder(name).append("-index.yaml").toString());
     }
     assert cachedIndexPath != null;
-    this.cachedIndexPath = cachedIndexPath;
 
     if (cachedIndexPath.isAbsolute()) {
       this.indexCacheDirectory = null;
+      this.cachedIndexPath = cachedIndexPath;
     } else {
       if (indexCacheDirectory == null) {
         if (helmHome == null) {
@@ -335,11 +339,15 @@ public class ChartRepository extends AbstractChartResolver {
         throw new IllegalArgumentException("!indexCacheDirectory.isAbsolute(): " + indexCacheDirectory);
       } else {
         this.indexCacheDirectory = indexCacheDirectory;
+        assert this.indexCacheDirectory.isAbsolute();
       }
       if (!Files.isDirectory(this.indexCacheDirectory)) {
         throw new IllegalArgumentException("!Files.isDirectory(this.indexCacheDirectory): " + this.indexCacheDirectory);
       }
+      this.cachedIndexPath = this.indexCacheDirectory.resolve(cachedIndexPath);
     }
+    assert this.cachedIndexPath != null;
+    assert this.cachedIndexPath.isAbsolute();
     
     this.name = name;
     this.uri = uri;
