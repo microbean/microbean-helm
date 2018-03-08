@@ -77,7 +77,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    *
    * <p>This field is never {@code null}.</p>
    */
-  public static final String VERSION = "2.7.2";
+  public static final String VERSION = "2.8.1";
 
   /**
    * The Kubernetes namespace into which Tiller server instances are
