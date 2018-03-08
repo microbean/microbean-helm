@@ -781,8 +781,9 @@ public abstract class AbstractChartWriter implements Closeable {
       } else if (MaintainerOrBuilder.class.isAssignableFrom(type)) {
         returnValue = new TreeSet<>();
         try {
-          returnValue.add(new MethodProperty(new PropertyDescriptor("name", type, "getName", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("email", type, "getEmail", null)));
+          returnValue.add(new MethodProperty(new PropertyDescriptor("name", type, "getName", null)));
+          returnValue.add(new MethodProperty(new PropertyDescriptor("url", type, "getUrl", null)));
         } catch (final IntrospectionException introspectionException) {
           throw new IllegalStateException(introspectionException.getMessage(), introspectionException);
         }
