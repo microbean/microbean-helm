@@ -99,8 +99,9 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
    * </ul>
    */
   private static final Pattern fileNamePattern = Pattern.compile("^/*[^/]+(?!.*/(?:charts|templates)/)/(.+)$");
-  
-  private static final Pattern templateFileNamePattern = Pattern.compile("^.+/(templates/[^/]+)$");
+
+  @Issue(uri = "https://github.com/microbean/microbean-helm/issues/88")
+  private static final Pattern templateFileNamePattern = Pattern.compile("^.+/(templates/.+)$");
 
   @Issue(uri = "https://github.com/microbean/microbean-helm/issues/63")
   private static final Pattern subchartFileNamePattern = Pattern.compile("^.+/charts/([^._][^/]+/?(.*))$");
