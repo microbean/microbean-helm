@@ -33,6 +33,8 @@ import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
 
+import org.microbean.development.annotation.Issue;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -43,8 +45,10 @@ public class TestURLChartLoader {
   
   @Before
   public void setUp() throws IOException {
+
     // Chart is arbitrary, but it does have subcharts in it, which exercise some tricky logic
-    final URI uri = URI.create("https://kubernetes-charts.storage.googleapis.com/wordpress-0.6.6.tgz");
+    @Issue(uri = "https://github.com/microbean/microbean-helm/issues/88")
+    final URI uri = URI.create("https://kubernetes-charts.storage.googleapis.com/wordpress-0.6.12.tgz");
     assertNotNull(uri);
     final URL url = uri.toURL();
     assertNotNull(url);
@@ -68,7 +72,7 @@ public class TestURLChartLoader {
     final Metadata metadata = chart.getMetadata();
     assertNotNull(metadata);
     assertEquals("wordpress", metadata.getName());
-    assertEquals("0.6.6", metadata.getVersion());
+    assertEquals("0.6.12", metadata.getVersion());
     final List<Chart> dependencies = chart.getDependenciesList();
     assertNotNull(dependencies);
     for (final Chart d : dependencies) {
