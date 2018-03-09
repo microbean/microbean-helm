@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -130,13 +131,13 @@ public class URLChartLoader extends StreamOrientedChartLoader<URL> {
       final String urlString = url.toString();
       assert urlString != null;
       if (urlString.endsWith(".zip") || urlString.endsWith(".jar")) {
-        final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(url.openStream()));
+        final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(this.openStream(url)));
         this.closeables.put(zipInputStream, null);
         final ZipInputStreamChartLoader loader = new ZipInputStreamChartLoader();
         this.closeables.put(loader, null);
         returnValue = loader.toNamedInputStreamEntries(zipInputStream);
       } else {
-        final TarInputStream tarInputStream = new TarInputStream(new GZIPInputStream(new BufferedInputStream(url.openStream())));
+        final TarInputStream tarInputStream = new TarInputStream(new GZIPInputStream(new BufferedInputStream(this.openStream(url))));
         this.closeables.put(tarInputStream, null);
         final TapeArchiveChartLoader loader = new TapeArchiveChartLoader();
         this.closeables.put(loader, null);
@@ -146,6 +147,36 @@ public class URLChartLoader extends StreamOrientedChartLoader<URL> {
       final DirectoryChartLoader loader = new DirectoryChartLoader();
       this.closeables.put(loader, null);
       returnValue = loader.toNamedInputStreamEntries(path);
+    }
+    return returnValue;
+  }
+
+  /**
+   * Returns an {@link InputStream} corresponding to the supplied
+   * {@link URL}.
+   *
+   * <p>This method may return {@code null}.</p>
+   *
+   * <p>Overrides of this method are permitted to return {@code
+   * null}.</p>
+   *
+   * @param url the {@link URL} whose affiliated {@link InputStream}
+   * should be returned; may be {@code null} in which case {@code
+   * null} will be returned
+   *
+   * @return an {@link InputStream} appropriate for the supplied
+   * {@link URL}, or {@code null}
+   *
+   * @exception IOException if an error occurs while connecting to the
+   * supplied {@link URL}
+   */
+  protected InputStream openStream(final URL url) throws IOException {
+    InputStream returnValue = null;
+    if (url != null) {
+      final URLConnection urlConnection = url.openConnection();
+      assert urlConnection != null;
+      urlConnection.setRequestProperty("User-Agent", "microbean-helm");
+      returnValue = urlConnection.getInputStream();
     }
     return returnValue;
   }
