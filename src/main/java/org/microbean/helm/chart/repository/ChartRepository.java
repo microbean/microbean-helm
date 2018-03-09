@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 
 import java.nio.ByteBuffer;
 
@@ -606,7 +607,7 @@ public class ChartRepository extends AbstractChartResolver {
     }
     final Path temporaryPath = Files.createTempFile(new StringBuilder(this.getName()).append("-index-").toString(), ".yaml");
     assert temporaryPath != null;
-    try (final BufferedInputStream stream = new BufferedInputStream(indexUrl.openStream())) {
+    try (final BufferedInputStream stream = new BufferedInputStream(this.openStream(indexUrl))) {
       Files.copy(stream, temporaryPath, StandardCopyOption.REPLACE_EXISTING);
     } catch (final IOException throwMe) {
       try {
@@ -713,7 +714,7 @@ public class ChartRepository extends AbstractChartResolver {
             assert chartUrl != null;
             final Path temporaryPath = Files.createTempFile(chartKey.append("-").toString(), ".tgz");
             assert temporaryPath != null;
-            try (final InputStream stream = new BufferedInputStream(chartUrl.openStream())) {
+            try (final InputStream stream = new BufferedInputStream(this.openStream(chartUrl))) {
               Files.copy(stream, temporaryPath, StandardCopyOption.REPLACE_EXISTING);
             } catch (final IOException throwMe) {
               try {
@@ -732,6 +733,36 @@ public class ChartRepository extends AbstractChartResolver {
     return returnValue;
   }
 
+  /**
+   * Returns an {@link InputStream} corresponding to the supplied
+   * {@link URL}.
+   *
+   * <p>This method may return {@code null}.</p>
+   *
+   * <p>Overrides of this method are permitted to return {@code
+   * null}.</p>
+   *
+   * @param url the {@link URL} whose affiliated {@link InputStream}
+   * should be returned; may be {@code null} in which case {@code
+   * null} will be returned
+   *
+   * @return an {@link InputStream} appropriate for the supplied
+   * {@link URL}, or {@code null}
+   *
+   * @exception IOException if an error occurs while connecting to the
+   * supplied {@link URL}
+   */
+  protected InputStream openStream(final URL url) throws IOException {
+    InputStream returnValue = null;
+    if (url != null) {
+      final URLConnection urlConnection = url.openConnection();
+      assert urlConnection != null;
+      urlConnection.setRequestProperty("User-Agent", "microbean-helm");
+      returnValue = urlConnection.getInputStream();
+    }
+    return returnValue;
+  }
+  
   /**
    * {@inheritDoc}
    *
