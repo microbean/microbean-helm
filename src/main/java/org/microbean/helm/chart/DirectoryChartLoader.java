@@ -20,6 +20,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.LinkOption; // for javadoc only
 import java.nio.file.Path;
@@ -51,15 +52,58 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
 
 
   /*
+   * Static fields.
+   */
+  
+
+  /**
+   * A zero-length array of {@link FileVisitOption} for use by the
+   * {@link Files#walk(Path, FileVisitOption...)} method.
+   */
+  private static final FileVisitOption[] EMPTY_FILE_VISIT_OPTION_ARRAY = new FileVisitOption[0];
+  
+
+  /*
+   * Instance fields.
+   */
+  
+
+  /**
+   * An array of {@link FileVisitOption}s that will be used during
+   * chart loading.
+   *
+   * <p>This field may be {@code null}.</p>
+   *
+   * @see #DirectoryChartLoader(boolean)
+   */
+  private final FileVisitOption[] fileVisitOptions;
+  
+
+  /*
    * Constructors.
    */
   
   
   /**
    * Creates a new {@link DirectoryChartLoader}.
+   *
+   * <p>When loading charts, symbolic links are not followed.</p>
+   *
+   * @see #DirectoryChartLoader(boolean)
    */
   public DirectoryChartLoader() {
+    this(false);
+  }
+
+  /**
+   * Creates a new {@link DirectoryChartLoader}.
+   *
+   * @param followSymlinks if {@code true}, then symbolic links will
+   * be followed during chart loading
+   */
+  public DirectoryChartLoader(final boolean followSymlinks) {
     super();
+    this.fileVisitOptions = followSymlinks ? new FileVisitOption[] { FileVisitOption.FOLLOW_LINKS } : EMPTY_FILE_VISIT_OPTION_ARRAY;
   }
 
 
@@ -98,7 +142,7 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
     if (path == null || !Files.isDirectory(path)) {
       returnValue = new EmptyIterable();
     } else {
-      returnValue = new PathWalker(path);
+      returnValue = new PathWalker(path, this.fileVisitOptions);
     }
     return returnValue;
   }
@@ -114,8 +158,10 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
     private final Path directoryParent;
 
     private final Stream<? extends Path> pathStream;
+
+    private final FileVisitOption[] fileVisitOptions;
     
-    private PathWalker(final Path directory) throws IOException {
+    private PathWalker(final Path directory, final FileVisitOption[] fileVisitOptions) throws IOException {
       super();
       Objects.requireNonNull(directory);
       if (!Files.isDirectory(directory)) {
@@ -126,6 +172,7 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
         throw new IllegalArgumentException("directory.getParent() == null");
       }
       this.directoryParent = directoryParent;
+      this.fileVisitOptions = fileVisitOptions;
       final Stream<Path> pathStream;
       final Path helmIgnore = directory.resolve(".helmIgnore");
       assert helmIgnore != null;
@@ -133,11 +180,11 @@ public class DirectoryChartLoader extends StreamOrientedChartLoader<Path> {
       // it's, for example, foo/charts/bar/.fred--that .-prefixed
       // directory and all of its files has to be ignored.
       if (!Files.exists(helmIgnore)) {
-        pathStream = Files.walk(directory)
+        pathStream = Files.walk(directory, this.fileVisitOptions)
           .filter(p -> p != null && !Files.isDirectory(p));
       } else {
         final HelmIgnorePathMatcher helmIgnorePathMatcher = new HelmIgnorePathMatcher(helmIgnore);
-        pathStream = Files.walk(directory)
+        pathStream = Files.walk(directory, this.fileVisitOptions)
           .filter(p -> p != null && !Files.isDirectory(p) && !helmIgnorePathMatcher.matches(p));
       }
       this.pathStream = pathStream;
