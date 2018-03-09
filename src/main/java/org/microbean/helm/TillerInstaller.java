@@ -32,9 +32,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.github.zafarkhaja.semver.Version;
+
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+
+import io.fabric8.kubernetes.client.dsl.Resource;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerPort;
@@ -56,6 +60,7 @@ import io.fabric8.kubernetes.api.model.VolumeMount;
 
 import io.fabric8.kubernetes.api.model.extensions.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.DeploymentSpec;
+import io.fabric8.kubernetes.api.model.extensions.DoneableDeployment;
 
 import org.microbean.development.annotation.Experimental;
 
@@ -258,8 +263,11 @@ public class TillerInstaller {
    *
    * @exception IOException if a communication error occurs
    *
+   * @see #init(boolean, String, String, String, Map, String, String,
+   * ImagePullPolicy, int, boolean, boolean, boolean, URI, URI, URI)
+   *
    * @see #install(String, String, String, Map, String, String,
-   * ImagePullPolicy, boolean, boolean, boolean, URI, URI, URI)
+   * ImagePullPolicy, int, boolean, boolean, boolean, URI, URI, URI)
    *
    * @see #upgrade(String, String, String, String, String,
    * ImagePullPolicy, Map)
@@ -272,6 +280,117 @@ public class TillerInstaller {
                    String serviceAccountName,
                    String imageName,
                    final ImagePullPolicy imagePullPolicy,
+                   final boolean hostNetwork,
+                   final boolean tls,
+                   final boolean verifyTls,
+                   final URI tlsKeyUri,
+                   final URI tlsCertUri,
+                   final URI tlsCaCertUri)
+    throws IOException {
+    this.init(upgrade,
+              namespace,
+              deploymentName,
+              serviceName,
+              labels,
+              serviceAccountName,
+              imageName,
+              imagePullPolicy,
+              0,
+              hostNetwork,
+              tls,
+              verifyTls,
+              tlsKeyUri,
+              tlsCertUri,
+              tlsCaCertUri);
+  }
+
+  /**
+   * Attempts to {@linkplain #install(String, String, String, Map,
+   * String, String, ImagePullPolicy, boolean, boolean, boolean, URI,
+   * URI, URI) install} Tiller into the Kubernetes cluster, silently
+   * returning if Tiller is already installed and {@code upgrade} is
+   * {@code false}, or {@linkplain #upgrade(String, String, String,
+   * String, String, ImagePullPolicy, Map) upgrading} the Tiller
+   * installation if {@code upgrade} is {@code true} and a newer
+   * version of Tiller is available.
+   *
+   * @param upgrade whether or not to attempt an upgrade if Tiller is
+   * already installed
+   *
+   * @param namespace the Kubernetes namespace into which Tiller will
+   * be installed, if it is not already installed; may be {@code null}
+   * in which case a default will be used
+   *
+   * @param deploymentName the name that the Kubernetes Deployment
+   * representing Tiller will have; may be {@code null}; {@code
+   * tiller-deploy} by default
+   *
+   * @param serviceName the name that the Kubernetes Service
+   * representing Tiller will have; may be {@code null}; {@code
+   * tiller-deploy} (yes, {@code tiller-deploy}) by default
+   *
+   * @param labels the Kubernetes Labels that will be applied to
+   * various Kubernetes resources representing Tiller; may be {@code
+   * null} in which case a {@link Map} consisting of a label of {@code
+   * app} with a value of {@code helm} and a label of {@code name}
+   * with a value of {@code tiller} will be used instead
+   *
+   * @param serviceAccountName the name of the Kubernetes Service
+   * Account that Tiller should use; may be {@code null} in which case
+   * the default Service Account will be used instead
+   *
+   * @param imageName the name of the Docker image that contains the
+   * Tiller code; may be {@code null} in which case the Java {@link
+   * String} <code>"gcr.io/kubernetes-helm/tiller:v" + {@value
+   * #VERSION}</code> will be used instead
+   *
+   * @param imagePullPolicy an {@link ImagePullPolicy} specifying how
+   * the Tiller image should be pulled; may be {@code null} in which
+   * case {@link ImagePullPolicy#IF_NOT_PRESENT} will be used instead
+   *
+   * @param maxHistory the maximum number of release versions stored
+   * per release; a value that is less than or equal to zero means
+   * there is effectively no limit
+   *
+   * @param hostNetwork the value to be used for the {@linkplain
+   * PodSpec#setHostNetwork(Boolean) <code>hostNetwork</code>
+   * property} of the Tiller Pod's {@link PodSpec}
+   *
+   * @param tls whether Tiller's conversations with Kubernetes will be
+   * encrypted using TLS
+   *
+   * @param verifyTls whether, if and only if {@code tls} is {@code
+   * true}, additional TLS-related verification will be performed
+   *
+   * @param tlsKeyUri a {@link URI} to the public key used during TLS
+   * communication with Kubernetes; may be {@code null} if {@code tls}
+   * is {@code false}
+   *
+   * @param tlsCertUri a {@link URI} to the certificate used during
+   * TLS communication with Kubernetes; may be {@code null} if {@code
+   * tls} is {@code false}
+   *
+   * @param tlsCaCertUri a {@link URI} to the certificate authority
+   * used during TLS communication with Kubernetes; may be {@code
+   * null} if {@code tls} is {@code false}
+   *
+   * @exception IOException if a communication error occurs
+   *
+   * @see #install(String, String, String, Map, String, String,
+   * ImagePullPolicy, int, boolean, boolean, boolean, URI, URI, URI)
+   *
+   * @see #upgrade(String, String, String, String, String,
+   * ImagePullPolicy, Map)
+   */
+  public void init(final boolean upgrade,
+                   String namespace,
+                   String deploymentName,
+                   String serviceName,
+                   Map<String, String> labels,
+                   String serviceAccountName,
+                   String imageName,
+                   final ImagePullPolicy imagePullPolicy,
+                   final int maxHistory,
                    final boolean hostNetwork,
                    final boolean tls,
                    final boolean verifyTls,
@@ -294,6 +413,7 @@ public class TillerInstaller {
                    serviceAccountName,
                    imageName,
                    imagePullPolicy,
+                   maxHistory,
                    hostNetwork,
                    tls,
                    verifyTls,
@@ -318,7 +438,7 @@ public class TillerInstaller {
 
   public void install() {
     try {
-      this.install(null, null, null, null, null, null, null, false, false, false, null, null, null);
+      this.install(null, null, null, null, null, null, null, 0, false, false, false, null, null, null);
     } catch (final IOException willNotHappen) {
       throw new AssertionError(willNotHappen);
     }
@@ -338,6 +458,37 @@ public class TillerInstaller {
                       final URI tlsCertUri,
                       final URI tlsCaCertUri)
     throws IOException {
+    this.install(namespace,
+                 deploymentName,
+                 serviceName,
+                 labels,
+                 serviceAccountName,
+                 imageName,
+                 imagePullPolicy,
+                 0, // maxHistory
+                 hostNetwork,
+                 tls,
+                 verifyTls,
+                 tlsKeyUri,
+                 tlsCertUri,
+                 tlsCaCertUri);
+  }
+
+  public void install(String namespace,
+                      final String deploymentName,
+                      final String serviceName,
+                      Map<String, String> labels,
+                      final String serviceAccountName,
+                      final String imageName,
+                      final ImagePullPolicy imagePullPolicy,
+                      final int maxHistory,
+                      final boolean hostNetwork,
+                      final boolean tls,
+                      final boolean verifyTls,
+                      final URI tlsKeyUri,
+                      final URI tlsCertUri,
+                      final URI tlsCaCertUri)
+    throws IOException {
     namespace = normalizeNamespace(namespace);
     labels = normalizeLabels(labels);
     final Deployment deployment =
@@ -347,6 +498,7 @@ public class TillerInstaller {
                             normalizeServiceAccountName(serviceAccountName),
                             normalizeImageName(imageName),
                             imagePullPolicy,
+                            maxHistory,
                             hostNetwork,
                             tls,
                             verifyTls);
@@ -369,7 +521,7 @@ public class TillerInstaller {
   }
 
   public void upgrade() {
-    this.upgrade(null, null, null, null, null, null, null);
+    this.upgrade(null, null, null, null, null, null, null, false);
   }
   
   public void upgrade(String namespace,
@@ -379,14 +531,43 @@ public class TillerInstaller {
                       final String imageName,
                       final ImagePullPolicy imagePullPolicy,
                       final Map<String, String> labels) {
+    this.upgrade(namespace,
+                 deploymentName,
+                 serviceName,
+                 serviceAccountName,
+                 imageName,
+                 imagePullPolicy,
+                 labels,
+                 false);
+  }
+
+  public void upgrade(String namespace,
+                      final String deploymentName,
+                      String serviceName,
+                      final String serviceAccountName,
+                      final String imageName,
+                      final ImagePullPolicy imagePullPolicy,
+                      final Map<String, String> labels,
+                      final boolean force) {
     namespace = normalizeNamespace(namespace);
     serviceName = normalizeServiceName(serviceName);
 
-    this.kubernetesClient.extensions()
+    final Resource<Deployment, DoneableDeployment> resource = this.kubernetesClient.extensions()
       .deployments()
       .inNamespace(namespace)
-      .withName(normalizeDeploymentName(deploymentName))
-      .edit()
+      .withName(normalizeDeploymentName(deploymentName));
+    assert resource != null;
+
+    if (!force) {
+      final String serverTillerImage = resource.get().getSpec().getTemplate().getSpec().getContainers().get(0).getImage();
+      assert serverTillerImage != null;
+      
+      if (isServerTillerVersionGreaterThanClientTillerVersion(serverTillerImage)) {
+        throw new IllegalStateException(serverTillerImage + " is newer than " + VERSION + "; use force=true to force downgrade");
+      }
+    }
+    
+    resource.edit()
       .editSpec()
       .editTemplate()
       .editSpec()
@@ -439,6 +620,28 @@ public class TillerInstaller {
                                         final boolean hostNetwork,
                                         final boolean tls,
                                         final boolean verifyTls) {
+    return this.createDeployment(namespace,
+                                 deploymentName,
+                                 labels,
+                                 serviceAccountName,
+                                 imageName,
+                                 imagePullPolicy,
+                                 0,
+                                 hostNetwork,
+                                 tls,
+                                 verifyTls);
+  }
+
+  protected Deployment createDeployment(String namespace,
+                                        final String deploymentName,
+                                        Map<String, String> labels,
+                                        final String serviceAccountName,
+                                        final String imageName,
+                                        final ImagePullPolicy imagePullPolicy,
+                                        final int maxHistory,
+                                        final boolean hostNetwork,
+                                        final boolean tls,
+                                        final boolean verifyTls) {
     namespace = normalizeNamespace(namespace);
     labels = normalizeLabels(labels);
 
@@ -450,7 +653,15 @@ public class TillerInstaller {
     metadata.setLabels(labels);
     deployment.setMetadata(metadata);
 
-    deployment.setSpec(this.createDeploymentSpec(labels, serviceAccountName, imageName, imagePullPolicy, namespace, hostNetwork, tls, verifyTls));
+    deployment.setSpec(this.createDeploymentSpec(labels,
+                                                 serviceAccountName,
+                                                 imageName,
+                                                 imagePullPolicy,
+                                                 maxHistory,
+                                                 namespace,
+                                                 hostNetwork,
+                                                 tls,
+                                                 verifyTls));
     return deployment;
   }
 
@@ -502,7 +713,28 @@ public class TillerInstaller {
                                                 final String namespace,
                                                 final boolean hostNetwork,
                                                 final boolean tls,
+                                                final boolean verifyTls) {
+    return this.createDeploymentSpec(labels,
+                                     serviceAccountName,
+                                     imageName,
+                                     imagePullPolicy,
+                                     0,
+                                     namespace,
+                                     hostNetwork,
+                                     tls,
+                                     verifyTls);
+  }
+
+  protected DeploymentSpec createDeploymentSpec(final Map<String, String> labels,
+                                                final String serviceAccountName,
+                                                final String imageName,
+                                                final ImagePullPolicy imagePullPolicy,
+                                                final int maxHistory,
+                                                final String namespace,
+                                                final boolean hostNetwork,
+                                                final boolean tls,
                                                 final boolean verifyTls) {    
+
     final DeploymentSpec deploymentSpec = new DeploymentSpec();
     final PodTemplateSpec podTemplateSpec = new PodTemplateSpec();
     final ObjectMeta metadata = new ObjectMeta();
@@ -510,7 +742,7 @@ public class TillerInstaller {
     podTemplateSpec.setMetadata(metadata);
     final PodSpec podSpec = new PodSpec();
     podSpec.setServiceAccountName(normalizeServiceAccountName(serviceAccountName));
-    podSpec.setContainers(Arrays.asList(this.createContainer(imageName, imagePullPolicy, namespace, tls, verifyTls)));
+    podSpec.setContainers(Arrays.asList(this.createContainer(imageName, imagePullPolicy, maxHistory, namespace, tls, verifyTls)));
     podSpec.setHostNetwork(Boolean.valueOf(hostNetwork));
     final Map<String, String> nodeSelector = new HashMap<>();
     nodeSelector.put("beta.kubernetes.io/os", "linux");
@@ -533,6 +765,15 @@ public class TillerInstaller {
                                       final String namespace,
                                       final boolean tls,
                                       final boolean verifyTls) {
+    return this.createContainer(imageName, imagePullPolicy, 0, namespace, tls, verifyTls);
+  }
+  
+  protected Container createContainer(final String imageName,
+                                      final ImagePullPolicy imagePullPolicy,
+                                      final int maxHistory,
+                                      final String namespace,
+                                      final boolean tls,
+                                      final boolean verifyTls) {
     final Container container = new Container();
     container.setName(DEFAULT_NAME);
     container.setImage(normalizeImageName(imageName));
@@ -549,6 +790,11 @@ public class TillerInstaller {
     tillerNamespace.setName("TILLER_NAMESPACE");
     tillerNamespace.setValue(normalizeNamespace(namespace));
     env.add(tillerNamespace);
+
+    final EnvVar tillerHistoryMax = new EnvVar();
+    tillerHistoryMax.setName("TILLER_HISTORY_MAX");
+    tillerHistoryMax.setValue(String.valueOf(maxHistory));
+    env.add(tillerHistoryMax);
 
     if (tls) {
       final EnvVar tlsVerify = new EnvVar();
@@ -715,6 +961,22 @@ public class TillerInstaller {
     return returnValue;
   }
 
+  private static final boolean isServerTillerVersionGreaterThanClientTillerVersion(final String serverTillerImage) {
+    boolean returnValue = false;
+    if (serverTillerImage != null) {
+      final String[] parts = serverTillerImage.split(":");
+      if (parts != null && parts.length > 1) {
+        final Version serverTillerVersion = Version.valueOf(parts[1]);
+        assert serverTillerVersion != null;
+        final Version clientTillerVersion = Version.valueOf(VERSION);
+        assert clientTillerVersion != null;
+        returnValue = serverTillerVersion.compareTo(clientTillerVersion) > 0;
+      }
+    }
+    return returnValue;
+  }
+
+  
 
   /*
    * Inner and nested classes.
