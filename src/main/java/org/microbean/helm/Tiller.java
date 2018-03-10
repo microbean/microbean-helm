@@ -40,6 +40,7 @@ import io.fabric8.kubernetes.client.ConfigAware;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient; // for javadoc only
 import io.fabric8.kubernetes.client.HttpClientAware;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException; // for javadoc only
 import io.fabric8.kubernetes.client.LocalPortForward;
 
 import io.grpc.ManagedChannel;
@@ -263,6 +264,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * identifying a Pod within the cluster that houses a Tiller instance
    *
    * @exception NullPointerException if {@code client} is {@code null}
+   *
+   * @exception KubernetesClientException if there was a problem
+   * connecting to Kubernetes
+   *
+   * @exception TillerException if a ready Tiller pod could not be
+   * found and consequently a connection could not be established
    */
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client, final String namespaceHousingTiller) throws MalformedURLException {
     this(client, namespaceHousingTiller, DEFAULT_PORT, DEFAULT_LABELS);
@@ -304,6 +311,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * identifying a Pod within the cluster that houses a Tiller instance
    *
    * @exception NullPointerException if {@code client} is {@code null}
+   *
+   * @exception KubernetesClientException if there was a problem
+   * connecting to Kubernetes
+   *
+   * @exception TillerException if a ready Tiller pod could not be
+   * found and consequently a connection could not be established
    */
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client,
                                                                String namespaceHousingTiller,
@@ -325,8 +338,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     if (httpClient == null) {
       throw new IllegalArgumentException("client", new IllegalStateException("client.getHttpClient() == null"));
     }
+    LocalPortForward portForward = null;
+    
     this.portForward = Pods.forwardPort(httpClient, client.pods().inNamespace(namespaceHousingTiller).withLabels(tillerLabels), tillerPort);
-    assert this.portForward != null;
+    if (this.portForward == null) {
+      throw new TillerException("Could not forward port to a Ready Tiller pod's port " + tillerPort + " in namespace " + namespaceHousingTiller + " with labels " + tillerLabels);
+    }
     this.channel = this.buildChannel(this.portForward);
   }
 
