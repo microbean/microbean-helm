@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.github.zafarkhaja.semver.Version;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -118,6 +121,8 @@ public class TillerInstaller {
   /*
    * Derivative static fields.
    */
+
+  private static final Pattern TILLER_VERSION_PATTERN = Pattern.compile(":v(.+)$");
   
   private static final String DEFAULT_IMAGE_NAME = "gcr.io/kubernetes-helm/" + DEFAULT_NAME + ":v" + VERSION;
 
@@ -263,10 +268,11 @@ public class TillerInstaller {
    *
    * @exception IOException if a communication error occurs
    *
-   * @see #init(boolean, String, String, String, Map, String, String,
-   * ImagePullPolicy, int, boolean, boolean, boolean, URI, URI, URI)
+   * @see #init(boolean, String, String, String, Map, Map, String,
+   * String, ImagePullPolicy, int, boolean, boolean, boolean, URI,
+   * URI, URI)
    *
-   * @see #install(String, String, String, Map, String, String,
+   * @see #install(String, String, String, Map, Map, String, String,
    * ImagePullPolicy, int, boolean, boolean, boolean, URI, URI, URI)
    *
    * @see #upgrade(String, String, String, String, String,
@@ -292,6 +298,7 @@ public class TillerInstaller {
               deploymentName,
               serviceName,
               labels,
+              null,
               serviceAccountName,
               imageName,
               imagePullPolicy,
@@ -334,6 +341,9 @@ public class TillerInstaller {
    * null} in which case a {@link Map} consisting of a label of {@code
    * app} with a value of {@code helm} and a label of {@code name}
    * with a value of {@code tiller} will be used instead
+   *
+   * @param nodeSelector a {@link Map} representing labels that will
+   * be written as a node selector; may be {@code null}
    *
    * @param serviceAccountName the name of the Kubernetes Service
    * Account that Tiller should use; may be {@code null} in which case
@@ -387,6 +397,7 @@ public class TillerInstaller {
                    String deploymentName,
                    String serviceName,
                    Map<String, String> labels,
+                   Map<String, String> nodeSelector,
                    String serviceAccountName,
                    String imageName,
                    final ImagePullPolicy imagePullPolicy,
@@ -410,6 +421,7 @@ public class TillerInstaller {
                    deploymentName,
                    serviceName,
                    labels,
+                   nodeSelector,
                    serviceAccountName,
                    imageName,
                    imagePullPolicy,
@@ -438,7 +450,7 @@ public class TillerInstaller {
 
   public void install() {
     try {
-      this.install(null, null, null, null, null, null, null, 0, false, false, false, null, null, null);
+      this.install(null, null, null, null, null, null, null, null, 0, false, false, false, null, null, null);
     } catch (final IOException willNotHappen) {
       throw new AssertionError(willNotHappen);
     }
@@ -462,6 +474,7 @@ public class TillerInstaller {
                  deploymentName,
                  serviceName,
                  labels,
+                 null,
                  serviceAccountName,
                  imageName,
                  imagePullPolicy,
@@ -478,6 +491,7 @@ public class TillerInstaller {
                       final String deploymentName,
                       final String serviceName,
                       Map<String, String> labels,
+                      final Map<String, String> nodeSelector,
                       final String serviceAccountName,
                       final String imageName,
                       final ImagePullPolicy imagePullPolicy,
@@ -495,6 +509,7 @@ public class TillerInstaller {
       this.createDeployment(namespace,
                             normalizeDeploymentName(deploymentName),
                             labels,
+                            nodeSelector,
                             normalizeServiceAccountName(serviceAccountName),
                             normalizeImageName(imageName),
                             imagePullPolicy,
@@ -623,6 +638,7 @@ public class TillerInstaller {
     return this.createDeployment(namespace,
                                  deploymentName,
                                  labels,
+                                 null,
                                  serviceAccountName,
                                  imageName,
                                  imagePullPolicy,
@@ -635,6 +651,7 @@ public class TillerInstaller {
   protected Deployment createDeployment(String namespace,
                                         final String deploymentName,
                                         Map<String, String> labels,
+                                        final Map<String, String> nodeSelector,
                                         final String serviceAccountName,
                                         final String imageName,
                                         final ImagePullPolicy imagePullPolicy,
@@ -654,6 +671,7 @@ public class TillerInstaller {
     deployment.setMetadata(metadata);
 
     deployment.setSpec(this.createDeploymentSpec(labels,
+                                                 nodeSelector,
                                                  serviceAccountName,
                                                  imageName,
                                                  imagePullPolicy,
@@ -715,6 +733,7 @@ public class TillerInstaller {
                                                 final boolean tls,
                                                 final boolean verifyTls) {
     return this.createDeploymentSpec(labels,
+                                     null,
                                      serviceAccountName,
                                      imageName,
                                      imagePullPolicy,
@@ -726,6 +745,7 @@ public class TillerInstaller {
   }
 
   protected DeploymentSpec createDeploymentSpec(final Map<String, String> labels,
+                                                final Map<String, String> nodeSelector,
                                                 final String serviceAccountName,
                                                 final String imageName,
                                                 final ImagePullPolicy imagePullPolicy,
@@ -744,9 +764,9 @@ public class TillerInstaller {
     podSpec.setServiceAccountName(normalizeServiceAccountName(serviceAccountName));
     podSpec.setContainers(Arrays.asList(this.createContainer(imageName, imagePullPolicy, maxHistory, namespace, tls, verifyTls)));
     podSpec.setHostNetwork(Boolean.valueOf(hostNetwork));
-    final Map<String, String> nodeSelector = new HashMap<>();
-    nodeSelector.put("beta.kubernetes.io/os", "linux");
-    podSpec.setNodeSelector(nodeSelector);    
+    if (nodeSelector != null && !nodeSelector.isEmpty()) {
+      podSpec.setNodeSelector(nodeSelector);
+    }
     if (tls) {
       final Volume volume = new Volume();
       volume.setName(DEFAULT_NAME + "-certs");
@@ -964,13 +984,17 @@ public class TillerInstaller {
   private static final boolean isServerTillerVersionGreaterThanClientTillerVersion(final String serverTillerImage) {
     boolean returnValue = false;
     if (serverTillerImage != null) {
-      final String[] parts = serverTillerImage.split(":");
-      if (parts != null && parts.length > 1) {
-        final Version serverTillerVersion = Version.valueOf(parts[1]);
-        assert serverTillerVersion != null;
-        final Version clientTillerVersion = Version.valueOf(VERSION);
-        assert clientTillerVersion != null;
-        returnValue = serverTillerVersion.compareTo(clientTillerVersion) > 0;
+      final Matcher matcher = TILLER_VERSION_PATTERN.matcher(serverTillerImage);
+      assert matcher != null;
+      if (matcher.find()) {
+        final String versionSpecifier = matcher.group(1);
+        if (versionSpecifier != null) {
+          final Version serverTillerVersion = Version.valueOf(versionSpecifier);
+          assert serverTillerVersion != null;
+          final Version clientTillerVersion = Version.valueOf(VERSION);
+          assert clientTillerVersion != null;
+          returnValue = serverTillerVersion.compareTo(clientTillerVersion) > 0;
+        }
       }
     }
     return returnValue;
