@@ -325,9 +325,58 @@ public class ChartRepositoryRepository extends AbstractChartResolver {
    *
    * @exception URISyntaxException if there was an invalid URI in the
    * file
+   *
+   * @see #fromYaml(InputStream, Path, Path, ChartRepositoryFactory)
    */
   public static final ChartRepositoryRepository fromYaml(final InputStream stream, Path archiveCacheDirectory, Path indexCacheDirectory) throws IOException, URISyntaxException {
+    return fromYaml(stream, archiveCacheDirectory, indexCacheDirectory, null);
+  }
+
+  /**
+   * Creates and returns a new {@link ChartRepositoryRepository} from
+   * the contents of a {@code repositories.yaml} file represented by
+   * the supplied {@link InputStream}.
+   *
+   * @param stream the {@link InputStream} to read from; must not be
+   * {@code null}
+   *
+   * @param archiveCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory where Helm chart
+   * archives may be stored; if {@code null} then a {@link Path}
+   * beginning with the absolute directory represented by the value of
+   * the {@code helm.home} system property, or the value of the {@code
+   * HELM_HOME} environment variable, appended with {@code
+   * cache/archive} will be used instead
+   *
+   * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory that the supplied
+   * {@code cachedIndexPath} parameter value will be considered to be
+   * relative to; will be ignored and hence may be {@code null} if the
+   * supplied {@code cachedIndexPath} parameter value {@linkplain
+   * Path#isAbsolute()}
+   *
+   * @param factory a {@link ChartRepositoryFactory} that can create
+   * {@link ChartRepository} instances; may be {@code null} in which
+   * case the {@link ChartRepository#ChartRepository(String, URI,
+   * Path, Path, Path)} constructor will be used instead
+   *
+   * @return a new {@link ChartRepositoryRepository}; never {@code
+   * null}
+   *
+   * @exception IOException if there was a problem reading the file
+   *
+   * @exception URISyntaxException if there was an invalid URI in the
+   * file
+   */
+  public static final ChartRepositoryRepository fromYaml(final InputStream stream,
+                                                         Path archiveCacheDirectory,
+                                                         Path indexCacheDirectory,
+                                                         ChartRepositoryFactory factory)
+    throws IOException, URISyntaxException {
     Objects.requireNonNull(stream);
+    if (factory == null) {
+      factory = ChartRepository::new;
+    }
     Path helmHome = null;
     if (archiveCacheDirectory == null) {
       helmHome = ChartRepository.getHelmHome();
@@ -364,18 +413,90 @@ public class ChartRepositoryRepository extends AbstractChartResolver {
         if (repositoryMap != null && !repositoryMap.isEmpty()) {
           final String name = Objects.requireNonNull((String)repositoryMap.get("name"));
           final URI uri = new URI((String)repositoryMap.get("url"));
-          Path cache = Objects.requireNonNull(Paths.get((String)repositoryMap.get("cache")));
-          if (!cache.isAbsolute()) {
-            cache = indexCacheDirectory.resolve(cache);
-            assert cache.isAbsolute();
+          Path cachedIndexPath = Objects.requireNonNull(Paths.get((String)repositoryMap.get("cache")));
+          if (!cachedIndexPath.isAbsolute()) {
+            cachedIndexPath = indexCacheDirectory.resolve(cachedIndexPath);
+            assert cachedIndexPath.isAbsolute();
           }
           
-          final ChartRepository chartRepository = new ChartRepository(name, uri, archiveCacheDirectory, indexCacheDirectory, cache);
+          // final ChartRepository chartRepository = new ChartRepository(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath);
+          final ChartRepository chartRepository = factory.createChartRepository(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath);
+          if (chartRepository == null) {
+            throw new IllegalStateException("factory.createChartRepository() == null");
+          }
           chartRepositories.add(chartRepository);
         }      
       }
     }
     return new ChartRepositoryRepository(chartRepositories);
+  }
+
+
+  /*
+   * Inner and nested classes.
+   */
+  
+
+  /**
+   * A factory for {@link ChartRepository} instances.
+   *
+   * @author <a href="https://about.me/lairdnelson"
+   * target="_parent">Laird Nelson</a>
+   *
+   * @see ChartRepository
+   */
+  @FunctionalInterface
+  public static interface ChartRepositoryFactory {
+
+    /**
+     * Creates a new {@link ChartRepository} and returns it.
+     *
+     * @param name the name of the chart repository; must not be
+     * {@code null}
+     *
+     * @param uri the {@link URI} to the root of the chart repository;
+     * must not be {@code null}
+     *
+     * @param archiveCacheDirectory an {@linkplain Path#isAbsolute()
+     * absolute} {@link Path} representing a directory where Helm chart
+     * archives may be stored; if {@code null} then often a {@link Path}
+     * beginning with the absolute directory represented by the value of
+     * the {@code helm.home} system property, or the value of the {@code
+     * HELM_HOME} environment variable, appended with {@code
+     * cache/archive} will be used instead
+     *
+     * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
+     * absolute} {@link Path} representing a directory that the supplied
+     * {@code cachedIndexPath} parameter value will be considered to be
+     * relative to; <strong>will be ignored and hence may be {@code
+     * null}</strong> if the supplied {@code cachedIndexPath} parameter
+     * value {@linkplain Path#isAbsolute()}
+     *
+     * @param cachedIndexPath a {@link Path} naming the file that will
+     * store a copy of the chart repository's {@code index.yaml} file;
+     * if {@code null} then a {@link Path} relative to the absolute
+     * directory represented by the value of the {@code helm.home}
+     * system property, or the value of the {@code HELM_HOME}
+     * environment variable, and bearing a name consisting of the
+     * supplied {@code name} suffixed with {@code -index.yaml} will
+     * often be used instead
+     *
+     * @exception NullPointerException if either {@code name} or {@code
+     * uri} is {@code null}
+     *
+     * @exception IllegalArgumentException if {@code uri} is {@linkplain
+     * URI#isAbsolute() not absolute}, or if there is no existing "Helm
+     * home" directory, or if {@code archiveCacheDirectory} is
+     * non-{@code null} and either empty or not {@linkplain
+     * Path#isAbsolute()}
+     *
+     * @return a new, non-{@code null} {@link ChartRepository}
+     *
+     * @see ChartRepository#ChartRepository(String, URI, Path, Path,
+     * Path)
+     */
+    public ChartRepository createChartRepository(final String name, final URI uri, final Path archiveCacheDirectory, final Path indexCacheDirectory, final Path cachedIndexPath);
+    
   }
  
 }
