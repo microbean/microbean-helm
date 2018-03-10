@@ -386,7 +386,7 @@ public class TillerInstaller {
    *
    * @exception IOException if a communication error occurs
    *
-   * @see #install(String, String, String, Map, String, String,
+   * @see #install(String, String, String, Map, Map, String, String,
    * ImagePullPolicy, int, boolean, boolean, boolean, URI, URI, URI)
    *
    * @see #upgrade(String, String, String, String, String,
@@ -799,10 +799,19 @@ public class TillerInstaller {
     container.setImage(normalizeImageName(imageName));
     container.setImagePullPolicy(normalizeImagePullPolicy(imagePullPolicy));
 
-    final ContainerPort containerPort = new ContainerPort();
+    final List<ContainerPort> containerPorts = new ArrayList<>(2);
+
+    ContainerPort containerPort = new ContainerPort();
     containerPort.setContainerPort(Integer.valueOf(44134));
     containerPort.setName(DEFAULT_NAME);
-    container.setPorts(Arrays.asList(containerPort));
+    containerPorts.add(containerPort);
+
+    containerPort = new ContainerPort();
+    containerPort.setContainerPort(Integer.valueOf(44135));
+    containerPort.setName("http");
+    containerPorts.add(containerPort);
+    
+    container.setPorts(containerPorts);
 
     final List<EnvVar> env = new ArrayList<>();
     

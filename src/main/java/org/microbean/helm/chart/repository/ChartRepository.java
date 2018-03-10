@@ -263,7 +263,7 @@ public class ChartRepository extends AbstractChartResolver {
    * {@code cachedIndexPath} parameter value will be considered to be
    * relative to; <strong>will be ignored and hence may be {@code
    * null}</strong> if the supplied {@code cachedIndexPath} parameter
-   * value {@linkplain Path#isAbsolute()}
+   * value {@linkplain Path#isAbsolute() is absolute}
    *
    * @param cachedIndexPath a {@link Path} naming the file that will
    * store a copy of the chart repository's {@code index.yaml} file;
