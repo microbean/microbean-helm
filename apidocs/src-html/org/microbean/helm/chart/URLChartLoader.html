@@ -8,7 +8,7 @@
 <div class="sourceContainer">
 <pre><span class="sourceLineNo">001</span>/* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-<a name="line.1"></a>
 <span class="sourceLineNo">002</span> *<a name="line.2"></a>
-<span class="sourceLineNo">003</span> * Copyright © 2017 MicroBean.<a name="line.3"></a>
+<span class="sourceLineNo">003</span> * Copyright © 2017-2018 microBean.<a name="line.3"></a>
 <span class="sourceLineNo">004</span> *<a name="line.4"></a>
 <span class="sourceLineNo">005</span> * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.5"></a>
 <span class="sourceLineNo">006</span> * you may not use this file except in compliance with the License.<a name="line.6"></a>
@@ -31,167 +31,198 @@
 <span class="sourceLineNo">023</span>import java.net.URI;<a name="line.23"></a>
 <span class="sourceLineNo">024</span>import java.net.URISyntaxException;<a name="line.24"></a>
 <span class="sourceLineNo">025</span>import java.net.URL;<a name="line.25"></a>
-<span class="sourceLineNo">026</span><a name="line.26"></a>
-<span class="sourceLineNo">027</span>import java.nio.file.Files;<a name="line.27"></a>
-<span class="sourceLineNo">028</span>import java.nio.file.Path;<a name="line.28"></a>
-<span class="sourceLineNo">029</span>import java.nio.file.Paths;<a name="line.29"></a>
-<span class="sourceLineNo">030</span><a name="line.30"></a>
-<span class="sourceLineNo">031</span>import java.util.IdentityHashMap;<a name="line.31"></a>
-<span class="sourceLineNo">032</span>import java.util.Collection;<a name="line.32"></a>
-<span class="sourceLineNo">033</span>import java.util.Iterator;<a name="line.33"></a>
-<span class="sourceLineNo">034</span>import java.util.Map.Entry;<a name="line.34"></a>
-<span class="sourceLineNo">035</span>import java.util.Objects;<a name="line.35"></a>
-<span class="sourceLineNo">036</span><a name="line.36"></a>
-<span class="sourceLineNo">037</span>import java.util.zip.GZIPInputStream;<a name="line.37"></a>
-<span class="sourceLineNo">038</span>import java.util.zip.ZipInputStream;<a name="line.38"></a>
-<span class="sourceLineNo">039</span><a name="line.39"></a>
-<span class="sourceLineNo">040</span>import hapi.chart.ChartOuterClass.Chart; // for javadoc only<a name="line.40"></a>
-<span class="sourceLineNo">041</span><a name="line.41"></a>
-<span class="sourceLineNo">042</span>import org.kamranzafar.jtar.TarInputStream;<a name="line.42"></a>
-<span class="sourceLineNo">043</span><a name="line.43"></a>
-<span class="sourceLineNo">044</span>/**<a name="line.44"></a>
-<span class="sourceLineNo">045</span> * A {@link StreamOrientedChartLoader StreamOrientedChartLoader&amp;lt;URL&amp;gt;} that creates<a name="line.45"></a>
-<span class="sourceLineNo">046</span> * {@link Chart} instances from {@link URL} instances.<a name="line.46"></a>
-<span class="sourceLineNo">047</span> *<a name="line.47"></a>
-<span class="sourceLineNo">048</span> * &lt;h2&gt;Thread Safety&lt;/h2&gt;<a name="line.48"></a>
-<span class="sourceLineNo">049</span> *<a name="line.49"></a>
-<span class="sourceLineNo">050</span> * &lt;p&gt;This class is safe for concurrent use by multiple threads.&lt;/p&gt;<a name="line.50"></a>
-<span class="sourceLineNo">051</span> *<a name="line.51"></a>
-<span class="sourceLineNo">052</span> * @author &lt;a href="https://about.me/lairdnelson"<a name="line.52"></a>
-<span class="sourceLineNo">053</span> * target="_parent"&gt;Laird Nelson&lt;/a&gt;<a name="line.53"></a>
-<span class="sourceLineNo">054</span> *<a name="line.54"></a>
-<span class="sourceLineNo">055</span> * @see #toNamedInputStreamEntries(URL)<a name="line.55"></a>
-<span class="sourceLineNo">056</span> *<a name="line.56"></a>
-<span class="sourceLineNo">057</span> * @see StreamOrientedChartLoader<a name="line.57"></a>
-<span class="sourceLineNo">058</span> */<a name="line.58"></a>
-<span class="sourceLineNo">059</span>public class URLChartLoader extends StreamOrientedChartLoader&lt;URL&gt; {<a name="line.59"></a>
-<span class="sourceLineNo">060</span><a name="line.60"></a>
+<span class="sourceLineNo">026</span>import java.net.URLConnection;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.nio.file.Files;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.nio.file.Path;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.nio.file.Paths;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.IdentityHashMap;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.Collection;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.util.Iterator;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.util.Map.Entry;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.util.Objects;<a name="line.36"></a>
+<span class="sourceLineNo">037</span><a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.util.zip.GZIPInputStream;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import java.util.zip.ZipInputStream;<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>import hapi.chart.ChartOuterClass.Chart; // for javadoc only<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>import org.kamranzafar.jtar.TarInputStream;<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>/**<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * A {@link StreamOrientedChartLoader StreamOrientedChartLoader&amp;lt;URL&amp;gt;} that creates<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * {@link Chart} instances from {@link URL} instances.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;h2&gt;Thread Safety&lt;/h2&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;p&gt;This class is safe for concurrent use by multiple threads.&lt;/p&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * @author &lt;a href="https://about.me/lairdnelson"<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * target="_parent"&gt;Laird Nelson&lt;/a&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * @see #toNamedInputStreamEntries(URL)<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * @see StreamOrientedChartLoader<a name="line.58"></a>
+<span class="sourceLineNo">059</span> */<a name="line.59"></a>
+<span class="sourceLineNo">060</span>public class URLChartLoader extends StreamOrientedChartLoader&lt;URL&gt; {<a name="line.60"></a>
 <span class="sourceLineNo">061</span><a name="line.61"></a>
-<span class="sourceLineNo">062</span>  /**<a name="line.62"></a>
-<span class="sourceLineNo">063</span>   * Resources to be closed by the {@link #close()} method.<a name="line.63"></a>
-<span class="sourceLineNo">064</span>   *<a name="line.64"></a>
-<span class="sourceLineNo">065</span>   * &lt;p&gt;This field is never {@code null}.&lt;/p&gt;<a name="line.65"></a>
-<span class="sourceLineNo">066</span>   */<a name="line.66"></a>
-<span class="sourceLineNo">067</span>  private final IdentityHashMap&lt;AutoCloseable, Void&gt; closeables;<a name="line.67"></a>
-<span class="sourceLineNo">068</span>  <a name="line.68"></a>
-<span class="sourceLineNo">069</span><a name="line.69"></a>
-<span class="sourceLineNo">070</span>  /*<a name="line.70"></a>
-<span class="sourceLineNo">071</span>   * Constructors.<a name="line.71"></a>
-<span class="sourceLineNo">072</span>   */<a name="line.72"></a>
-<span class="sourceLineNo">073</span><a name="line.73"></a>
-<span class="sourceLineNo">074</span>  <a name="line.74"></a>
-<span class="sourceLineNo">075</span>  /**<a name="line.75"></a>
-<span class="sourceLineNo">076</span>   * Creates a new {@link URLChartLoader}.<a name="line.76"></a>
-<span class="sourceLineNo">077</span>   */<a name="line.77"></a>
-<span class="sourceLineNo">078</span>  public URLChartLoader() {<a name="line.78"></a>
-<span class="sourceLineNo">079</span>    super();<a name="line.79"></a>
-<span class="sourceLineNo">080</span>    this.closeables = new IdentityHashMap&lt;&gt;();<a name="line.80"></a>
-<span class="sourceLineNo">081</span>  }<a name="line.81"></a>
-<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>  /**<a name="line.63"></a>
+<span class="sourceLineNo">064</span>   * Resources to be closed by the {@link #close()} method.<a name="line.64"></a>
+<span class="sourceLineNo">065</span>   *<a name="line.65"></a>
+<span class="sourceLineNo">066</span>   * &lt;p&gt;This field is never {@code null}.&lt;/p&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>   */<a name="line.67"></a>
+<span class="sourceLineNo">068</span>  private final IdentityHashMap&lt;AutoCloseable, Void&gt; closeables;<a name="line.68"></a>
+<span class="sourceLineNo">069</span>  <a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>  /*<a name="line.71"></a>
+<span class="sourceLineNo">072</span>   * Constructors.<a name="line.72"></a>
+<span class="sourceLineNo">073</span>   */<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>  <a name="line.75"></a>
+<span class="sourceLineNo">076</span>  /**<a name="line.76"></a>
+<span class="sourceLineNo">077</span>   * Creates a new {@link URLChartLoader}.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>   */<a name="line.78"></a>
+<span class="sourceLineNo">079</span>  public URLChartLoader() {<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    super();<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    this.closeables = new IdentityHashMap&lt;&gt;();<a name="line.81"></a>
+<span class="sourceLineNo">082</span>  }<a name="line.82"></a>
 <span class="sourceLineNo">083</span><a name="line.83"></a>
-<span class="sourceLineNo">084</span>  /*<a name="line.84"></a>
-<span class="sourceLineNo">085</span>   * Instance methods.<a name="line.85"></a>
-<span class="sourceLineNo">086</span>   */<a name="line.86"></a>
-<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>  /*<a name="line.85"></a>
+<span class="sourceLineNo">086</span>   * Instance methods.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>   */<a name="line.87"></a>
 <span class="sourceLineNo">088</span><a name="line.88"></a>
-<span class="sourceLineNo">089</span>  /**<a name="line.89"></a>
-<span class="sourceLineNo">090</span>   * Converts the supplied {@link URL} into an {@link Iterable} of<a name="line.90"></a>
-<span class="sourceLineNo">091</span>   * {@link Entry} instances, each of which consists of an {@link<a name="line.91"></a>
-<span class="sourceLineNo">092</span>   * InputStream} representing a resource within a Helm chart together<a name="line.92"></a>
-<span class="sourceLineNo">093</span>   * with its (relative to the chart) name.<a name="line.93"></a>
-<span class="sourceLineNo">094</span>   *<a name="line.94"></a>
-<span class="sourceLineNo">095</span>   * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.95"></a>
-<span class="sourceLineNo">096</span>   *<a name="line.96"></a>
-<span class="sourceLineNo">097</span>   * &lt;p&gt;Overrides of this method are not permitted to return {@code<a name="line.97"></a>
-<span class="sourceLineNo">098</span>   * null}.<a name="line.98"></a>
-<span class="sourceLineNo">099</span>   *<a name="line.99"></a>
-<span class="sourceLineNo">100</span>   * @param url the {@link URL} to dereference; must be non-{@code<a name="line.100"></a>
-<span class="sourceLineNo">101</span>   * null} or an effectively empty {@link Iterable} will be returned<a name="line.101"></a>
-<span class="sourceLineNo">102</span>   *<a name="line.102"></a>
-<span class="sourceLineNo">103</span>   * @return a non-{@code null} {@link Iterable} of {@link Entry}<a name="line.103"></a>
-<span class="sourceLineNo">104</span>   * instances representing named {@link InputStream}s<a name="line.104"></a>
-<span class="sourceLineNo">105</span>   *<a name="line.105"></a>
-<span class="sourceLineNo">106</span>   * @exception IOException if there is a problem reading from the<a name="line.106"></a>
-<span class="sourceLineNo">107</span>   * supplied {@link URL}<a name="line.107"></a>
-<span class="sourceLineNo">108</span>   */<a name="line.108"></a>
-<span class="sourceLineNo">109</span>  @Override<a name="line.109"></a>
-<span class="sourceLineNo">110</span>  protected Iterable&lt;? extends Entry&lt;? extends String, ? extends InputStream&gt;&gt; toNamedInputStreamEntries(final URL url) throws IOException {<a name="line.110"></a>
-<span class="sourceLineNo">111</span>    Objects.requireNonNull(url);<a name="line.111"></a>
-<span class="sourceLineNo">112</span>    final String scheme = url.getProtocol();<a name="line.112"></a>
-<span class="sourceLineNo">113</span>    Path path = null;<a name="line.113"></a>
-<span class="sourceLineNo">114</span>    if ("file".equals(scheme)) {<a name="line.114"></a>
-<span class="sourceLineNo">115</span>      URI uri = null;<a name="line.115"></a>
-<span class="sourceLineNo">116</span>      try {<a name="line.116"></a>
-<span class="sourceLineNo">117</span>        uri = url.toURI();<a name="line.117"></a>
-<span class="sourceLineNo">118</span>      } catch (final URISyntaxException wrapMe) {<a name="line.118"></a>
-<span class="sourceLineNo">119</span>        throw new IllegalArgumentException(wrapMe.getMessage(), wrapMe);<a name="line.119"></a>
-<span class="sourceLineNo">120</span>      }<a name="line.120"></a>
-<span class="sourceLineNo">121</span>      assert uri != null;<a name="line.121"></a>
-<span class="sourceLineNo">122</span>      try {<a name="line.122"></a>
-<span class="sourceLineNo">123</span>        path = Paths.get(uri);<a name="line.123"></a>
-<span class="sourceLineNo">124</span>      } catch (final IllegalArgumentException notAFile) {<a name="line.124"></a>
-<span class="sourceLineNo">125</span>        path = null;<a name="line.125"></a>
-<span class="sourceLineNo">126</span>      }<a name="line.126"></a>
-<span class="sourceLineNo">127</span>    }<a name="line.127"></a>
-<span class="sourceLineNo">128</span>    final Iterable&lt;? extends Entry&lt;? extends String, ? extends InputStream&gt;&gt; returnValue;<a name="line.128"></a>
-<span class="sourceLineNo">129</span>    if (path == null || !Files.isDirectory(path)) {<a name="line.129"></a>
-<span class="sourceLineNo">130</span>      final String urlString = url.toString();<a name="line.130"></a>
-<span class="sourceLineNo">131</span>      assert urlString != null;<a name="line.131"></a>
-<span class="sourceLineNo">132</span>      if (urlString.endsWith(".zip") || urlString.endsWith(".jar")) {<a name="line.132"></a>
-<span class="sourceLineNo">133</span>        final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(url.openStream()));<a name="line.133"></a>
-<span class="sourceLineNo">134</span>        this.closeables.put(zipInputStream, null);<a name="line.134"></a>
-<span class="sourceLineNo">135</span>        final ZipInputStreamChartLoader loader = new ZipInputStreamChartLoader();<a name="line.135"></a>
-<span class="sourceLineNo">136</span>        this.closeables.put(loader, null);<a name="line.136"></a>
-<span class="sourceLineNo">137</span>        returnValue = loader.toNamedInputStreamEntries(zipInputStream);<a name="line.137"></a>
-<span class="sourceLineNo">138</span>      } else {<a name="line.138"></a>
-<span class="sourceLineNo">139</span>        final TarInputStream tarInputStream = new TarInputStream(new GZIPInputStream(new BufferedInputStream(url.openStream())));<a name="line.139"></a>
-<span class="sourceLineNo">140</span>        this.closeables.put(tarInputStream, null);<a name="line.140"></a>
-<span class="sourceLineNo">141</span>        final TapeArchiveChartLoader loader = new TapeArchiveChartLoader();<a name="line.141"></a>
-<span class="sourceLineNo">142</span>        this.closeables.put(loader, null);<a name="line.142"></a>
-<span class="sourceLineNo">143</span>        returnValue = loader.toNamedInputStreamEntries(tarInputStream);<a name="line.143"></a>
-<span class="sourceLineNo">144</span>      }<a name="line.144"></a>
-<span class="sourceLineNo">145</span>    } else {<a name="line.145"></a>
-<span class="sourceLineNo">146</span>      final DirectoryChartLoader loader = new DirectoryChartLoader();<a name="line.146"></a>
-<span class="sourceLineNo">147</span>      this.closeables.put(loader, null);<a name="line.147"></a>
-<span class="sourceLineNo">148</span>      returnValue = loader.toNamedInputStreamEntries(path);<a name="line.148"></a>
-<span class="sourceLineNo">149</span>    }<a name="line.149"></a>
-<span class="sourceLineNo">150</span>    return returnValue;<a name="line.150"></a>
-<span class="sourceLineNo">151</span>  }<a name="line.151"></a>
-<span class="sourceLineNo">152</span><a name="line.152"></a>
-<span class="sourceLineNo">153</span>  /**<a name="line.153"></a>
-<span class="sourceLineNo">154</span>   * Closes resources opened by this {@link URLChartLoader}'s {@link<a name="line.154"></a>
-<span class="sourceLineNo">155</span>   * #toNamedInputStreamEntries(URL)} method.<a name="line.155"></a>
-<span class="sourceLineNo">156</span>   *<a name="line.156"></a>
-<span class="sourceLineNo">157</span>   * @exception IOException if a subclass has overridden this method<a name="line.157"></a>
-<span class="sourceLineNo">158</span>   * and an error occurs<a name="line.158"></a>
-<span class="sourceLineNo">159</span>   */<a name="line.159"></a>
-<span class="sourceLineNo">160</span>  @Override<a name="line.160"></a>
-<span class="sourceLineNo">161</span>  public void close() throws IOException {<a name="line.161"></a>
-<span class="sourceLineNo">162</span>    if (!this.closeables.isEmpty()) {<a name="line.162"></a>
-<span class="sourceLineNo">163</span>      final Collection&lt;? extends AutoCloseable&gt; keys = this.closeables.keySet();<a name="line.163"></a>
-<span class="sourceLineNo">164</span>      if (keys != null &amp;&amp; !keys.isEmpty()) {<a name="line.164"></a>
-<span class="sourceLineNo">165</span>        final Iterator&lt;? extends AutoCloseable&gt; iterator = keys.iterator();<a name="line.165"></a>
-<span class="sourceLineNo">166</span>        if (iterator != null) {<a name="line.166"></a>
-<span class="sourceLineNo">167</span>          while (iterator.hasNext()) {<a name="line.167"></a>
-<span class="sourceLineNo">168</span>            final AutoCloseable closeable = iterator.next();<a name="line.168"></a>
-<span class="sourceLineNo">169</span>            if (closeable != null) {<a name="line.169"></a>
-<span class="sourceLineNo">170</span>              try {<a name="line.170"></a>
-<span class="sourceLineNo">171</span>                closeable.close();<a name="line.171"></a>
-<span class="sourceLineNo">172</span>              } catch (final IOException | RuntimeException throwMe) {<a name="line.172"></a>
-<span class="sourceLineNo">173</span>                throw throwMe;<a name="line.173"></a>
-<span class="sourceLineNo">174</span>              } catch (final Exception willNeverHappen) {<a name="line.174"></a>
-<span class="sourceLineNo">175</span>                throw new AssertionError(willNeverHappen);<a name="line.175"></a>
-<span class="sourceLineNo">176</span>              }<a name="line.176"></a>
-<span class="sourceLineNo">177</span>            }<a name="line.177"></a>
-<span class="sourceLineNo">178</span>            iterator.remove();<a name="line.178"></a>
-<span class="sourceLineNo">179</span>          }<a name="line.179"></a>
-<span class="sourceLineNo">180</span>        }<a name="line.180"></a>
-<span class="sourceLineNo">181</span>      }<a name="line.181"></a>
-<span class="sourceLineNo">182</span>    }<a name="line.182"></a>
-<span class="sourceLineNo">183</span>    assert this.closeables.isEmpty();<a name="line.183"></a>
-<span class="sourceLineNo">184</span>  }<a name="line.184"></a>
-<span class="sourceLineNo">185</span>  <a name="line.185"></a>
-<span class="sourceLineNo">186</span>}<a name="line.186"></a>
+<span class="sourceLineNo">089</span><a name="line.89"></a>
+<span class="sourceLineNo">090</span>  /**<a name="line.90"></a>
+<span class="sourceLineNo">091</span>   * Converts the supplied {@link URL} into an {@link Iterable} of<a name="line.91"></a>
+<span class="sourceLineNo">092</span>   * {@link Entry} instances, each of which consists of an {@link<a name="line.92"></a>
+<span class="sourceLineNo">093</span>   * InputStream} representing a resource within a Helm chart together<a name="line.93"></a>
+<span class="sourceLineNo">094</span>   * with its (relative to the chart) name.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>   *<a name="line.95"></a>
+<span class="sourceLineNo">096</span>   * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span>   *<a name="line.97"></a>
+<span class="sourceLineNo">098</span>   * &lt;p&gt;Overrides of this method are not permitted to return {@code<a name="line.98"></a>
+<span class="sourceLineNo">099</span>   * null}.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>   *<a name="line.100"></a>
+<span class="sourceLineNo">101</span>   * @param url the {@link URL} to dereference; must be non-{@code<a name="line.101"></a>
+<span class="sourceLineNo">102</span>   * null} or an effectively empty {@link Iterable} will be returned<a name="line.102"></a>
+<span class="sourceLineNo">103</span>   *<a name="line.103"></a>
+<span class="sourceLineNo">104</span>   * @return a non-{@code null} {@link Iterable} of {@link Entry}<a name="line.104"></a>
+<span class="sourceLineNo">105</span>   * instances representing named {@link InputStream}s<a name="line.105"></a>
+<span class="sourceLineNo">106</span>   *<a name="line.106"></a>
+<span class="sourceLineNo">107</span>   * @exception IOException if there is a problem reading from the<a name="line.107"></a>
+<span class="sourceLineNo">108</span>   * supplied {@link URL}<a name="line.108"></a>
+<span class="sourceLineNo">109</span>   */<a name="line.109"></a>
+<span class="sourceLineNo">110</span>  @Override<a name="line.110"></a>
+<span class="sourceLineNo">111</span>  protected Iterable&lt;? extends Entry&lt;? extends String, ? extends InputStream&gt;&gt; toNamedInputStreamEntries(final URL url) throws IOException {<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    Objects.requireNonNull(url);<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    final String scheme = url.getProtocol();<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    Path path = null;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    if ("file".equals(scheme)) {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>      URI uri = null;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>      try {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        uri = url.toURI();<a name="line.118"></a>
+<span class="sourceLineNo">119</span>      } catch (final URISyntaxException wrapMe) {<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        throw new IllegalArgumentException(wrapMe.getMessage(), wrapMe);<a name="line.120"></a>
+<span class="sourceLineNo">121</span>      }<a name="line.121"></a>
+<span class="sourceLineNo">122</span>      assert uri != null;<a name="line.122"></a>
+<span class="sourceLineNo">123</span>      try {<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        path = Paths.get(uri);<a name="line.124"></a>
+<span class="sourceLineNo">125</span>      } catch (final IllegalArgumentException notAFile) {<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        path = null;<a name="line.126"></a>
+<span class="sourceLineNo">127</span>      }<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    }<a name="line.128"></a>
+<span class="sourceLineNo">129</span>    final Iterable&lt;? extends Entry&lt;? extends String, ? extends InputStream&gt;&gt; returnValue;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    if (path == null || !Files.isDirectory(path)) {<a name="line.130"></a>
+<span class="sourceLineNo">131</span>      final String urlString = url.toString();<a name="line.131"></a>
+<span class="sourceLineNo">132</span>      assert urlString != null;<a name="line.132"></a>
+<span class="sourceLineNo">133</span>      if (urlString.endsWith(".zip") || urlString.endsWith(".jar")) {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(this.openStream(url)));<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        this.closeables.put(zipInputStream, null);<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        final ZipInputStreamChartLoader loader = new ZipInputStreamChartLoader();<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        this.closeables.put(loader, null);<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        returnValue = loader.toNamedInputStreamEntries(zipInputStream);<a name="line.138"></a>
+<span class="sourceLineNo">139</span>      } else {<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        final TarInputStream tarInputStream = new TarInputStream(new GZIPInputStream(new BufferedInputStream(this.openStream(url))));<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        this.closeables.put(tarInputStream, null);<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        final TapeArchiveChartLoader loader = new TapeArchiveChartLoader();<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        this.closeables.put(loader, null);<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        returnValue = loader.toNamedInputStreamEntries(tarInputStream);<a name="line.144"></a>
+<span class="sourceLineNo">145</span>      }<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    } else {<a name="line.146"></a>
+<span class="sourceLineNo">147</span>      final DirectoryChartLoader loader = new DirectoryChartLoader();<a name="line.147"></a>
+<span class="sourceLineNo">148</span>      this.closeables.put(loader, null);<a name="line.148"></a>
+<span class="sourceLineNo">149</span>      returnValue = loader.toNamedInputStreamEntries(path);<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    }<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    return returnValue;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>  }<a name="line.152"></a>
+<span class="sourceLineNo">153</span><a name="line.153"></a>
+<span class="sourceLineNo">154</span>  /**<a name="line.154"></a>
+<span class="sourceLineNo">155</span>   * Returns an {@link InputStream} corresponding to the supplied<a name="line.155"></a>
+<span class="sourceLineNo">156</span>   * {@link URL}.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>   *<a name="line.157"></a>
+<span class="sourceLineNo">158</span>   * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span>   *<a name="line.159"></a>
+<span class="sourceLineNo">160</span>   * &lt;p&gt;Overrides of this method are permitted to return {@code<a name="line.160"></a>
+<span class="sourceLineNo">161</span>   * null}.&lt;/p&gt;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>   *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>   * @param url the {@link URL} whose affiliated {@link InputStream}<a name="line.163"></a>
+<span class="sourceLineNo">164</span>   * should be returned; may be {@code null} in which case {@code<a name="line.164"></a>
+<span class="sourceLineNo">165</span>   * null} will be returned<a name="line.165"></a>
+<span class="sourceLineNo">166</span>   *<a name="line.166"></a>
+<span class="sourceLineNo">167</span>   * @return an {@link InputStream} appropriate for the supplied<a name="line.167"></a>
+<span class="sourceLineNo">168</span>   * {@link URL}, or {@code null}<a name="line.168"></a>
+<span class="sourceLineNo">169</span>   *<a name="line.169"></a>
+<span class="sourceLineNo">170</span>   * @exception IOException if an error occurs while connecting to the<a name="line.170"></a>
+<span class="sourceLineNo">171</span>   * supplied {@link URL}<a name="line.171"></a>
+<span class="sourceLineNo">172</span>   */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>  protected InputStream openStream(final URL url) throws IOException {<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    InputStream returnValue = null;<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    if (url != null) {<a name="line.175"></a>
+<span class="sourceLineNo">176</span>      final URLConnection urlConnection = url.openConnection();<a name="line.176"></a>
+<span class="sourceLineNo">177</span>      assert urlConnection != null;<a name="line.177"></a>
+<span class="sourceLineNo">178</span>      urlConnection.setRequestProperty("User-Agent", "microbean-helm");<a name="line.178"></a>
+<span class="sourceLineNo">179</span>      returnValue = urlConnection.getInputStream();<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    }<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    return returnValue;<a name="line.181"></a>
+<span class="sourceLineNo">182</span>  }<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>  /**<a name="line.184"></a>
+<span class="sourceLineNo">185</span>   * Closes resources opened by this {@link URLChartLoader}'s {@link<a name="line.185"></a>
+<span class="sourceLineNo">186</span>   * #toNamedInputStreamEntries(URL)} method.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>   *<a name="line.187"></a>
+<span class="sourceLineNo">188</span>   * @exception IOException if a subclass has overridden this method<a name="line.188"></a>
+<span class="sourceLineNo">189</span>   * and an error occurs<a name="line.189"></a>
+<span class="sourceLineNo">190</span>   */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>  @Override<a name="line.191"></a>
+<span class="sourceLineNo">192</span>  public void close() throws IOException {<a name="line.192"></a>
+<span class="sourceLineNo">193</span>    if (!this.closeables.isEmpty()) {<a name="line.193"></a>
+<span class="sourceLineNo">194</span>      final Collection&lt;? extends AutoCloseable&gt; keys = this.closeables.keySet();<a name="line.194"></a>
+<span class="sourceLineNo">195</span>      if (keys != null &amp;&amp; !keys.isEmpty()) {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        final Iterator&lt;? extends AutoCloseable&gt; iterator = keys.iterator();<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        if (iterator != null) {<a name="line.197"></a>
+<span class="sourceLineNo">198</span>          while (iterator.hasNext()) {<a name="line.198"></a>
+<span class="sourceLineNo">199</span>            final AutoCloseable closeable = iterator.next();<a name="line.199"></a>
+<span class="sourceLineNo">200</span>            if (closeable != null) {<a name="line.200"></a>
+<span class="sourceLineNo">201</span>              try {<a name="line.201"></a>
+<span class="sourceLineNo">202</span>                closeable.close();<a name="line.202"></a>
+<span class="sourceLineNo">203</span>              } catch (final IOException | RuntimeException throwMe) {<a name="line.203"></a>
+<span class="sourceLineNo">204</span>                throw throwMe;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>              } catch (final Exception willNeverHappen) {<a name="line.205"></a>
+<span class="sourceLineNo">206</span>                throw new AssertionError(willNeverHappen);<a name="line.206"></a>
+<span class="sourceLineNo">207</span>              }<a name="line.207"></a>
+<span class="sourceLineNo">208</span>            }<a name="line.208"></a>
+<span class="sourceLineNo">209</span>            iterator.remove();<a name="line.209"></a>
+<span class="sourceLineNo">210</span>          }<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        }<a name="line.211"></a>
+<span class="sourceLineNo">212</span>      }<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    }<a name="line.213"></a>
+<span class="sourceLineNo">214</span>    assert this.closeables.isEmpty();<a name="line.214"></a>
+<span class="sourceLineNo">215</span>  }<a name="line.215"></a>
+<span class="sourceLineNo">216</span>  <a name="line.216"></a>
+<span class="sourceLineNo">217</span>}<a name="line.217"></a>
 
 
 

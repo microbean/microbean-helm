@@ -8,7 +8,7 @@
 <div class="sourceContainer">
 <pre><span class="sourceLineNo">001</span>/* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-<a name="line.1"></a>
 <span class="sourceLineNo">002</span> *<a name="line.2"></a>
-<span class="sourceLineNo">003</span> * Copyright © 2017 MicroBean.<a name="line.3"></a>
+<span class="sourceLineNo">003</span> * Copyright © 2017-2018 microBean.<a name="line.3"></a>
 <span class="sourceLineNo">004</span> *<a name="line.4"></a>
 <span class="sourceLineNo">005</span> * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.5"></a>
 <span class="sourceLineNo">006</span> * you may not use this file except in compliance with the License.<a name="line.6"></a>
@@ -768,48 +768,51 @@
 <span class="sourceLineNo">760</span>      if (MetadataOrBuilder.class.isAssignableFrom(type)) {<a name="line.760"></a>
 <span class="sourceLineNo">761</span>        returnValue = new TreeSet&lt;&gt;();<a name="line.761"></a>
 <span class="sourceLineNo">762</span>        try {<a name="line.762"></a>
-<span class="sourceLineNo">763</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("apiVersion", type, "getApiVersion", null)));<a name="line.763"></a>
-<span class="sourceLineNo">764</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("appVersion", type, "getAppVersion", null)));<a name="line.764"></a>
-<span class="sourceLineNo">765</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("condition", type, "getCondition", null)));<a name="line.765"></a>
-<span class="sourceLineNo">766</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("deprecated", type, "getDeprecated", null)));<a name="line.766"></a>
-<span class="sourceLineNo">767</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("description", type, "getDescription", null)));<a name="line.767"></a>
-<span class="sourceLineNo">768</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("engine", type, "getEngine", null)));<a name="line.768"></a>
-<span class="sourceLineNo">769</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("home", type, "getHome", null)));<a name="line.769"></a>
-<span class="sourceLineNo">770</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("icon", type, "getIcon", null)));<a name="line.770"></a>
-<span class="sourceLineNo">771</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("keywords", type, "getKeywordsList", null)));<a name="line.771"></a>
-<span class="sourceLineNo">772</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("maintainers", type, "getMaintainersOrBuilderList", null)));<a name="line.772"></a>
-<span class="sourceLineNo">773</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("name", type, "getName", null)));<a name="line.773"></a>
-<span class="sourceLineNo">774</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("sources", type, "getSourcesList", null)));<a name="line.774"></a>
-<span class="sourceLineNo">775</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("tags", type, "getTags", null)));<a name="line.775"></a>
-<span class="sourceLineNo">776</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("tillerVersion", type, "getTillerVersion", null)));<a name="line.776"></a>
-<span class="sourceLineNo">777</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("version", type, "getVersion", null)));<a name="line.777"></a>
-<span class="sourceLineNo">778</span>        } catch (final IntrospectionException introspectionException) {<a name="line.778"></a>
-<span class="sourceLineNo">779</span>          throw new IllegalStateException(introspectionException.getMessage(), introspectionException);<a name="line.779"></a>
-<span class="sourceLineNo">780</span>        }<a name="line.780"></a>
-<span class="sourceLineNo">781</span>      } else if (MaintainerOrBuilder.class.isAssignableFrom(type)) {<a name="line.781"></a>
-<span class="sourceLineNo">782</span>        returnValue = new TreeSet&lt;&gt;();<a name="line.782"></a>
-<span class="sourceLineNo">783</span>        try {<a name="line.783"></a>
-<span class="sourceLineNo">784</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("name", type, "getName", null)));<a name="line.784"></a>
-<span class="sourceLineNo">785</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("email", type, "getEmail", null)));<a name="line.785"></a>
-<span class="sourceLineNo">786</span>        } catch (final IntrospectionException introspectionException) {<a name="line.786"></a>
-<span class="sourceLineNo">787</span>          throw new IllegalStateException(introspectionException.getMessage(), introspectionException);<a name="line.787"></a>
-<span class="sourceLineNo">788</span>        }<a name="line.788"></a>
-<span class="sourceLineNo">789</span>      } else if (ConfigOrBuilder.class.isAssignableFrom(type)) {<a name="line.789"></a>
-<span class="sourceLineNo">790</span>        returnValue = new TreeSet&lt;&gt;();<a name="line.790"></a>
-<span class="sourceLineNo">791</span>        try {<a name="line.791"></a>
-<span class="sourceLineNo">792</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("raw", type, "getRaw", null)));<a name="line.792"></a>
-<span class="sourceLineNo">793</span>        } catch (final IntrospectionException introspectionException) {<a name="line.793"></a>
-<span class="sourceLineNo">794</span>          throw new IllegalStateException(introspectionException.getMessage(), introspectionException);<a name="line.794"></a>
-<span class="sourceLineNo">795</span>        }<a name="line.795"></a>
-<span class="sourceLineNo">796</span>      } else {<a name="line.796"></a>
-<span class="sourceLineNo">797</span>        returnValue = super.createPropertySet(type, beanAccess);<a name="line.797"></a>
-<span class="sourceLineNo">798</span>      }<a name="line.798"></a>
-<span class="sourceLineNo">799</span>      return returnValue;<a name="line.799"></a>
-<span class="sourceLineNo">800</span>    }<a name="line.800"></a>
-<span class="sourceLineNo">801</span>    <a name="line.801"></a>
-<span class="sourceLineNo">802</span>  }<a name="line.802"></a>
-<span class="sourceLineNo">803</span>  <a name="line.803"></a>
-<span class="sourceLineNo">804</span>}<a name="line.804"></a>
+<span class="sourceLineNo">763</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("annotations", type, "getAnnotationsMap", null)));<a name="line.763"></a>
+<span class="sourceLineNo">764</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("apiVersion", type, "getApiVersion", null)));<a name="line.764"></a>
+<span class="sourceLineNo">765</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("appVersion", type, "getAppVersion", null)));<a name="line.765"></a>
+<span class="sourceLineNo">766</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("condition", type, "getCondition", null)));<a name="line.766"></a>
+<span class="sourceLineNo">767</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("deprecated", type, "getDeprecated", null)));<a name="line.767"></a>
+<span class="sourceLineNo">768</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("description", type, "getDescription", null)));<a name="line.768"></a>
+<span class="sourceLineNo">769</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("engine", type, "getEngine", null)));<a name="line.769"></a>
+<span class="sourceLineNo">770</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("home", type, "getHome", null)));<a name="line.770"></a>
+<span class="sourceLineNo">771</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("icon", type, "getIcon", null)));<a name="line.771"></a>
+<span class="sourceLineNo">772</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("keywords", type, "getKeywordsList", null)));<a name="line.772"></a>
+<span class="sourceLineNo">773</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("kubeVersion", type, "getKubeVersion", null)));<a name="line.773"></a>
+<span class="sourceLineNo">774</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("maintainers", type, "getMaintainersOrBuilderList", null)));<a name="line.774"></a>
+<span class="sourceLineNo">775</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("name", type, "getName", null)));<a name="line.775"></a>
+<span class="sourceLineNo">776</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("sources", type, "getSourcesList", null)));<a name="line.776"></a>
+<span class="sourceLineNo">777</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("tags", type, "getTags", null)));<a name="line.777"></a>
+<span class="sourceLineNo">778</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("tillerVersion", type, "getTillerVersion", null)));<a name="line.778"></a>
+<span class="sourceLineNo">779</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("version", type, "getVersion", null)));<a name="line.779"></a>
+<span class="sourceLineNo">780</span>        } catch (final IntrospectionException introspectionException) {<a name="line.780"></a>
+<span class="sourceLineNo">781</span>          throw new IllegalStateException(introspectionException.getMessage(), introspectionException);<a name="line.781"></a>
+<span class="sourceLineNo">782</span>        }<a name="line.782"></a>
+<span class="sourceLineNo">783</span>      } else if (MaintainerOrBuilder.class.isAssignableFrom(type)) {<a name="line.783"></a>
+<span class="sourceLineNo">784</span>        returnValue = new TreeSet&lt;&gt;();<a name="line.784"></a>
+<span class="sourceLineNo">785</span>        try {<a name="line.785"></a>
+<span class="sourceLineNo">786</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("email", type, "getEmail", null)));<a name="line.786"></a>
+<span class="sourceLineNo">787</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("name", type, "getName", null)));<a name="line.787"></a>
+<span class="sourceLineNo">788</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("url", type, "getUrl", null)));<a name="line.788"></a>
+<span class="sourceLineNo">789</span>        } catch (final IntrospectionException introspectionException) {<a name="line.789"></a>
+<span class="sourceLineNo">790</span>          throw new IllegalStateException(introspectionException.getMessage(), introspectionException);<a name="line.790"></a>
+<span class="sourceLineNo">791</span>        }<a name="line.791"></a>
+<span class="sourceLineNo">792</span>      } else if (ConfigOrBuilder.class.isAssignableFrom(type)) {<a name="line.792"></a>
+<span class="sourceLineNo">793</span>        returnValue = new TreeSet&lt;&gt;();<a name="line.793"></a>
+<span class="sourceLineNo">794</span>        try {<a name="line.794"></a>
+<span class="sourceLineNo">795</span>          returnValue.add(new MethodProperty(new PropertyDescriptor("raw", type, "getRaw", null)));<a name="line.795"></a>
+<span class="sourceLineNo">796</span>        } catch (final IntrospectionException introspectionException) {<a name="line.796"></a>
+<span class="sourceLineNo">797</span>          throw new IllegalStateException(introspectionException.getMessage(), introspectionException);<a name="line.797"></a>
+<span class="sourceLineNo">798</span>        }<a name="line.798"></a>
+<span class="sourceLineNo">799</span>      } else {<a name="line.799"></a>
+<span class="sourceLineNo">800</span>        returnValue = super.createPropertySet(type, beanAccess);<a name="line.800"></a>
+<span class="sourceLineNo">801</span>      }<a name="line.801"></a>
+<span class="sourceLineNo">802</span>      return returnValue;<a name="line.802"></a>
+<span class="sourceLineNo">803</span>    }<a name="line.803"></a>
+<span class="sourceLineNo">804</span>    <a name="line.804"></a>
+<span class="sourceLineNo">805</span>  }<a name="line.805"></a>
+<span class="sourceLineNo">806</span>  <a name="line.806"></a>
+<span class="sourceLineNo">807</span>}<a name="line.807"></a>
 
 
 
