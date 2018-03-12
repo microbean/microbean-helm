@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import java.util.concurrent.TimeUnit;
+
 import hapi.services.tiller.ReleaseServiceGrpc;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceBlockingStub;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceFutureStub;
@@ -105,6 +107,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * <p>This field is never {@code null}.</p>
    */
   public static final Map<String, String> DEFAULT_LABELS;
+
+  /**
+   * The maximum size, in bytes, that messages destined for Tiller may
+   * be.
+   */
+  public static final int MAX_MESSAGE_SIZE = 20 * 1024 * 1024;
   
   /**
    * A {@link Metadata} that ensures that certain Tiller-related
@@ -407,7 +415,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     if (hostAddress == null) {
       throw new IllegalArgumentException("portForward", new IllegalStateException("portForward.getLocalAddress().getHostAddress() == null"));
     }
-    return ManagedChannelBuilder.forAddress(hostAddress, portForward.getLocalPort()).usePlaintext(true).build();
+    return ManagedChannelBuilder.forAddress(hostAddress, portForward.getLocalPort())
+      .idleTimeout(5L, TimeUnit.SECONDS)
+      .keepAliveTime(30L, TimeUnit.SECONDS)
+      .maxInboundMessageSize(MAX_MESSAGE_SIZE)
+      .usePlaintext(true)
+      .build();
   }
 
   /**
