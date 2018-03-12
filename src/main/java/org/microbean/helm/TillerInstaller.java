@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
 
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
@@ -38,9 +39,11 @@ import java.util.regex.Pattern;
 import com.github.zafarkhaja.semver.Version;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.HttpClientAware;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 
+import io.fabric8.kubernetes.client.dsl.Listable;
 import io.fabric8.kubernetes.client.dsl.Resource;
 
 import io.fabric8.kubernetes.api.model.Container;
@@ -49,6 +52,7 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.HTTPGetAction;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.PodTemplateSpec;
 import io.fabric8.kubernetes.api.model.Probe;
@@ -65,7 +69,14 @@ import io.fabric8.kubernetes.api.model.extensions.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.DeploymentSpec;
 import io.fabric8.kubernetes.api.model.extensions.DoneableDeployment;
 
+import io.grpc.health.v1.HealthCheckRequest;
+import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
+import io.grpc.health.v1.HealthCheckResponseOrBuilder;
+import io.grpc.health.v1.HealthGrpc.HealthBlockingStub;
+
 import org.microbean.development.annotation.Experimental;
+
+import org.microbean.kubernetes.Pods;
 
 /**
  * A class that idiomatically but faithfully emulates the
@@ -116,7 +127,7 @@ public class TillerInstaller {
   /**
    * The version of Tiller to install.
    */
-  public static final String VERSION = "2.8.1";
+  public static final String VERSION = "2.8.2";
 
   /*
    * Derivative static fields.
@@ -150,10 +161,10 @@ public class TillerInstaller {
    * Creates a new {@link TillerInstaller}, using a new {@link
    * DefaultKubernetesClient}.
    *
-   * @see #TillerInstaller(KubernetesClient)
+   * @see #TillerInstaller(KubernetesClient, String)
    */
   public TillerInstaller() {
-    this(new DefaultKubernetesClient());
+    this(new DefaultKubernetesClient(), null);
   }
 
   /**
@@ -162,14 +173,41 @@ public class TillerInstaller {
    * @param kubernetesClient the {@link KubernetesClient} to use to
    * communicate with Kubernetes; must not be {@code null}
    *
+   * @param tillerNamespace the namespace into which to install
+   * Tiller; may be {@code null} in which case the value of the {@link
+   * TILLER_NAMESPACE} environment variable will be used&mdash;if that
+   * is {@code null} then {@code kube-system} will be used instead
+   *
+   * @exception NullPointerException if {@code kubernetesClient} is
+   * {@code null}
+   *
+   * @see #TillerInstaller(KubernetesClient, String)
+   */
+  public TillerInstaller(final KubernetesClient kubernetesClient) {
+    this(kubernetesClient, null);
+  }
+
+  /**
+   * Creates a new {@link TillerInstaller}.
+   *
+   * @param kubernetesClient the {@link KubernetesClient} to use to
+   * communicate with Kubernetes; must not be {@code null}
+   *
+   * @param tillerNamespace the namespace into which to install
+   * Tiller; may be {@code null} in which case the value of the {@link
+   * TILLER_NAMESPACE} environment variable will be used&mdash;if that
+   * is {@code null} then {@code kube-system} will be used instead
+   *
    * @exception NullPointerException if {@code kubernetesClient} is
    * {@code null}
    */
-  public TillerInstaller(final KubernetesClient kubernetesClient) {
+  public TillerInstaller(final KubernetesClient kubernetesClient, String tillerNamespace) {
     super();
     Objects.requireNonNull(kubernetesClient);
     this.kubernetesClient = kubernetesClient;
-    final String tillerNamespace = System.getenv("TILLER_NAMESPACE");
+    if (tillerNamespace == null || tillerNamespace.isEmpty()) {      
+      tillerNamespace = System.getProperty("tiller.namespace", System.getenv("TILLER_NAMESPACE"));
+    }
     if (tillerNamespace == null || tillerNamespace.isEmpty()) {
       this.tillerNamespace = DEFAULT_NAMESPACE;
     } else {
@@ -186,7 +224,7 @@ public class TillerInstaller {
   
   public void init() {
     try {
-      this.init(false, null, null, null, null, null, null, null, false, false, false, null, null, null);
+      this.init(false, null, null, null, null, null, null, null, null, 0, false, false, false, null, null, null, -1L);
     } catch (final IOException willNotHappen) {
       throw new AssertionError(willNotHappen);
     }
@@ -194,7 +232,7 @@ public class TillerInstaller {
   
   public void init(final boolean upgrade) {
     try {
-      this.init(upgrade, null, null, null, null, null, null, null, false, false, false, null, null, null);
+      this.init(upgrade, null, null, null, null, null, null, null, null, 0, false, false, false, null, null, null, -1L);
     } catch (final IOException willNotHappen) {
       throw new AssertionError(willNotHappen);
     }
@@ -270,14 +308,19 @@ public class TillerInstaller {
    *
    * @see #init(boolean, String, String, String, Map, Map, String,
    * String, ImagePullPolicy, int, boolean, boolean, boolean, URI,
-   * URI, URI)
+   * URI, URI, long)
    *
    * @see #install(String, String, String, Map, Map, String, String,
    * ImagePullPolicy, int, boolean, boolean, boolean, URI, URI, URI)
    *
    * @see #upgrade(String, String, String, String, String,
    * ImagePullPolicy, Map)
+   *
+   * @deprecated Please use the {@link #init(boolean, String, String,
+   * String, Map, Map, String, String, ImagePullPolicy, int, boolean,
+   * boolean, boolean, URI, URI, URI, long)} method instead.
    */
+  @Deprecated
   public void init(final boolean upgrade,
                    String namespace,
                    String deploymentName,
@@ -308,7 +351,8 @@ public class TillerInstaller {
               verifyTls,
               tlsKeyUri,
               tlsCertUri,
-              tlsCaCertUri);
+              tlsCaCertUri,
+              -1L);
   }
 
   /**
@@ -384,6 +428,10 @@ public class TillerInstaller {
    * used during TLS communication with Kubernetes; may be {@code
    * null} if {@code tls} is {@code false}
    *
+   * @param tillerConnectionTimeout the number of milliseconds to wait
+   * for a Tiller pod to become ready; if less than {@code 0} no wait
+   * will occur
+   *
    * @exception IOException if a communication error occurs
    *
    * @see #install(String, String, String, Map, Map, String, String,
@@ -407,7 +455,8 @@ public class TillerInstaller {
                    final boolean verifyTls,
                    final URI tlsKeyUri,
                    final URI tlsCertUri,
-                   final URI tlsCaCertUri)
+                   final URI tlsCaCertUri,
+                   final long tillerConnectionTimeout)
     throws IOException {
     namespace = normalizeNamespace(namespace);
     deploymentName = normalizeDeploymentName(deploymentName);
@@ -445,6 +494,9 @@ public class TillerInstaller {
                      imagePullPolicy,
                      labels);
       }
+    }
+    if (tillerConnectionTimeout >= 0 && this.kubernetesClient instanceof HttpClientAware) {
+      this.ping(namespace, labels, tillerConnectionTimeout);
     }
   }
 
@@ -843,7 +895,6 @@ public class TillerInstaller {
     }
     
     container.setEnv(env);
-    
 
     final IntOrString port44135 = new IntOrString(Integer.valueOf(44135));
     
@@ -898,6 +949,118 @@ public class TillerInstaller {
       }
     }
     return namespace;
+  }
+
+  /**
+   * If the supplied {@code timeoutInMilliseconds} is zero or greater,
+   * waits for there to be a {@code Ready} Tiller pod and then
+   * contacts its health endpoint.
+   *
+   * <p>If the Tiller pod is healthy this method will return
+   * normally.</p>
+   *
+   * @param namespace the namespace housing Tiller; may be {@code
+   * null} in which case a default will be used
+   *
+   * @param labels the Kubernetes labels that will be used to find
+   * running Tiller pods; may be {@code null} in which case a {@link
+   * Map} consisting of a label of {@code app} with a value of {@code
+   * helm} and a label of {@code name} with a value of {@code tiller}
+   * will be used instead
+   *
+   * @param timeoutInMilliseconds the number of milliseconds to wait
+   * for a Tiller pod to become ready; if less than {@code 0} no wait
+   * will occur and this method will return immediately
+   *
+   * @exception KubernetesClientException if there was a problem
+   * connecting to Kubernetes
+   *
+   * @exception MalformedURLException if there was a problem
+   * forwarding a port to Tiller
+   *
+   * @exception TillerPollingDeadlineExceededException if Tiller could
+   * not be contacted in time
+   *
+   * @exception TillerUnavailableException if Tiller was not healthy
+   */
+  protected final <T extends HttpClientAware & KubernetesClient> void ping(String namespace, Map<String, String> labels, final long timeoutInMilliseconds) throws MalformedURLException {
+    if (timeoutInMilliseconds >= 0L && this.kubernetesClient instanceof HttpClientAware) {
+      namespace = normalizeNamespace(namespace);
+      labels = labels;
+      if (!this.isTillerPodReady(namespace, labels, timeoutInMilliseconds)) {
+        throw new TillerPollingDeadlineExceededException(String.valueOf(timeoutInMilliseconds));
+      }
+      @SuppressWarnings("unchecked")
+      final Tiller tiller = new Tiller((T)this.kubernetesClient, namespace, -1 /* use default */, labels);
+      final HealthBlockingStub health = tiller.getHealthBlockingStub();
+      assert health != null;
+      final HealthCheckRequest.Builder builder = HealthCheckRequest.newBuilder();
+      assert builder != null;
+      builder.setService("Tiller");
+      final HealthCheckResponseOrBuilder response = health.check(builder.build());
+      assert response != null;
+      final ServingStatus status = response.getStatus();
+      assert status != null;
+      switch (status) {
+      case SERVING:
+        break;
+      default:
+        throw new TillerNotAvailableException(String.valueOf(status));
+      }
+    }
+  }
+
+  /**
+   * Returns {@code true} if there is a running Tiller pod that is
+   * {@code Ready}, waiting for a particular amount of time for this
+   * result.
+   *
+   * @param namespace the namespace housing Tiller; may be {@code
+   * null} in which case a default will be used instead
+   *
+   * @param labels labels identifying Tiller pods; may be {@code null}
+   * in which case a default set will be used instead
+   *
+   * @param timeoutInMilliseconds the number of milliseconds to wait
+   * for a result; if {@code 0}, this method will block and wait
+   * forever; if less than {@code 0} this method will take no action
+   * and will return {@code false}
+   *
+   * @return {@code true} if there is a running Tiller pod that is
+   * {@code Ready}; {@code false} otherwise
+   *
+   * @exception KubernetesClientException if there was a problem
+   * communicating with Kubernetes
+   */
+  protected final boolean isTillerPodReady(String namespace,
+                                           Map<String, String> labels,
+                                           final long timeoutInMilliseconds) {
+    namespace = normalizeNamespace(namespace);
+    labels = normalizeLabels(labels);
+    final Object[] podHolder = new Object[1];
+    final Listable<? extends PodList> podList = this.kubernetesClient.pods().inNamespace(namespace).withLabels(labels);
+    final Thread thread = new Thread(() -> {
+        while (true) {
+          if ((podHolder[0] = Pods.getFirstReadyPod(podList)) == null) {
+            try {
+              Thread.sleep(500L);
+            } catch (final InterruptedException interruptedException) {
+              Thread.currentThread().interrupt();
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+      });
+    thread.start();
+    try {
+      thread.join(timeoutInMilliseconds);
+    } catch (final InterruptedException timeExpired) {
+      Thread.currentThread().interrupt();
+    }
+    final boolean returnValue = podHolder[0] != null;
+    return returnValue;
   }
 
 
