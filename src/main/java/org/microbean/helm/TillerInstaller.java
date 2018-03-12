@@ -238,6 +238,14 @@ public class TillerInstaller {
     }
   }
 
+  public void init(final boolean upgrade, final long tillerConnectionTimeout) {
+    try {
+      this.init(upgrade, null, null, null, null, null, null, null, null, 0, false, false, false, null, null, null, tillerConnectionTimeout);
+    } catch (final IOException willNotHappen) {
+      throw new AssertionError(willNotHappen);
+    }
+  }
+
   /**
    * Attempts to {@linkplain #install(String, String, String, Map,
    * String, String, ImagePullPolicy, boolean, boolean, boolean, URI,

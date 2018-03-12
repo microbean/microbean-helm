@@ -54,7 +54,7 @@ public class TestTillerInstaller {
   public void testTillerInstallation() throws IOException {
     assumeFalse(Boolean.getBoolean("skipInstallationTest"));
     final TillerInstaller installer = new TillerInstaller();
-    installer.init(true);
+    installer.init(true, 10000L);
   }
 
   @Test
