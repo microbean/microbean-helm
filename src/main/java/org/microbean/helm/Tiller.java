@@ -47,6 +47,11 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 
+import io.grpc.health.v1.HealthGrpc;
+import io.grpc.health.v1.HealthGrpc.HealthBlockingStub;
+import io.grpc.health.v1.HealthGrpc.HealthFutureStub;
+import io.grpc.health.v1.HealthGrpc.HealthStub;
+
 import io.grpc.stub.MetadataUtils;
 
 import okhttp3.OkHttpClient;
@@ -78,7 +83,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    *
    * <p>This field is never {@code null}.</p>
    */
-  public static final String VERSION = "2.8.1";
+  public static final String VERSION = "2.8.2";
 
   /**
    * The Kubernetes namespace into which Tiller server instances are
@@ -485,6 +490,30 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     ReleaseServiceStub returnValue = null;
     if (this.channel != null) {
       returnValue = MetadataUtils.attachHeaders(ReleaseServiceGrpc.newStub(this.channel), metadata);
+    }
+    return returnValue;
+  }
+
+  public HealthBlockingStub getHealthBlockingStub() {
+    HealthBlockingStub returnValue = null;
+    if (this.channel != null) {
+      returnValue = MetadataUtils.attachHeaders(HealthGrpc.newBlockingStub(this.channel), metadata);
+    }
+    return returnValue;
+  }
+
+  public HealthFutureStub getHealthFutureStub() {
+    HealthFutureStub returnValue = null;
+    if (this.channel != null) {
+      returnValue = MetadataUtils.attachHeaders(HealthGrpc.newFutureStub(this.channel), metadata);
+    }
+    return returnValue;
+  }
+  
+  public HealthStub getHealthStub() {
+    HealthStub returnValue = null;
+    if (this.channel != null) {
+      returnValue = MetadataUtils.attachHeaders(HealthGrpc.newStub(this.channel), metadata);
     }
     return returnValue;
   }

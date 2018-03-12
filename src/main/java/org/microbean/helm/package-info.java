@@ -26,7 +26,7 @@
  *
  * @see org.microbean.helm.ReleaseManager
  */
-@Version("2.8.1.1.0.0")
+@Version("2.8.2.1.0.0")
 package org.microbean.helm;
 
 import org.microbean.development.annotation.Version;
