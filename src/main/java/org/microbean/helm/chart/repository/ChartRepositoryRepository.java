@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import hapi.chart.ChartOuterClass.Chart;
 import org.microbean.development.annotation.Experimental;
 
 import org.yaml.snakeyaml.Yaml;
+
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import org.microbean.helm.chart.resolver.AbstractChartResolver;
 import org.microbean.helm.chart.resolver.ChartResolverException;
@@ -398,7 +400,7 @@ public class ChartRepositoryRepository extends AbstractChartResolver {
     if (!Files.isDirectory(indexCacheDirectory)) {
       throw new IllegalArgumentException("!Files.isDirectory(indexCacheDirectory): " + indexCacheDirectory);
     }
-    final Map<?, ?> map = new Yaml().loadAs(stream, Map.class);
+    final Map<?, ?> map = new Yaml(new SafeConstructor()).load(stream);
     if (map == null || map.isEmpty()) {
       throw new IllegalArgumentException("No data readable from stream: " + stream);
     }

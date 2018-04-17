@@ -31,6 +31,8 @@ import hapi.services.tiller.Tiller.InstallReleaseRequest; // for javadoc only
 
 import org.yaml.snakeyaml.Yaml;
 
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+
 /**
  * Replicates the intended behavior of the <a
  * href="https://godoc.org/k8s.io/helm/pkg/chartutil#CoalesceValues">{@code
@@ -226,7 +228,7 @@ final class Configs {
         }
       } else {
         @SuppressWarnings("unchecked")
-        final Map<String, Object> temp = new Yaml().loadAs(raw, Map.class);
+        final Map<String, Object> temp = new Yaml(new SafeConstructor()).load(raw);
         sourceMap = temp;
       }
       targetMap = Values.coalesceMaps(sourceMap, targetMap);

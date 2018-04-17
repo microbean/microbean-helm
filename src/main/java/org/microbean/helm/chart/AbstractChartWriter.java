@@ -42,7 +42,7 @@ import hapi.chart.TemplateOuterClass.TemplateOrBuilder;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import org.yaml.snakeyaml.introspector.BeanAccess;
 import org.yaml.snakeyaml.introspector.MethodProperty;
@@ -252,7 +252,7 @@ public abstract class AbstractChartWriter implements Closeable {
     representer.setPropertyUtils(new CustomPropertyUtils());
     final DumperOptions options = new DumperOptions();
     options.setAllowReadOnlyProperties(true);
-    return new Yaml(new Constructor(), representer, options);
+    return new Yaml(new SafeConstructor(), representer, options);
   }
 
   /**

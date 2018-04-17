@@ -361,7 +361,7 @@ public final class Requirements {
    * null}
    */
   public static final Chart.Builder apply(final Chart.Builder chartBuilder, ConfigOrBuilder userSuppliedValues) {
-    return apply(chartBuilder, userSuppliedValues, true);
+    return apply(chartBuilder, userSuppliedValues, true /* top level, i.e. non-recursive call */);
   }
 
   /**
@@ -378,8 +378,8 @@ public final class Requirements {
    * @param userSuppliedValues a {@link ConfigOrBuilder} representing
    * overriding values; may be {@code null}
    *
-   * @param firstInvocation {@code true} if this is a non-recursive
-   * call, and hence certain "top-level" processing should take place
+   * @param topLevel {@code true} if this is a non-recursive call, and
+   * hence certain "top-level" processing should take place
    *
    * @return the supplied {@code chartBuilder} for convenience; never
    * {@code null}
