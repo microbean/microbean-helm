@@ -74,6 +74,8 @@ import org.microbean.helm.chart.resolver.ChartResolverException;
 
 import org.yaml.snakeyaml.Yaml;
 
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+
 /**
  * An {@link AbstractChartResolver} that {@linkplain #resolve(String,
  * String) resolves} <a
@@ -1057,7 +1059,7 @@ public class ChartRepository extends AbstractChartResolver {
     public static final Index loadFrom(final InputStream stream) throws IOException, URISyntaxException {
       Objects.requireNonNull(stream);
       final Index returnValue;
-      final Map<?, ?> yamlMap = new Yaml().loadAs(stream, Map.class);
+      final Map<?, ?> yamlMap = new Yaml(new SafeConstructor()).load(stream);
       if (yamlMap == null || yamlMap.isEmpty()) {
         returnValue = new Index(null);
       } else {
