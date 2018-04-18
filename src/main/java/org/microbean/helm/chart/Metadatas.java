@@ -132,6 +132,11 @@ public final class Metadatas {
       if (keywords != null) {
         metadataBuilder.addAllKeywords(keywords);
       }
+
+      final String kubeVersion = (String)yamlMap.get("kubeVersion");
+      if (kubeVersion != null) {
+        metadataBuilder.setKubeVersion(kubeVersion);
+      }
       
       @SuppressWarnings("unchecked")
       final Iterable<? extends Map<?, ?>> maintainers = (Iterable<? extends Map<?, ?>>)yamlMap.get("maintainers");
