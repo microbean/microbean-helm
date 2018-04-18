@@ -369,7 +369,7 @@
 <span class="sourceLineNo">361</span>   * null}<a name="line.361"></a>
 <span class="sourceLineNo">362</span>   */<a name="line.362"></a>
 <span class="sourceLineNo">363</span>  public static final Chart.Builder apply(final Chart.Builder chartBuilder, ConfigOrBuilder userSuppliedValues) {<a name="line.363"></a>
-<span class="sourceLineNo">364</span>    return apply(chartBuilder, userSuppliedValues, true);<a name="line.364"></a>
+<span class="sourceLineNo">364</span>    return apply(chartBuilder, userSuppliedValues, true /* top level, i.e. non-recursive call */);<a name="line.364"></a>
 <span class="sourceLineNo">365</span>  }<a name="line.365"></a>
 <span class="sourceLineNo">366</span><a name="line.366"></a>
 <span class="sourceLineNo">367</span>  /**<a name="line.367"></a>
@@ -386,8 +386,8 @@
 <span class="sourceLineNo">378</span>   * @param userSuppliedValues a {@link ConfigOrBuilder} representing<a name="line.378"></a>
 <span class="sourceLineNo">379</span>   * overriding values; may be {@code null}<a name="line.379"></a>
 <span class="sourceLineNo">380</span>   *<a name="line.380"></a>
-<span class="sourceLineNo">381</span>   * @param firstInvocation {@code true} if this is a non-recursive<a name="line.381"></a>
-<span class="sourceLineNo">382</span>   * call, and hence certain "top-level" processing should take place<a name="line.382"></a>
+<span class="sourceLineNo">381</span>   * @param topLevel {@code true} if this is a non-recursive call, and<a name="line.381"></a>
+<span class="sourceLineNo">382</span>   * hence certain "top-level" processing should take place<a name="line.382"></a>
 <span class="sourceLineNo">383</span>   *<a name="line.383"></a>
 <span class="sourceLineNo">384</span>   * @return the supplied {@code chartBuilder} for convenience; never<a name="line.384"></a>
 <span class="sourceLineNo">385</span>   * {@code null}<a name="line.385"></a>
@@ -620,8 +620,8 @@
 <span class="sourceLineNo">612</span>    private String name;<a name="line.612"></a>
 <span class="sourceLineNo">613</span><a name="line.613"></a>
 <span class="sourceLineNo">614</span>    /**<a name="line.614"></a>
-<span class="sourceLineNo">615</span>     * The version of the subchart being represented by this {@link<a name="line.615"></a>
-<span class="sourceLineNo">616</span>     * Requirements.Dependency}.<a name="line.616"></a>
+<span class="sourceLineNo">615</span>     * The range of acceptable semantic versions of the subchart being<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     * represented by this {@link Requirements.Dependency}.<a name="line.616"></a>
 <span class="sourceLineNo">617</span>     *<a name="line.617"></a>
 <span class="sourceLineNo">618</span>     * &lt;p&gt;This field may be {@code null}.&lt;/p&gt;<a name="line.618"></a>
 <span class="sourceLineNo">619</span>     *<a name="line.619"></a>
@@ -629,7 +629,7 @@
 <span class="sourceLineNo">621</span>     *<a name="line.621"></a>
 <span class="sourceLineNo">622</span>     * @see #setVersion(String)<a name="line.622"></a>
 <span class="sourceLineNo">623</span>     */<a name="line.623"></a>
-<span class="sourceLineNo">624</span>    private String version;<a name="line.624"></a>
+<span class="sourceLineNo">624</span>    private String versionRange;<a name="line.624"></a>
 <span class="sourceLineNo">625</span><a name="line.625"></a>
 <span class="sourceLineNo">626</span>    /**<a name="line.626"></a>
 <span class="sourceLineNo">627</span>     * A {@link String} representation of a URI which, when {@code<a name="line.627"></a>
@@ -761,417 +761,415 @@
 <span class="sourceLineNo">753</span>    }<a name="line.753"></a>
 <span class="sourceLineNo">754</span><a name="line.754"></a>
 <span class="sourceLineNo">755</span>    /**<a name="line.755"></a>
-<span class="sourceLineNo">756</span>     * Returns the version of the subchart being represented by this {@link<a name="line.756"></a>
-<span class="sourceLineNo">757</span>     * Requirements.Dependency}.<a name="line.757"></a>
-<span class="sourceLineNo">758</span>     *<a name="line.758"></a>
-<span class="sourceLineNo">759</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.759"></a>
-<span class="sourceLineNo">760</span>     *<a name="line.760"></a>
-<span class="sourceLineNo">761</span>     * @return the version of the subchart being represented by this {@link<a name="line.761"></a>
-<span class="sourceLineNo">762</span>     * Requirements.Dependency}, or {@code null}<a name="line.762"></a>
-<span class="sourceLineNo">763</span>     *<a name="line.763"></a>
-<span class="sourceLineNo">764</span>     * @see #setVersion(String)<a name="line.764"></a>
-<span class="sourceLineNo">765</span>     */<a name="line.765"></a>
-<span class="sourceLineNo">766</span>    public final String getVersion() {<a name="line.766"></a>
-<span class="sourceLineNo">767</span>      return this.version;<a name="line.767"></a>
-<span class="sourceLineNo">768</span>    }<a name="line.768"></a>
-<span class="sourceLineNo">769</span><a name="line.769"></a>
-<span class="sourceLineNo">770</span>    /**<a name="line.770"></a>
-<span class="sourceLineNo">771</span>     * Sets the version of the subchart being represented by this {@link<a name="line.771"></a>
-<span class="sourceLineNo">772</span>     * Requirements.Dependency}.<a name="line.772"></a>
-<span class="sourceLineNo">773</span>     *<a name="line.773"></a>
-<span class="sourceLineNo">774</span>     * @param version the new version; may be {@code null}<a name="line.774"></a>
+<span class="sourceLineNo">756</span>     * Returns the range of acceptable semantic versions of the<a name="line.756"></a>
+<span class="sourceLineNo">757</span>     * subchart being represented by this {@link<a name="line.757"></a>
+<span class="sourceLineNo">758</span>     * Requirements.Dependency}.<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     *<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     *<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     * @return the range of acceptable semantic versions of the<a name="line.762"></a>
+<span class="sourceLineNo">763</span>     * subchart being represented by this {@link<a name="line.763"></a>
+<span class="sourceLineNo">764</span>     * Requirements.Dependency}, or {@code null}<a name="line.764"></a>
+<span class="sourceLineNo">765</span>     *<a name="line.765"></a>
+<span class="sourceLineNo">766</span>     * @see #setVersion(String)<a name="line.766"></a>
+<span class="sourceLineNo">767</span>     */<a name="line.767"></a>
+<span class="sourceLineNo">768</span>    public final String getVersion() {<a name="line.768"></a>
+<span class="sourceLineNo">769</span>      return this.versionRange;<a name="line.769"></a>
+<span class="sourceLineNo">770</span>    }<a name="line.770"></a>
+<span class="sourceLineNo">771</span><a name="line.771"></a>
+<span class="sourceLineNo">772</span>    /**<a name="line.772"></a>
+<span class="sourceLineNo">773</span>     * Sets the range of acceptable semantic versions of the subchart<a name="line.773"></a>
+<span class="sourceLineNo">774</span>     * being represented by this {@link Requirements.Dependency}.<a name="line.774"></a>
 <span class="sourceLineNo">775</span>     *<a name="line.775"></a>
-<span class="sourceLineNo">776</span>     * @see #getVersion()<a name="line.776"></a>
-<span class="sourceLineNo">777</span>     */<a name="line.777"></a>
-<span class="sourceLineNo">778</span>    public final void setVersion(final String version) {<a name="line.778"></a>
-<span class="sourceLineNo">779</span>      this.version = version;<a name="line.779"></a>
-<span class="sourceLineNo">780</span>    }<a name="line.780"></a>
-<span class="sourceLineNo">781</span><a name="line.781"></a>
-<span class="sourceLineNo">782</span>    /**<a name="line.782"></a>
-<span class="sourceLineNo">783</span>     * Returns the {@link String} representation of a URI which, when<a name="line.783"></a>
-<span class="sourceLineNo">784</span>     * {@code index.yaml} is appended to it, results in a URI<a name="line.784"></a>
-<span class="sourceLineNo">785</span>     * designating a Helm chart repository index.<a name="line.785"></a>
-<span class="sourceLineNo">786</span>     *<a name="line.786"></a>
-<span class="sourceLineNo">787</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.787"></a>
-<span class="sourceLineNo">788</span>     *<a name="line.788"></a>
-<span class="sourceLineNo">789</span>     * @return the {@link String} representation of a URI which, when<a name="line.789"></a>
-<span class="sourceLineNo">790</span>     * {@code index.yaml} is appended to it, results in a URI<a name="line.790"></a>
-<span class="sourceLineNo">791</span>     * designating a Helm chart repository index, or {@code null}<a name="line.791"></a>
-<span class="sourceLineNo">792</span>     *<a name="line.792"></a>
-<span class="sourceLineNo">793</span>     * @see #setRepository(String)<a name="line.793"></a>
-<span class="sourceLineNo">794</span>     */<a name="line.794"></a>
-<span class="sourceLineNo">795</span>    public final String getRepository() {<a name="line.795"></a>
-<span class="sourceLineNo">796</span>      return this.repository;<a name="line.796"></a>
-<span class="sourceLineNo">797</span>    }<a name="line.797"></a>
-<span class="sourceLineNo">798</span><a name="line.798"></a>
-<span class="sourceLineNo">799</span>    /**<a name="line.799"></a>
-<span class="sourceLineNo">800</span>     * Sets the {@link String} representation of a URI which, when<a name="line.800"></a>
-<span class="sourceLineNo">801</span>     * {@code index.yaml} is appended to it, results in a URI<a name="line.801"></a>
-<span class="sourceLineNo">802</span>     * designating a Helm chart repository index.<a name="line.802"></a>
-<span class="sourceLineNo">803</span>     *<a name="line.803"></a>
-<span class="sourceLineNo">804</span>     * @param repository the {@link String} representation of a URI<a name="line.804"></a>
-<span class="sourceLineNo">805</span>     * which, when {@code index.yaml} is appended to it, results in a<a name="line.805"></a>
-<span class="sourceLineNo">806</span>     * URI designating a Helm chart repository index, or {@code null}<a name="line.806"></a>
-<span class="sourceLineNo">807</span>     *<a name="line.807"></a>
-<span class="sourceLineNo">808</span>     * @see #getRepository()<a name="line.808"></a>
-<span class="sourceLineNo">809</span>     */<a name="line.809"></a>
-<span class="sourceLineNo">810</span>    public final void setRepository(final String repository) {<a name="line.810"></a>
-<span class="sourceLineNo">811</span>      this.repository = repository;<a name="line.811"></a>
-<span class="sourceLineNo">812</span>    }<a name="line.812"></a>
-<span class="sourceLineNo">813</span><a name="line.813"></a>
-<span class="sourceLineNo">814</span>    /**<a name="line.814"></a>
-<span class="sourceLineNo">815</span>     * Returns a period-separated path that, when evaluated against a<a name="line.815"></a>
-<span class="sourceLineNo">816</span>     * {@link Map} of {@link Map}s representing user-supplied or<a name="line.816"></a>
-<span class="sourceLineNo">817</span>     * default values, will hopefully result in a value that can, in<a name="line.817"></a>
-<span class="sourceLineNo">818</span>     * turn, be evaluated as a truth-value to aid in the enabling and<a name="line.818"></a>
-<span class="sourceLineNo">819</span>     * disabling of subcharts.<a name="line.819"></a>
-<span class="sourceLineNo">820</span>     *<a name="line.820"></a>
-<span class="sourceLineNo">821</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.821"></a>
-<span class="sourceLineNo">822</span>     *<a name="line.822"></a>
-<span class="sourceLineNo">823</span>     * &lt;p&gt;This method may return a value that actually holds several<a name="line.823"></a>
-<span class="sourceLineNo">824</span>     * such paths separated by commas.  This is an artifact of the<a name="line.824"></a>
-<span class="sourceLineNo">825</span>     * design of Helm's {@code requirements.yaml} file.&lt;/p&gt;<a name="line.825"></a>
-<span class="sourceLineNo">826</span>     *<a name="line.826"></a>
-<span class="sourceLineNo">827</span>     * @return a period-separated path that, when evaluated against a<a name="line.827"></a>
-<span class="sourceLineNo">828</span>     * {@link Map} of {@link Map}s representing user-supplied or<a name="line.828"></a>
-<span class="sourceLineNo">829</span>     * default values, will hopefully result in a value that can, in<a name="line.829"></a>
-<span class="sourceLineNo">830</span>     * turn, be evaluated as a truth-value to aid in the enabling and<a name="line.830"></a>
-<span class="sourceLineNo">831</span>     * disabling of subcharts, or {@code null}<a name="line.831"></a>
-<span class="sourceLineNo">832</span>     *<a name="line.832"></a>
-<span class="sourceLineNo">833</span>     * @see #setCondition(String)<a name="line.833"></a>
-<span class="sourceLineNo">834</span>     */<a name="line.834"></a>
-<span class="sourceLineNo">835</span>    public final String getCondition() {<a name="line.835"></a>
-<span class="sourceLineNo">836</span>      return this.condition;<a name="line.836"></a>
-<span class="sourceLineNo">837</span>    }<a name="line.837"></a>
-<span class="sourceLineNo">838</span><a name="line.838"></a>
-<span class="sourceLineNo">839</span>    /**<a name="line.839"></a>
-<span class="sourceLineNo">840</span>     * Sets the period-separated path that, when evaluated against a<a name="line.840"></a>
-<span class="sourceLineNo">841</span>     * {@link Map} of {@link Map}s representing user-supplied or<a name="line.841"></a>
-<span class="sourceLineNo">842</span>     * default values, will hopefully result in a value that can, in<a name="line.842"></a>
-<span class="sourceLineNo">843</span>     * turn, be evaluated as a truth-value to aid in the enabling and<a name="line.843"></a>
-<span class="sourceLineNo">844</span>     * disabling of subcharts.<a name="line.844"></a>
-<span class="sourceLineNo">845</span>     *<a name="line.845"></a>
-<span class="sourceLineNo">846</span>     * @param condition a period-separated path that, when evaluated<a name="line.846"></a>
-<span class="sourceLineNo">847</span>     * against a {@link Map} of {@link Map}s representing<a name="line.847"></a>
-<span class="sourceLineNo">848</span>     * user-supplied or default values, will hopefully result in a<a name="line.848"></a>
-<span class="sourceLineNo">849</span>     * value that can, in turn, be evaluated as a truth-value to aid<a name="line.849"></a>
-<span class="sourceLineNo">850</span>     * in the enabling and disabling of subcharts, or {@code null}<a name="line.850"></a>
-<span class="sourceLineNo">851</span>     *<a name="line.851"></a>
-<span class="sourceLineNo">852</span>     * @see #getCondition()<a name="line.852"></a>
-<span class="sourceLineNo">853</span>     */<a name="line.853"></a>
-<span class="sourceLineNo">854</span>    public final void setCondition(final String condition) {<a name="line.854"></a>
-<span class="sourceLineNo">855</span>      this.condition = condition;<a name="line.855"></a>
-<span class="sourceLineNo">856</span>    }<a name="line.856"></a>
-<span class="sourceLineNo">857</span><a name="line.857"></a>
-<span class="sourceLineNo">858</span>    /**<a name="line.858"></a>
-<span class="sourceLineNo">859</span>     * Returns the {@link Collection} of tags that can be used to enable or<a name="line.859"></a>
-<span class="sourceLineNo">860</span>     * disable subcharts.<a name="line.860"></a>
-<span class="sourceLineNo">861</span>     *<a name="line.861"></a>
-<span class="sourceLineNo">862</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.862"></a>
-<span class="sourceLineNo">863</span>     *<a name="line.863"></a>
-<span class="sourceLineNo">864</span>     * @return the {@link Collection} of tags that can be used to<a name="line.864"></a>
-<span class="sourceLineNo">865</span>     * enable or disable subcharts, or {@code null}<a name="line.865"></a>
+<span class="sourceLineNo">776</span>     * @param versionRange the new semantic version range; may be {@code<a name="line.776"></a>
+<span class="sourceLineNo">777</span>     * null}<a name="line.777"></a>
+<span class="sourceLineNo">778</span>     *<a name="line.778"></a>
+<span class="sourceLineNo">779</span>     * @see #getVersion()<a name="line.779"></a>
+<span class="sourceLineNo">780</span>     */<a name="line.780"></a>
+<span class="sourceLineNo">781</span>    public final void setVersion(final String versionRange) {<a name="line.781"></a>
+<span class="sourceLineNo">782</span>      this.versionRange = versionRange;<a name="line.782"></a>
+<span class="sourceLineNo">783</span>    }<a name="line.783"></a>
+<span class="sourceLineNo">784</span><a name="line.784"></a>
+<span class="sourceLineNo">785</span>    /**<a name="line.785"></a>
+<span class="sourceLineNo">786</span>     * Returns the {@link String} representation of a URI which, when<a name="line.786"></a>
+<span class="sourceLineNo">787</span>     * {@code index.yaml} is appended to it, results in a URI<a name="line.787"></a>
+<span class="sourceLineNo">788</span>     * designating a Helm chart repository index.<a name="line.788"></a>
+<span class="sourceLineNo">789</span>     *<a name="line.789"></a>
+<span class="sourceLineNo">790</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.790"></a>
+<span class="sourceLineNo">791</span>     *<a name="line.791"></a>
+<span class="sourceLineNo">792</span>     * @return the {@link String} representation of a URI which, when<a name="line.792"></a>
+<span class="sourceLineNo">793</span>     * {@code index.yaml} is appended to it, results in a URI<a name="line.793"></a>
+<span class="sourceLineNo">794</span>     * designating a Helm chart repository index, or {@code null}<a name="line.794"></a>
+<span class="sourceLineNo">795</span>     *<a name="line.795"></a>
+<span class="sourceLineNo">796</span>     * @see #setRepository(String)<a name="line.796"></a>
+<span class="sourceLineNo">797</span>     */<a name="line.797"></a>
+<span class="sourceLineNo">798</span>    public final String getRepository() {<a name="line.798"></a>
+<span class="sourceLineNo">799</span>      return this.repository;<a name="line.799"></a>
+<span class="sourceLineNo">800</span>    }<a name="line.800"></a>
+<span class="sourceLineNo">801</span><a name="line.801"></a>
+<span class="sourceLineNo">802</span>    /**<a name="line.802"></a>
+<span class="sourceLineNo">803</span>     * Sets the {@link String} representation of a URI which, when<a name="line.803"></a>
+<span class="sourceLineNo">804</span>     * {@code index.yaml} is appended to it, results in a URI<a name="line.804"></a>
+<span class="sourceLineNo">805</span>     * designating a Helm chart repository index.<a name="line.805"></a>
+<span class="sourceLineNo">806</span>     *<a name="line.806"></a>
+<span class="sourceLineNo">807</span>     * @param repository the {@link String} representation of a URI<a name="line.807"></a>
+<span class="sourceLineNo">808</span>     * which, when {@code index.yaml} is appended to it, results in a<a name="line.808"></a>
+<span class="sourceLineNo">809</span>     * URI designating a Helm chart repository index, or {@code null}<a name="line.809"></a>
+<span class="sourceLineNo">810</span>     *<a name="line.810"></a>
+<span class="sourceLineNo">811</span>     * @see #getRepository()<a name="line.811"></a>
+<span class="sourceLineNo">812</span>     */<a name="line.812"></a>
+<span class="sourceLineNo">813</span>    public final void setRepository(final String repository) {<a name="line.813"></a>
+<span class="sourceLineNo">814</span>      this.repository = repository;<a name="line.814"></a>
+<span class="sourceLineNo">815</span>    }<a name="line.815"></a>
+<span class="sourceLineNo">816</span><a name="line.816"></a>
+<span class="sourceLineNo">817</span>    /**<a name="line.817"></a>
+<span class="sourceLineNo">818</span>     * Returns a period-separated path that, when evaluated against a<a name="line.818"></a>
+<span class="sourceLineNo">819</span>     * {@link Map} of {@link Map}s representing user-supplied or<a name="line.819"></a>
+<span class="sourceLineNo">820</span>     * default values, will hopefully result in a value that can, in<a name="line.820"></a>
+<span class="sourceLineNo">821</span>     * turn, be evaluated as a truth-value to aid in the enabling and<a name="line.821"></a>
+<span class="sourceLineNo">822</span>     * disabling of subcharts.<a name="line.822"></a>
+<span class="sourceLineNo">823</span>     *<a name="line.823"></a>
+<span class="sourceLineNo">824</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.824"></a>
+<span class="sourceLineNo">825</span>     *<a name="line.825"></a>
+<span class="sourceLineNo">826</span>     * &lt;p&gt;This method may return a value that actually holds several<a name="line.826"></a>
+<span class="sourceLineNo">827</span>     * such paths separated by commas.  This is an artifact of the<a name="line.827"></a>
+<span class="sourceLineNo">828</span>     * design of Helm's {@code requirements.yaml} file.&lt;/p&gt;<a name="line.828"></a>
+<span class="sourceLineNo">829</span>     *<a name="line.829"></a>
+<span class="sourceLineNo">830</span>     * @return a period-separated path that, when evaluated against a<a name="line.830"></a>
+<span class="sourceLineNo">831</span>     * {@link Map} of {@link Map}s representing user-supplied or<a name="line.831"></a>
+<span class="sourceLineNo">832</span>     * default values, will hopefully result in a value that can, in<a name="line.832"></a>
+<span class="sourceLineNo">833</span>     * turn, be evaluated as a truth-value to aid in the enabling and<a name="line.833"></a>
+<span class="sourceLineNo">834</span>     * disabling of subcharts, or {@code null}<a name="line.834"></a>
+<span class="sourceLineNo">835</span>     *<a name="line.835"></a>
+<span class="sourceLineNo">836</span>     * @see #setCondition(String)<a name="line.836"></a>
+<span class="sourceLineNo">837</span>     */<a name="line.837"></a>
+<span class="sourceLineNo">838</span>    public final String getCondition() {<a name="line.838"></a>
+<span class="sourceLineNo">839</span>      return this.condition;<a name="line.839"></a>
+<span class="sourceLineNo">840</span>    }<a name="line.840"></a>
+<span class="sourceLineNo">841</span><a name="line.841"></a>
+<span class="sourceLineNo">842</span>    /**<a name="line.842"></a>
+<span class="sourceLineNo">843</span>     * Sets the period-separated path that, when evaluated against a<a name="line.843"></a>
+<span class="sourceLineNo">844</span>     * {@link Map} of {@link Map}s representing user-supplied or<a name="line.844"></a>
+<span class="sourceLineNo">845</span>     * default values, will hopefully result in a value that can, in<a name="line.845"></a>
+<span class="sourceLineNo">846</span>     * turn, be evaluated as a truth-value to aid in the enabling and<a name="line.846"></a>
+<span class="sourceLineNo">847</span>     * disabling of subcharts.<a name="line.847"></a>
+<span class="sourceLineNo">848</span>     *<a name="line.848"></a>
+<span class="sourceLineNo">849</span>     * @param condition a period-separated path that, when evaluated<a name="line.849"></a>
+<span class="sourceLineNo">850</span>     * against a {@link Map} of {@link Map}s representing<a name="line.850"></a>
+<span class="sourceLineNo">851</span>     * user-supplied or default values, will hopefully result in a<a name="line.851"></a>
+<span class="sourceLineNo">852</span>     * value that can, in turn, be evaluated as a truth-value to aid<a name="line.852"></a>
+<span class="sourceLineNo">853</span>     * in the enabling and disabling of subcharts, or {@code null}<a name="line.853"></a>
+<span class="sourceLineNo">854</span>     *<a name="line.854"></a>
+<span class="sourceLineNo">855</span>     * @see #getCondition()<a name="line.855"></a>
+<span class="sourceLineNo">856</span>     */<a name="line.856"></a>
+<span class="sourceLineNo">857</span>    public final void setCondition(final String condition) {<a name="line.857"></a>
+<span class="sourceLineNo">858</span>      this.condition = condition;<a name="line.858"></a>
+<span class="sourceLineNo">859</span>    }<a name="line.859"></a>
+<span class="sourceLineNo">860</span><a name="line.860"></a>
+<span class="sourceLineNo">861</span>    /**<a name="line.861"></a>
+<span class="sourceLineNo">862</span>     * Returns the {@link Collection} of tags that can be used to enable or<a name="line.862"></a>
+<span class="sourceLineNo">863</span>     * disable subcharts.<a name="line.863"></a>
+<span class="sourceLineNo">864</span>     *<a name="line.864"></a>
+<span class="sourceLineNo">865</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.865"></a>
 <span class="sourceLineNo">866</span>     *<a name="line.866"></a>
-<span class="sourceLineNo">867</span>     * @see #setTags(Collection)<a name="line.867"></a>
-<span class="sourceLineNo">868</span>     */<a name="line.868"></a>
-<span class="sourceLineNo">869</span>    public final Collection&lt;String&gt; getTags() {<a name="line.869"></a>
-<span class="sourceLineNo">870</span>      return this.tags;<a name="line.870"></a>
-<span class="sourceLineNo">871</span>    }<a name="line.871"></a>
-<span class="sourceLineNo">872</span><a name="line.872"></a>
-<span class="sourceLineNo">873</span>    /**<a name="line.873"></a>
-<span class="sourceLineNo">874</span>     * Sets the {@link Collection} of tags that can be used to enable<a name="line.874"></a>
-<span class="sourceLineNo">875</span>     * or disable subcharts.<a name="line.875"></a>
-<span class="sourceLineNo">876</span>     *<a name="line.876"></a>
-<span class="sourceLineNo">877</span>     * @param tags the {@link Collection} of tags that can be used to<a name="line.877"></a>
-<span class="sourceLineNo">878</span>     * enable or disable subcharts; may be {@code null}<a name="line.878"></a>
+<span class="sourceLineNo">867</span>     * @return the {@link Collection} of tags that can be used to<a name="line.867"></a>
+<span class="sourceLineNo">868</span>     * enable or disable subcharts, or {@code null}<a name="line.868"></a>
+<span class="sourceLineNo">869</span>     *<a name="line.869"></a>
+<span class="sourceLineNo">870</span>     * @see #setTags(Collection)<a name="line.870"></a>
+<span class="sourceLineNo">871</span>     */<a name="line.871"></a>
+<span class="sourceLineNo">872</span>    public final Collection&lt;String&gt; getTags() {<a name="line.872"></a>
+<span class="sourceLineNo">873</span>      return this.tags;<a name="line.873"></a>
+<span class="sourceLineNo">874</span>    }<a name="line.874"></a>
+<span class="sourceLineNo">875</span><a name="line.875"></a>
+<span class="sourceLineNo">876</span>    /**<a name="line.876"></a>
+<span class="sourceLineNo">877</span>     * Sets the {@link Collection} of tags that can be used to enable<a name="line.877"></a>
+<span class="sourceLineNo">878</span>     * or disable subcharts.<a name="line.878"></a>
 <span class="sourceLineNo">879</span>     *<a name="line.879"></a>
-<span class="sourceLineNo">880</span>     * @see #getTags()<a name="line.880"></a>
-<span class="sourceLineNo">881</span>     */<a name="line.881"></a>
-<span class="sourceLineNo">882</span>    public final void setTags(final Collection&lt;String&gt; tags) {<a name="line.882"></a>
-<span class="sourceLineNo">883</span>      this.tags = tags;<a name="line.883"></a>
-<span class="sourceLineNo">884</span>    }<a name="line.884"></a>
-<span class="sourceLineNo">885</span><a name="line.885"></a>
-<span class="sourceLineNo">886</span>    /**<a name="line.886"></a>
-<span class="sourceLineNo">887</span>     * Returns {@code true} if the subchart this {@link<a name="line.887"></a>
-<span class="sourceLineNo">888</span>     * Requirements.Dependency} identifies is to be considered<a name="line.888"></a>
-<span class="sourceLineNo">889</span>     * enabled.<a name="line.889"></a>
-<span class="sourceLineNo">890</span>     *<a name="line.890"></a>
-<span class="sourceLineNo">891</span>     * @return {@code true} if the subchart this {@link<a name="line.891"></a>
-<span class="sourceLineNo">892</span>     * Requirements.Dependency} identifies is to be considered<a name="line.892"></a>
-<span class="sourceLineNo">893</span>     * enabled; {@code false} otherwise<a name="line.893"></a>
-<span class="sourceLineNo">894</span>     *<a name="line.894"></a>
-<span class="sourceLineNo">895</span>     * @see #setEnabled(boolean)<a name="line.895"></a>
-<span class="sourceLineNo">896</span>     */<a name="line.896"></a>
-<span class="sourceLineNo">897</span>    public final boolean isEnabled() {<a name="line.897"></a>
-<span class="sourceLineNo">898</span>      return this.enabled;<a name="line.898"></a>
-<span class="sourceLineNo">899</span>    }<a name="line.899"></a>
-<span class="sourceLineNo">900</span><a name="line.900"></a>
-<span class="sourceLineNo">901</span>    /**<a name="line.901"></a>
-<span class="sourceLineNo">902</span>     * Sets whether the subchart this {@link<a name="line.902"></a>
-<span class="sourceLineNo">903</span>     * Requirements.Dependency} identifies is to be considered<a name="line.903"></a>
-<span class="sourceLineNo">904</span>     * enabled.<a name="line.904"></a>
-<span class="sourceLineNo">905</span>     *<a name="line.905"></a>
-<span class="sourceLineNo">906</span>     * @param enabled whether the subchart this {@link<a name="line.906"></a>
-<span class="sourceLineNo">907</span>     * Requirements.Dependency} identifies is to be considered<a name="line.907"></a>
-<span class="sourceLineNo">908</span>     * enabled<a name="line.908"></a>
-<span class="sourceLineNo">909</span>     *<a name="line.909"></a>
-<span class="sourceLineNo">910</span>     * @see #isEnabled()<a name="line.910"></a>
-<span class="sourceLineNo">911</span>     */<a name="line.911"></a>
-<span class="sourceLineNo">912</span>    public final void setEnabled(final boolean enabled) {<a name="line.912"></a>
-<span class="sourceLineNo">913</span>      this.enabled = enabled;<a name="line.913"></a>
-<span class="sourceLineNo">914</span>    }<a name="line.914"></a>
-<span class="sourceLineNo">915</span><a name="line.915"></a>
-<span class="sourceLineNo">916</span>    /**<a name="line.916"></a>
-<span class="sourceLineNo">917</span>     * Returns a {@link Collection} representing the contents of a {@code<a name="line.917"></a>
-<span class="sourceLineNo">918</span>     * requirements.yaml}'s &lt;a<a name="line.918"></a>
-<span class="sourceLineNo">919</span>     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format"&gt;{@code<a name="line.919"></a>
-<span class="sourceLineNo">920</span>     * import-values} section&lt;/a&gt;.<a name="line.920"></a>
-<span class="sourceLineNo">921</span>     *<a name="line.921"></a>
-<span class="sourceLineNo">922</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.922"></a>
-<span class="sourceLineNo">923</span>     *<a name="line.923"></a>
-<span class="sourceLineNo">924</span>     * @return a {@link Collection} representing the contents of a {@code<a name="line.924"></a>
-<span class="sourceLineNo">925</span>     * requirements.yaml}'s &lt;a<a name="line.925"></a>
-<span class="sourceLineNo">926</span>     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format"&gt;{@code<a name="line.926"></a>
-<span class="sourceLineNo">927</span>     * import-values} section&lt;/a&gt;, or {@code null}<a name="line.927"></a>
-<span class="sourceLineNo">928</span>     *<a name="line.928"></a>
-<span class="sourceLineNo">929</span>     * @see #setImportValues(Collection)<a name="line.929"></a>
-<span class="sourceLineNo">930</span>     */<a name="line.930"></a>
-<span class="sourceLineNo">931</span>    public final Collection&lt;Object&gt; getImportValues() {<a name="line.931"></a>
-<span class="sourceLineNo">932</span>      return this.importValues;<a name="line.932"></a>
-<span class="sourceLineNo">933</span>    }<a name="line.933"></a>
-<span class="sourceLineNo">934</span><a name="line.934"></a>
-<span class="sourceLineNo">935</span>    /**<a name="line.935"></a>
-<span class="sourceLineNo">936</span>     * Sets the {@link Collection} representing the contents of a {@code<a name="line.936"></a>
-<span class="sourceLineNo">937</span>     * requirements.yaml}'s &lt;a<a name="line.937"></a>
-<span class="sourceLineNo">938</span>     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format"&gt;{@code<a name="line.938"></a>
-<span class="sourceLineNo">939</span>     * import-values} section&lt;/a&gt;.<a name="line.939"></a>
-<span class="sourceLineNo">940</span>     *<a name="line.940"></a>
-<span class="sourceLineNo">941</span>     * @param importValues the {@link Collection} representing the contents of a {@code<a name="line.941"></a>
-<span class="sourceLineNo">942</span>     * requirements.yaml}'s &lt;a<a name="line.942"></a>
-<span class="sourceLineNo">943</span>     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format"&gt;{@code<a name="line.943"></a>
-<span class="sourceLineNo">944</span>     * import-values} section&lt;/a&gt;; may be {@code null}<a name="line.944"></a>
-<span class="sourceLineNo">945</span>     *<a name="line.945"></a>
-<span class="sourceLineNo">946</span>     * @see #getImportValues()<a name="line.946"></a>
-<span class="sourceLineNo">947</span>     */<a name="line.947"></a>
-<span class="sourceLineNo">948</span>    public final void setImportValues(final Collection&lt;Object&gt; importValues) {<a name="line.948"></a>
-<span class="sourceLineNo">949</span>      this.importValues = importValues;<a name="line.949"></a>
-<span class="sourceLineNo">950</span>    }<a name="line.950"></a>
-<span class="sourceLineNo">951</span><a name="line.951"></a>
-<span class="sourceLineNo">952</span>    /**<a name="line.952"></a>
-<span class="sourceLineNo">953</span>     * Returns the alias to use for the subchart identified by this {@link<a name="line.953"></a>
-<span class="sourceLineNo">954</span>     * Requirements.Dependency}.<a name="line.954"></a>
-<span class="sourceLineNo">955</span>     *<a name="line.955"></a>
-<span class="sourceLineNo">956</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.956"></a>
-<span class="sourceLineNo">957</span>     *<a name="line.957"></a>
-<span class="sourceLineNo">958</span>     * @return the alias to use for the subchart identified by this {@link<a name="line.958"></a>
-<span class="sourceLineNo">959</span>     * Requirements.Dependency}, or {@code null}<a name="line.959"></a>
+<span class="sourceLineNo">880</span>     * @param tags the {@link Collection} of tags that can be used to<a name="line.880"></a>
+<span class="sourceLineNo">881</span>     * enable or disable subcharts; may be {@code null}<a name="line.881"></a>
+<span class="sourceLineNo">882</span>     *<a name="line.882"></a>
+<span class="sourceLineNo">883</span>     * @see #getTags()<a name="line.883"></a>
+<span class="sourceLineNo">884</span>     */<a name="line.884"></a>
+<span class="sourceLineNo">885</span>    public final void setTags(final Collection&lt;String&gt; tags) {<a name="line.885"></a>
+<span class="sourceLineNo">886</span>      this.tags = tags;<a name="line.886"></a>
+<span class="sourceLineNo">887</span>    }<a name="line.887"></a>
+<span class="sourceLineNo">888</span><a name="line.888"></a>
+<span class="sourceLineNo">889</span>    /**<a name="line.889"></a>
+<span class="sourceLineNo">890</span>     * Returns {@code true} if the subchart this {@link<a name="line.890"></a>
+<span class="sourceLineNo">891</span>     * Requirements.Dependency} identifies is to be considered<a name="line.891"></a>
+<span class="sourceLineNo">892</span>     * enabled.<a name="line.892"></a>
+<span class="sourceLineNo">893</span>     *<a name="line.893"></a>
+<span class="sourceLineNo">894</span>     * @return {@code true} if the subchart this {@link<a name="line.894"></a>
+<span class="sourceLineNo">895</span>     * Requirements.Dependency} identifies is to be considered<a name="line.895"></a>
+<span class="sourceLineNo">896</span>     * enabled; {@code false} otherwise<a name="line.896"></a>
+<span class="sourceLineNo">897</span>     *<a name="line.897"></a>
+<span class="sourceLineNo">898</span>     * @see #setEnabled(boolean)<a name="line.898"></a>
+<span class="sourceLineNo">899</span>     */<a name="line.899"></a>
+<span class="sourceLineNo">900</span>    public final boolean isEnabled() {<a name="line.900"></a>
+<span class="sourceLineNo">901</span>      return this.enabled;<a name="line.901"></a>
+<span class="sourceLineNo">902</span>    }<a name="line.902"></a>
+<span class="sourceLineNo">903</span><a name="line.903"></a>
+<span class="sourceLineNo">904</span>    /**<a name="line.904"></a>
+<span class="sourceLineNo">905</span>     * Sets whether the subchart this {@link<a name="line.905"></a>
+<span class="sourceLineNo">906</span>     * Requirements.Dependency} identifies is to be considered<a name="line.906"></a>
+<span class="sourceLineNo">907</span>     * enabled.<a name="line.907"></a>
+<span class="sourceLineNo">908</span>     *<a name="line.908"></a>
+<span class="sourceLineNo">909</span>     * @param enabled whether the subchart this {@link<a name="line.909"></a>
+<span class="sourceLineNo">910</span>     * Requirements.Dependency} identifies is to be considered<a name="line.910"></a>
+<span class="sourceLineNo">911</span>     * enabled<a name="line.911"></a>
+<span class="sourceLineNo">912</span>     *<a name="line.912"></a>
+<span class="sourceLineNo">913</span>     * @see #isEnabled()<a name="line.913"></a>
+<span class="sourceLineNo">914</span>     */<a name="line.914"></a>
+<span class="sourceLineNo">915</span>    public final void setEnabled(final boolean enabled) {<a name="line.915"></a>
+<span class="sourceLineNo">916</span>      this.enabled = enabled;<a name="line.916"></a>
+<span class="sourceLineNo">917</span>    }<a name="line.917"></a>
+<span class="sourceLineNo">918</span><a name="line.918"></a>
+<span class="sourceLineNo">919</span>    /**<a name="line.919"></a>
+<span class="sourceLineNo">920</span>     * Returns a {@link Collection} representing the contents of a {@code<a name="line.920"></a>
+<span class="sourceLineNo">921</span>     * requirements.yaml}'s &lt;a<a name="line.921"></a>
+<span class="sourceLineNo">922</span>     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format"&gt;{@code<a name="line.922"></a>
+<span class="sourceLineNo">923</span>     * import-values} section&lt;/a&gt;.<a name="line.923"></a>
+<span class="sourceLineNo">924</span>     *<a name="line.924"></a>
+<span class="sourceLineNo">925</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.925"></a>
+<span class="sourceLineNo">926</span>     *<a name="line.926"></a>
+<span class="sourceLineNo">927</span>     * @return a {@link Collection} representing the contents of a {@code<a name="line.927"></a>
+<span class="sourceLineNo">928</span>     * requirements.yaml}'s &lt;a<a name="line.928"></a>
+<span class="sourceLineNo">929</span>     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format"&gt;{@code<a name="line.929"></a>
+<span class="sourceLineNo">930</span>     * import-values} section&lt;/a&gt;, or {@code null}<a name="line.930"></a>
+<span class="sourceLineNo">931</span>     *<a name="line.931"></a>
+<span class="sourceLineNo">932</span>     * @see #setImportValues(Collection)<a name="line.932"></a>
+<span class="sourceLineNo">933</span>     */<a name="line.933"></a>
+<span class="sourceLineNo">934</span>    public final Collection&lt;Object&gt; getImportValues() {<a name="line.934"></a>
+<span class="sourceLineNo">935</span>      return this.importValues;<a name="line.935"></a>
+<span class="sourceLineNo">936</span>    }<a name="line.936"></a>
+<span class="sourceLineNo">937</span><a name="line.937"></a>
+<span class="sourceLineNo">938</span>    /**<a name="line.938"></a>
+<span class="sourceLineNo">939</span>     * Sets the {@link Collection} representing the contents of a {@code<a name="line.939"></a>
+<span class="sourceLineNo">940</span>     * requirements.yaml}'s &lt;a<a name="line.940"></a>
+<span class="sourceLineNo">941</span>     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format"&gt;{@code<a name="line.941"></a>
+<span class="sourceLineNo">942</span>     * import-values} section&lt;/a&gt;.<a name="line.942"></a>
+<span class="sourceLineNo">943</span>     *<a name="line.943"></a>
+<span class="sourceLineNo">944</span>     * @param importValues the {@link Collection} representing the contents of a {@code<a name="line.944"></a>
+<span class="sourceLineNo">945</span>     * requirements.yaml}'s &lt;a<a name="line.945"></a>
+<span class="sourceLineNo">946</span>     * href="https://docs.helm.sh/developing_charts/#using-the-exports-format"&gt;{@code<a name="line.946"></a>
+<span class="sourceLineNo">947</span>     * import-values} section&lt;/a&gt;; may be {@code null}<a name="line.947"></a>
+<span class="sourceLineNo">948</span>     *<a name="line.948"></a>
+<span class="sourceLineNo">949</span>     * @see #getImportValues()<a name="line.949"></a>
+<span class="sourceLineNo">950</span>     */<a name="line.950"></a>
+<span class="sourceLineNo">951</span>    public final void setImportValues(final Collection&lt;Object&gt; importValues) {<a name="line.951"></a>
+<span class="sourceLineNo">952</span>      this.importValues = importValues;<a name="line.952"></a>
+<span class="sourceLineNo">953</span>    }<a name="line.953"></a>
+<span class="sourceLineNo">954</span><a name="line.954"></a>
+<span class="sourceLineNo">955</span>    /**<a name="line.955"></a>
+<span class="sourceLineNo">956</span>     * Returns the alias to use for the subchart identified by this {@link<a name="line.956"></a>
+<span class="sourceLineNo">957</span>     * Requirements.Dependency}.<a name="line.957"></a>
+<span class="sourceLineNo">958</span>     *<a name="line.958"></a>
+<span class="sourceLineNo">959</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.959"></a>
 <span class="sourceLineNo">960</span>     *<a name="line.960"></a>
-<span class="sourceLineNo">961</span>     * @see #setAlias(String)<a name="line.961"></a>
-<span class="sourceLineNo">962</span>     */<a name="line.962"></a>
-<span class="sourceLineNo">963</span>    public final String getAlias() {<a name="line.963"></a>
-<span class="sourceLineNo">964</span>      return this.alias;<a name="line.964"></a>
-<span class="sourceLineNo">965</span>    }<a name="line.965"></a>
-<span class="sourceLineNo">966</span><a name="line.966"></a>
-<span class="sourceLineNo">967</span>    /**<a name="line.967"></a>
-<span class="sourceLineNo">968</span>     * Sets the alias to use for the subchart identified by this {@link<a name="line.968"></a>
-<span class="sourceLineNo">969</span>     * Requirements.Dependency}.<a name="line.969"></a>
-<span class="sourceLineNo">970</span>     *<a name="line.970"></a>
-<span class="sourceLineNo">971</span>     * @param alias the alias to use for the subchart identified by this {@link<a name="line.971"></a>
-<span class="sourceLineNo">972</span>     * Requirements.Dependency}; may be {@code null}<a name="line.972"></a>
+<span class="sourceLineNo">961</span>     * @return the alias to use for the subchart identified by this {@link<a name="line.961"></a>
+<span class="sourceLineNo">962</span>     * Requirements.Dependency}, or {@code null}<a name="line.962"></a>
+<span class="sourceLineNo">963</span>     *<a name="line.963"></a>
+<span class="sourceLineNo">964</span>     * @see #setAlias(String)<a name="line.964"></a>
+<span class="sourceLineNo">965</span>     */<a name="line.965"></a>
+<span class="sourceLineNo">966</span>    public final String getAlias() {<a name="line.966"></a>
+<span class="sourceLineNo">967</span>      return this.alias;<a name="line.967"></a>
+<span class="sourceLineNo">968</span>    }<a name="line.968"></a>
+<span class="sourceLineNo">969</span><a name="line.969"></a>
+<span class="sourceLineNo">970</span>    /**<a name="line.970"></a>
+<span class="sourceLineNo">971</span>     * Sets the alias to use for the subchart identified by this {@link<a name="line.971"></a>
+<span class="sourceLineNo">972</span>     * Requirements.Dependency}.<a name="line.972"></a>
 <span class="sourceLineNo">973</span>     *<a name="line.973"></a>
-<span class="sourceLineNo">974</span>     * @see #getAlias()<a name="line.974"></a>
-<span class="sourceLineNo">975</span>     */<a name="line.975"></a>
-<span class="sourceLineNo">976</span>    public final void setAlias(final String alias) {<a name="line.976"></a>
-<span class="sourceLineNo">977</span>      this.alias = alias;<a name="line.977"></a>
-<span class="sourceLineNo">978</span>    }<a name="line.978"></a>
-<span class="sourceLineNo">979</span><a name="line.979"></a>
-<span class="sourceLineNo">980</span>    /**<a name="line.980"></a>
-<span class="sourceLineNo">981</span>     * Returns {@code true} if this {@link Requirements.Dependency}<a name="line.981"></a>
-<span class="sourceLineNo">982</span>     * identifies the given {@link ChartOrBuilder}.<a name="line.982"></a>
-<span class="sourceLineNo">983</span>     *<a name="line.983"></a>
-<span class="sourceLineNo">984</span>     * @param chart the {@link ChartOrBuilder} to check; may be {@code<a name="line.984"></a>
-<span class="sourceLineNo">985</span>     * null} in which case {@code false} will be returned<a name="line.985"></a>
+<span class="sourceLineNo">974</span>     * @param alias the alias to use for the subchart identified by this {@link<a name="line.974"></a>
+<span class="sourceLineNo">975</span>     * Requirements.Dependency}; may be {@code null}<a name="line.975"></a>
+<span class="sourceLineNo">976</span>     *<a name="line.976"></a>
+<span class="sourceLineNo">977</span>     * @see #getAlias()<a name="line.977"></a>
+<span class="sourceLineNo">978</span>     */<a name="line.978"></a>
+<span class="sourceLineNo">979</span>    public final void setAlias(final String alias) {<a name="line.979"></a>
+<span class="sourceLineNo">980</span>      this.alias = alias;<a name="line.980"></a>
+<span class="sourceLineNo">981</span>    }<a name="line.981"></a>
+<span class="sourceLineNo">982</span><a name="line.982"></a>
+<span class="sourceLineNo">983</span>    /**<a name="line.983"></a>
+<span class="sourceLineNo">984</span>     * Returns {@code true} if this {@link Requirements.Dependency}<a name="line.984"></a>
+<span class="sourceLineNo">985</span>     * identifies the given {@link ChartOrBuilder}.<a name="line.985"></a>
 <span class="sourceLineNo">986</span>     *<a name="line.986"></a>
-<span class="sourceLineNo">987</span>     * @return {@code true} if this {@link Requirements.Dependency}<a name="line.987"></a>
-<span class="sourceLineNo">988</span>     * identifies the given {@link ChartOrBuilder}; {@code false}<a name="line.988"></a>
-<span class="sourceLineNo">989</span>     * otherwise<a name="line.989"></a>
-<span class="sourceLineNo">990</span>     */<a name="line.990"></a>
-<span class="sourceLineNo">991</span>    public final boolean selects(final ChartOrBuilder chart) {<a name="line.991"></a>
-<span class="sourceLineNo">992</span>      if (chart == null) {<a name="line.992"></a>
-<span class="sourceLineNo">993</span>        return false;<a name="line.993"></a>
-<span class="sourceLineNo">994</span>      }<a name="line.994"></a>
-<span class="sourceLineNo">995</span>      return this.selects(chart.getMetadata());<a name="line.995"></a>
-<span class="sourceLineNo">996</span>    }<a name="line.996"></a>
-<span class="sourceLineNo">997</span>    <a name="line.997"></a>
-<span class="sourceLineNo">998</span>    private final boolean selects(final MetadataOrBuilder metadata) {<a name="line.998"></a>
-<span class="sourceLineNo">999</span>      final boolean returnValue;<a name="line.999"></a>
-<span class="sourceLineNo">1000</span>      if (metadata == null) {<a name="line.1000"></a>
-<span class="sourceLineNo">1001</span>        returnValue = this.selects(null, null);<a name="line.1001"></a>
-<span class="sourceLineNo">1002</span>      } else {<a name="line.1002"></a>
-<span class="sourceLineNo">1003</span>        returnValue = this.selects(metadata.getName(), metadata.getVersion());<a name="line.1003"></a>
-<span class="sourceLineNo">1004</span>      }<a name="line.1004"></a>
-<span class="sourceLineNo">1005</span>      return returnValue;<a name="line.1005"></a>
-<span class="sourceLineNo">1006</span>    }<a name="line.1006"></a>
-<span class="sourceLineNo">1007</span><a name="line.1007"></a>
-<span class="sourceLineNo">1008</span>    private final boolean selects(final String name, final String versionString) {<a name="line.1008"></a>
-<span class="sourceLineNo">1009</span>      final Object myName = this.getName();<a name="line.1009"></a>
-<span class="sourceLineNo">1010</span>      if (myName == null) {<a name="line.1010"></a>
-<span class="sourceLineNo">1011</span>        if (name != null) {<a name="line.1011"></a>
-<span class="sourceLineNo">1012</span>          return false;<a name="line.1012"></a>
-<span class="sourceLineNo">1013</span>        }<a name="line.1013"></a>
-<span class="sourceLineNo">1014</span>      } else if (!myName.equals(name)) {<a name="line.1014"></a>
-<span class="sourceLineNo">1015</span>        return false;<a name="line.1015"></a>
-<span class="sourceLineNo">1016</span>      }<a name="line.1016"></a>
-<span class="sourceLineNo">1017</span><a name="line.1017"></a>
-<span class="sourceLineNo">1018</span>      final String myVersion = this.getVersion();<a name="line.1018"></a>
-<span class="sourceLineNo">1019</span>      if (myVersion == null) {<a name="line.1019"></a>
-<span class="sourceLineNo">1020</span>        if (versionString != null) {<a name="line.1020"></a>
-<span class="sourceLineNo">1021</span>          return false;<a name="line.1021"></a>
-<span class="sourceLineNo">1022</span>        }<a name="line.1022"></a>
-<span class="sourceLineNo">1023</span>      } else {<a name="line.1023"></a>
-<span class="sourceLineNo">1024</span>        final Version version = Version.valueOf(myVersion);<a name="line.1024"></a>
-<span class="sourceLineNo">1025</span>        assert version != null;<a name="line.1025"></a>
-<span class="sourceLineNo">1026</span>        final Parser&lt;Expression&gt; parser = ExpressionParser.newInstance();<a name="line.1026"></a>
-<span class="sourceLineNo">1027</span>        assert parser != null;<a name="line.1027"></a>
-<span class="sourceLineNo">1028</span>        final Expression semVerConstraint = parser.parse(versionString);<a name="line.1028"></a>
-<span class="sourceLineNo">1029</span>        assert semVerConstraint != null;<a name="line.1029"></a>
-<span class="sourceLineNo">1030</span>        if (!version.satisfies(semVerConstraint)) {<a name="line.1030"></a>
-<span class="sourceLineNo">1031</span>          return false;<a name="line.1031"></a>
-<span class="sourceLineNo">1032</span>        }<a name="line.1032"></a>
-<span class="sourceLineNo">1033</span>      }<a name="line.1033"></a>
-<span class="sourceLineNo">1034</span>      return true;<a name="line.1034"></a>
-<span class="sourceLineNo">1035</span>    }<a name="line.1035"></a>
-<span class="sourceLineNo">1036</span><a name="line.1036"></a>
-<span class="sourceLineNo">1037</span>    final boolean adjustName(final Chart.Builder subchart) {<a name="line.1037"></a>
-<span class="sourceLineNo">1038</span>      boolean returnValue = false;<a name="line.1038"></a>
-<span class="sourceLineNo">1039</span>      if (subchart != null &amp;&amp; this.selects(subchart)) {<a name="line.1039"></a>
-<span class="sourceLineNo">1040</span>        final String alias = this.getAlias();<a name="line.1040"></a>
-<span class="sourceLineNo">1041</span>        if (alias != null &amp;&amp; !alias.isEmpty() &amp;&amp; subchart.hasMetadata()) {<a name="line.1041"></a>
-<span class="sourceLineNo">1042</span>          final Metadata.Builder subchartMetadataBuilder = subchart.getMetadataBuilder();<a name="line.1042"></a>
-<span class="sourceLineNo">1043</span>          assert subchartMetadataBuilder != null;<a name="line.1043"></a>
-<span class="sourceLineNo">1044</span>          if (!alias.equals(subchartMetadataBuilder.getName())) {<a name="line.1044"></a>
-<span class="sourceLineNo">1045</span>            // Rename the chart to have our alias as its new name.<a name="line.1045"></a>
-<span class="sourceLineNo">1046</span>            subchartMetadataBuilder.setName(alias);<a name="line.1046"></a>
-<span class="sourceLineNo">1047</span>            returnValue = true;<a name="line.1047"></a>
-<span class="sourceLineNo">1048</span>          }<a name="line.1048"></a>
-<span class="sourceLineNo">1049</span>        }<a name="line.1049"></a>
-<span class="sourceLineNo">1050</span>      }<a name="line.1050"></a>
-<span class="sourceLineNo">1051</span>      return returnValue;<a name="line.1051"></a>
-<span class="sourceLineNo">1052</span>    }<a name="line.1052"></a>
-<span class="sourceLineNo">1053</span><a name="line.1053"></a>
-<span class="sourceLineNo">1054</span>    final boolean setNameToAlias() {<a name="line.1054"></a>
-<span class="sourceLineNo">1055</span>      boolean returnValue = false;<a name="line.1055"></a>
-<span class="sourceLineNo">1056</span>      final String alias = this.getAlias();<a name="line.1056"></a>
-<span class="sourceLineNo">1057</span>      if (alias != null &amp;&amp; !alias.isEmpty() &amp;&amp; !alias.equals(this.getName())) {        <a name="line.1057"></a>
-<span class="sourceLineNo">1058</span>        this.setName(alias);<a name="line.1058"></a>
-<span class="sourceLineNo">1059</span>        returnValue = true;<a name="line.1059"></a>
-<span class="sourceLineNo">1060</span>      }<a name="line.1060"></a>
-<span class="sourceLineNo">1061</span>      return returnValue;<a name="line.1061"></a>
-<span class="sourceLineNo">1062</span>    }<a name="line.1062"></a>
-<span class="sourceLineNo">1063</span><a name="line.1063"></a>
-<span class="sourceLineNo">1064</span>    final void processTags(final Map&lt;String, Object&gt; values) {<a name="line.1064"></a>
-<span class="sourceLineNo">1065</span>      if (values != null) {<a name="line.1065"></a>
-<span class="sourceLineNo">1066</span>        final Object tagsObject = values.get("tags");<a name="line.1066"></a>
-<span class="sourceLineNo">1067</span>        if (tagsObject instanceof Map) {<a name="line.1067"></a>
-<span class="sourceLineNo">1068</span>          final Map&lt;?, ?&gt; tags = (Map&lt;?, ?&gt;)tagsObject;<a name="line.1068"></a>
-<span class="sourceLineNo">1069</span>          final Collection&lt;? extends String&gt; myTags = this.getTags();<a name="line.1069"></a>
-<span class="sourceLineNo">1070</span>          if (myTags != null &amp;&amp; !myTags.isEmpty()) {<a name="line.1070"></a>
-<span class="sourceLineNo">1071</span>            boolean explicitlyTrue = false;<a name="line.1071"></a>
-<span class="sourceLineNo">1072</span>            boolean explicitlyFalse = false;<a name="line.1072"></a>
-<span class="sourceLineNo">1073</span>            for (final String myTag : myTags) {<a name="line.1073"></a>
-<span class="sourceLineNo">1074</span>              final Object tagValue = tags.get(myTag);<a name="line.1074"></a>
-<span class="sourceLineNo">1075</span>              if (Boolean.TRUE.equals(tagValue)) {<a name="line.1075"></a>
-<span class="sourceLineNo">1076</span>                explicitlyTrue = true;<a name="line.1076"></a>
-<span class="sourceLineNo">1077</span>              } else if (Boolean.FALSE.equals(tagValue)) {<a name="line.1077"></a>
-<span class="sourceLineNo">1078</span>                explicitlyFalse = true;<a name="line.1078"></a>
-<span class="sourceLineNo">1079</span>              } else {<a name="line.1079"></a>
-<span class="sourceLineNo">1080</span>                // Not a Boolean at all; just skip it<a name="line.1080"></a>
-<span class="sourceLineNo">1081</span>              }<a name="line.1081"></a>
-<span class="sourceLineNo">1082</span>            }<a name="line.1082"></a>
-<span class="sourceLineNo">1083</span>            <a name="line.1083"></a>
-<span class="sourceLineNo">1084</span>            // Note that this block looks different from the analogous<a name="line.1084"></a>
-<span class="sourceLineNo">1085</span>            // block in processConditions() below.  It is this way in the<a name="line.1085"></a>
-<span class="sourceLineNo">1086</span>            // Go code as well.<a name="line.1086"></a>
-<span class="sourceLineNo">1087</span>            if (explicitlyFalse) {<a name="line.1087"></a>
-<span class="sourceLineNo">1088</span>              if (!explicitlyTrue) {<a name="line.1088"></a>
-<span class="sourceLineNo">1089</span>                this.setEnabled(false);<a name="line.1089"></a>
-<span class="sourceLineNo">1090</span>              }<a name="line.1090"></a>
-<span class="sourceLineNo">1091</span>            } else {<a name="line.1091"></a>
-<span class="sourceLineNo">1092</span>              this.setEnabled(explicitlyTrue);<a name="line.1092"></a>
-<span class="sourceLineNo">1093</span>            }<a name="line.1093"></a>
-<span class="sourceLineNo">1094</span>          }<a name="line.1094"></a>
-<span class="sourceLineNo">1095</span>        }<a name="line.1095"></a>
-<span class="sourceLineNo">1096</span>      }<a name="line.1096"></a>
-<span class="sourceLineNo">1097</span>    }<a name="line.1097"></a>
-<span class="sourceLineNo">1098</span>    <a name="line.1098"></a>
-<span class="sourceLineNo">1099</span>    final void processConditions(final Map&lt;String, Object&gt; values) {<a name="line.1099"></a>
-<span class="sourceLineNo">1100</span>      if (values != null &amp;&amp; !values.isEmpty()) {<a name="line.1100"></a>
-<span class="sourceLineNo">1101</span>        final MapTree mapTree = new MapTree(values);<a name="line.1101"></a>
-<span class="sourceLineNo">1102</span>        boolean explicitlyTrue = false;<a name="line.1102"></a>
-<span class="sourceLineNo">1103</span>        boolean explicitlyFalse = false;<a name="line.1103"></a>
-<span class="sourceLineNo">1104</span>        String conditionString = this.getCondition();<a name="line.1104"></a>
-<span class="sourceLineNo">1105</span>        if (conditionString != null) {<a name="line.1105"></a>
-<span class="sourceLineNo">1106</span>          conditionString = conditionString.trim();<a name="line.1106"></a>
-<span class="sourceLineNo">1107</span>          final String[] conditions = commaSplitPattern.split(conditionString);<a name="line.1107"></a>
-<span class="sourceLineNo">1108</span>          if (conditions != null &amp;&amp; conditions.length &gt; 0) {<a name="line.1108"></a>
-<span class="sourceLineNo">1109</span>            for (final String condition : conditions) {<a name="line.1109"></a>
-<span class="sourceLineNo">1110</span>              if (condition != null &amp;&amp; !condition.isEmpty()) {<a name="line.1110"></a>
-<span class="sourceLineNo">1111</span>                final Object conditionValue = mapTree.get(condition, Object.class);<a name="line.1111"></a>
-<span class="sourceLineNo">1112</span>                if (Boolean.TRUE.equals(conditionValue)) {<a name="line.1112"></a>
-<span class="sourceLineNo">1113</span>                  explicitlyTrue = true;<a name="line.1113"></a>
-<span class="sourceLineNo">1114</span>                } else if (Boolean.FALSE.equals(conditionValue)) {<a name="line.1114"></a>
-<span class="sourceLineNo">1115</span>                  explicitlyFalse = true;<a name="line.1115"></a>
-<span class="sourceLineNo">1116</span>                } else if (conditionValue != null) {<a name="line.1116"></a>
-<span class="sourceLineNo">1117</span>                  break;<a name="line.1117"></a>
-<span class="sourceLineNo">1118</span>                }<a name="line.1118"></a>
-<span class="sourceLineNo">1119</span>              }<a name="line.1119"></a>
-<span class="sourceLineNo">1120</span>            }<a name="line.1120"></a>
-<span class="sourceLineNo">1121</span>          }<a name="line.1121"></a>
-<span class="sourceLineNo">1122</span>        }<a name="line.1122"></a>
-<span class="sourceLineNo">1123</span>        <a name="line.1123"></a>
-<span class="sourceLineNo">1124</span>        // Note that this block looks different from the analogous block<a name="line.1124"></a>
-<span class="sourceLineNo">1125</span>        // in processTags() above.  It is this way in the Go code as<a name="line.1125"></a>
-<span class="sourceLineNo">1126</span>        // well.<a name="line.1126"></a>
-<span class="sourceLineNo">1127</span>        if (explicitlyFalse) {<a name="line.1127"></a>
-<span class="sourceLineNo">1128</span>          if (!explicitlyTrue) {<a name="line.1128"></a>
-<span class="sourceLineNo">1129</span>            this.setEnabled(false);<a name="line.1129"></a>
-<span class="sourceLineNo">1130</span>          }<a name="line.1130"></a>
-<span class="sourceLineNo">1131</span>        } else if (explicitlyTrue) {<a name="line.1131"></a>
-<span class="sourceLineNo">1132</span>          this.setEnabled(true);<a name="line.1132"></a>
-<span class="sourceLineNo">1133</span>        }<a name="line.1133"></a>
-<span class="sourceLineNo">1134</span>      }<a name="line.1134"></a>
-<span class="sourceLineNo">1135</span>    }<a name="line.1135"></a>
-<span class="sourceLineNo">1136</span><a name="line.1136"></a>
-<span class="sourceLineNo">1137</span>    /**<a name="line.1137"></a>
-<span class="sourceLineNo">1138</span>     * Returns a {@link String} representation of this {@link<a name="line.1138"></a>
-<span class="sourceLineNo">1139</span>     * Requirements.Dependency}.<a name="line.1139"></a>
+<span class="sourceLineNo">987</span>     * @param chart the {@link ChartOrBuilder} to check; may be {@code<a name="line.987"></a>
+<span class="sourceLineNo">988</span>     * null} in which case {@code false} will be returned<a name="line.988"></a>
+<span class="sourceLineNo">989</span>     *<a name="line.989"></a>
+<span class="sourceLineNo">990</span>     * @return {@code true} if this {@link Requirements.Dependency}<a name="line.990"></a>
+<span class="sourceLineNo">991</span>     * identifies the given {@link ChartOrBuilder}; {@code false}<a name="line.991"></a>
+<span class="sourceLineNo">992</span>     * otherwise<a name="line.992"></a>
+<span class="sourceLineNo">993</span>     */<a name="line.993"></a>
+<span class="sourceLineNo">994</span>    public final boolean selects(final ChartOrBuilder chart) {<a name="line.994"></a>
+<span class="sourceLineNo">995</span>      if (chart == null) {<a name="line.995"></a>
+<span class="sourceLineNo">996</span>        return false;<a name="line.996"></a>
+<span class="sourceLineNo">997</span>      }<a name="line.997"></a>
+<span class="sourceLineNo">998</span>      return this.selects(chart.getMetadata());<a name="line.998"></a>
+<span class="sourceLineNo">999</span>    }<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>    <a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>    private final boolean selects(final MetadataOrBuilder metadata) {<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>      final boolean returnValue;<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>      if (metadata == null) {<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>        returnValue = false;<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>      } else {<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>        returnValue = this.selects(metadata.getName(), metadata.getVersion());<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>      }<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>      return returnValue;<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>    }<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span><a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>    private final boolean selects(final String name, final String versionString) {<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>      if (versionString == null) {<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>        return false;<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>      }<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>      <a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>      final Object myName = this.getName();<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>      if (myName == null) {<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>        if (name != null) {<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>          return false;<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>        }<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>      } else if (!myName.equals(name)) {<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>        return false;<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>      }<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span><a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>      final String myVersionRange = this.getVersion();<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>      if (myVersionRange == null) {<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>        return false;<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>      }<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>      <a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>      final Version version = Version.valueOf(versionString);<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>      assert version != null;<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>      return version.satisfies(ExpressionParser.newInstance().parse(myVersionRange));<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>    }<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span><a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>    final boolean adjustName(final Chart.Builder subchart) {<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>      boolean returnValue = false;<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>      if (subchart != null &amp;&amp; this.selects(subchart)) {<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>        final String alias = this.getAlias();<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>        if (alias != null &amp;&amp; !alias.isEmpty() &amp;&amp; subchart.hasMetadata()) {<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>          final Metadata.Builder subchartMetadataBuilder = subchart.getMetadataBuilder();<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>          assert subchartMetadataBuilder != null;<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>          if (!alias.equals(subchartMetadataBuilder.getName())) {<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>            // Rename the chart to have our alias as its new name.<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>            subchartMetadataBuilder.setName(alias);<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>            returnValue = true;<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>          }<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>        }<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>      }<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>      return returnValue;<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>    }<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span><a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>    final boolean setNameToAlias() {<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>      boolean returnValue = false;<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>      final String alias = this.getAlias();<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>      if (alias != null &amp;&amp; !alias.isEmpty() &amp;&amp; !alias.equals(this.getName())) {        <a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>        this.setName(alias);<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>        returnValue = true;<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>      }<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>      return returnValue;<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>    }<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span><a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>    final void processTags(final Map&lt;String, Object&gt; values) {<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>      if (values != null) {<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>        final Object tagsObject = values.get("tags");<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span>        if (tagsObject instanceof Map) {<a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>          final Map&lt;?, ?&gt; tags = (Map&lt;?, ?&gt;)tagsObject;<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>          final Collection&lt;? extends String&gt; myTags = this.getTags();<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>          if (myTags != null &amp;&amp; !myTags.isEmpty()) {<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>            boolean explicitlyTrue = false;<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>            boolean explicitlyFalse = false;<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>            for (final String myTag : myTags) {<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>              final Object tagValue = tags.get(myTag);<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>              if (Boolean.TRUE.equals(tagValue)) {<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>                explicitlyTrue = true;<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>              } else if (Boolean.FALSE.equals(tagValue)) {<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>                explicitlyFalse = true;<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>              } else {<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>                // Not a Boolean at all; just skip it<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>              }<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>            }<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>            <a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>            // Note that this block looks different from the analogous<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>            // block in processConditions() below.  It is this way in the<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>            // Go code as well.<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>            if (explicitlyFalse) {<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>              if (!explicitlyTrue) {<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>                this.setEnabled(false);<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>              }<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>            } else {<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>              this.setEnabled(explicitlyTrue);<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>            }<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>          }<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>        }<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>      }<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>    }<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>    <a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>    final void processConditions(final Map&lt;String, Object&gt; values) {<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>      if (values != null &amp;&amp; !values.isEmpty()) {<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>        final MapTree mapTree = new MapTree(values);<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>        boolean explicitlyTrue = false;<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>        boolean explicitlyFalse = false;<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>        String conditionString = this.getCondition();<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>        if (conditionString != null) {<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>          conditionString = conditionString.trim();<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>          final String[] conditions = commaSplitPattern.split(conditionString);<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>          if (conditions != null &amp;&amp; conditions.length &gt; 0) {<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>            for (final String condition : conditions) {<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>              if (condition != null &amp;&amp; !condition.isEmpty()) {<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>                final Object conditionValue = mapTree.get(condition, Object.class);<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>                if (Boolean.TRUE.equals(conditionValue)) {<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>                  explicitlyTrue = true;<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>                } else if (Boolean.FALSE.equals(conditionValue)) {<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>                  explicitlyFalse = true;<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>                } else if (conditionValue != null) {<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>                  break;<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>                }<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>              }<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>            }<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>          }<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>        }<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>        <a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>        // Note that this block looks different from the analogous block<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>        // in processTags() above.  It is this way in the Go code as<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>        // well.<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>        if (explicitlyFalse) {<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>          if (!explicitlyTrue) {<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>            this.setEnabled(false);<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>          }<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>        } else if (explicitlyTrue) {<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>          this.setEnabled(true);<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>        }<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>      }<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>    }<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span><a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>    /**<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>     * Returns a {@link String} representation of this {@link<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>     * Requirements.Dependency}.<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>     *<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.1139"></a>
 <span class="sourceLineNo">1140</span>     *<a name="line.1140"></a>
-<span class="sourceLineNo">1141</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.1141"></a>
-<span class="sourceLineNo">1142</span>     *<a name="line.1142"></a>
-<span class="sourceLineNo">1143</span>     * @return a non-{@code null} {@link String} representation of<a name="line.1143"></a>
-<span class="sourceLineNo">1144</span>     * this {@link Requirements.Dependency}<a name="line.1144"></a>
-<span class="sourceLineNo">1145</span>     */<a name="line.1145"></a>
-<span class="sourceLineNo">1146</span>    @Override<a name="line.1146"></a>
-<span class="sourceLineNo">1147</span>    public final String toString() {<a name="line.1147"></a>
-<span class="sourceLineNo">1148</span>      final StringBuilder sb = new StringBuilder();<a name="line.1148"></a>
-<span class="sourceLineNo">1149</span>      final Object name = this.getName();<a name="line.1149"></a>
-<span class="sourceLineNo">1150</span>      if (name == null) {<a name="line.1150"></a>
-<span class="sourceLineNo">1151</span>        sb.append("Unnamed");<a name="line.1151"></a>
-<span class="sourceLineNo">1152</span>      } else {<a name="line.1152"></a>
-<span class="sourceLineNo">1153</span>        sb.append(name);<a name="line.1153"></a>
-<span class="sourceLineNo">1154</span>      }<a name="line.1154"></a>
-<span class="sourceLineNo">1155</span>      final String alias = this.getAlias();<a name="line.1155"></a>
-<span class="sourceLineNo">1156</span>      if (alias != null &amp;&amp; !alias.isEmpty()) {<a name="line.1156"></a>
-<span class="sourceLineNo">1157</span>        sb.append(" (").append(alias).append(")");<a name="line.1157"></a>
-<span class="sourceLineNo">1158</span>      }<a name="line.1158"></a>
-<span class="sourceLineNo">1159</span>      sb.append(" ");<a name="line.1159"></a>
-<span class="sourceLineNo">1160</span>      sb.append(this.getVersion());<a name="line.1160"></a>
-<span class="sourceLineNo">1161</span>      return sb.toString();<a name="line.1161"></a>
-<span class="sourceLineNo">1162</span>    }<a name="line.1162"></a>
-<span class="sourceLineNo">1163</span><a name="line.1163"></a>
-<span class="sourceLineNo">1164</span>  }<a name="line.1164"></a>
-<span class="sourceLineNo">1165</span>  <a name="line.1165"></a>
-<span class="sourceLineNo">1166</span>}<a name="line.1166"></a>
+<span class="sourceLineNo">1141</span>     * @return a non-{@code null} {@link String} representation of<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>     * this {@link Requirements.Dependency}<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>     */<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>    @Override<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>    public final String toString() {<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>      final StringBuilder sb = new StringBuilder();<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>      final Object name = this.getName();<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>      if (name == null) {<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>        sb.append("Unnamed");<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>      } else {<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>        sb.append(name);<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>      }<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>      final String alias = this.getAlias();<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>      if (alias != null &amp;&amp; !alias.isEmpty()) {<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>        sb.append(" (").append(alias).append(")");<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>      }<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span>      sb.append(" ");<a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>      sb.append(this.getVersion());<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>      return sb.toString();<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>    }<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span><a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>  }<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>  <a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>}<a name="line.1164"></a>
 
 
 
