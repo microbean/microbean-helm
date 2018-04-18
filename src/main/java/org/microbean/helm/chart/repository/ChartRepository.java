@@ -68,6 +68,7 @@ import org.microbean.development.annotation.Experimental;
 import org.microbean.development.annotation.Issue;
 
 import org.microbean.helm.chart.Metadatas;
+import org.microbean.helm.chart.StringResolver;
 import org.microbean.helm.chart.TapeArchiveChartLoader;
 
 import org.microbean.helm.chart.resolver.AbstractChartResolver;
@@ -1170,40 +1171,6 @@ public class ChartRepository extends AbstractChartResolver {
      * Inner and nested classes.
      */
 
-
-    /**
-     * A {@link Resolver} that forces scalars to be {@link String}s.
-     *
-     * @author <a href="https://about.me/lairdnelson"
-     * target="_parent">Laird Nelson</a>
-     *
-     * @see <a
-     * href="https://github.com/microbean/microbean-helm/issues/131">Issue
-     * 131</a>
-     */
-    @Issue(
-      id = "131",
-      uri = "https://github.com/microbean/microbean-helm/issues/131"
-    )
-    private static final class StringResolver extends Resolver {
-
-      private StringResolver() {
-        super();
-      }
-
-      @Override
-      public final Tag resolve(final NodeId kind, final String value, final boolean implicit) {
-        final Tag returnValue;
-        if (implicit && kind != null && value != null && NodeId.scalar.equals(kind) && !value.isEmpty()) {
-          returnValue = Tag.STR;
-        } else {
-          returnValue = super.resolve(kind, value, implicit);
-        }
-        return returnValue;
-      }
-      
-    }
-    
 
     /**
      * An entry in a <a
