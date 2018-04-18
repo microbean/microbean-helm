@@ -65,6 +65,7 @@ import hapi.chart.MetadataOuterClass.MetadataOrBuilder;
 import org.kamranzafar.jtar.TarInputStream;
 
 import org.microbean.development.annotation.Experimental;
+import org.microbean.development.annotation.Issue;
 
 import org.microbean.helm.chart.Metadatas;
 import org.microbean.helm.chart.TapeArchiveChartLoader;
@@ -72,9 +73,17 @@ import org.microbean.helm.chart.TapeArchiveChartLoader;
 import org.microbean.helm.chart.resolver.AbstractChartResolver;
 import org.microbean.helm.chart.resolver.ChartResolverException;
 
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import org.yaml.snakeyaml.constructor.SafeConstructor;
+
+import org.yaml.snakeyaml.nodes.NodeId;
+import org.yaml.snakeyaml.nodes.Tag;
+
+import org.yaml.snakeyaml.representer.Representer;
+
+import org.yaml.snakeyaml.resolver.Resolver;
 
 /**
  * An {@link AbstractChartResolver} that {@linkplain #resolve(String,
@@ -1059,7 +1068,11 @@ public class ChartRepository extends AbstractChartResolver {
     public static final Index loadFrom(final InputStream stream) throws IOException, URISyntaxException {
       Objects.requireNonNull(stream);
       final Index returnValue;
-      final Map<?, ?> yamlMap = new Yaml(new SafeConstructor()).load(stream);
+      @Issue(
+        id = "131",
+        uri = "https://github.com/microbean/microbean-helm/issues/131"
+      )
+      final Map<?, ?> yamlMap = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions(), new StringResolver()).load(stream);
       if (yamlMap == null || yamlMap.isEmpty()) {
         returnValue = new Index(null);
       } else {
@@ -1159,6 +1172,40 @@ public class ChartRepository extends AbstractChartResolver {
 
 
     /**
+     * A {@link Resolver} that forces scalars to be {@link String}s.
+     *
+     * @author <a href="https://about.me/lairdnelson"
+     * target="_parent">Laird Nelson</a>
+     *
+     * @see <a
+     * href="https://github.com/microbean/microbean-helm/issues/131">Issue
+     * 131</a>
+     */
+    @Issue(
+      id = "131",
+      uri = "https://github.com/microbean/microbean-helm/issues/131"
+    )
+    private static final class StringResolver extends Resolver {
+
+      private StringResolver() {
+        super();
+      }
+
+      @Override
+      public final Tag resolve(final NodeId kind, final String value, final boolean implicit) {
+        final Tag returnValue;
+        if (implicit && kind != null && value != null && NodeId.scalar.equals(kind) && !value.isEmpty()) {
+          returnValue = Tag.STR;
+        } else {
+          returnValue = super.resolve(kind, value, implicit);
+        }
+        return returnValue;
+      }
+      
+    }
+    
+
+    /**
      * An entry in a <a
      * href="https://docs.helm.sh/developing_charts/#the-index-file">Helm
      * chart repository index</a>.
@@ -1193,8 +1240,8 @@ public class ChartRepository extends AbstractChartResolver {
        */
       private final Set<URI> uris;
 
-      
       private final String digest;
+      
 
       /*
        * Constructors.
