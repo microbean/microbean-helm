@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
 
+import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -163,6 +164,12 @@ public class ChartRepository extends AbstractChartResolver {
    */
   private final URI uri;
 
+  /**
+   * The {@link Proxy} representing the proxy to connect to the chart repository
+   * <p>This field is never {@code null}.</p>
+   */
+  private final Proxy proxy;
+
 
   /*
    * Constructors.
@@ -289,6 +296,61 @@ public class ChartRepository extends AbstractChartResolver {
    * @see #getCachedIndexPath()
    */
   public ChartRepository(final String name, final URI uri, final Path archiveCacheDirectory, Path indexCacheDirectory, Path cachedIndexPath) {
+    this(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath, Proxy.NO_PROXY);
+  }
+
+  /**
+   * Creates a new {@link ChartRepository}.
+   *
+   * @param name the name of this {@link ChartRepository}; must not be
+   * {@code null}
+   *
+   * @param uri the {@link URI} to the root of this {@link
+   * ChartRepository}; must not be {@code null}
+   *
+   * @param archiveCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory where Helm chart
+   * archives may be stored; if {@code null} then a {@link Path}
+   * beginning with the absolute directory represented by the value of
+   * the {@code helm.home} system property, or the value of the {@code
+   * HELM_HOME} environment variable, appended with {@code
+   * cache/archive} will be used instead
+   *
+   * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory that the supplied
+   * {@code cachedIndexPath} parameter value will be considered to be
+   * relative to; will be ignored and hence may be {@code null} if the
+   * supplied {@code cachedIndexPath} parameter value {@linkplain
+   * Path#isAbsolute()}
+   *
+   * @param cachedIndexPath a {@link Path} naming the file that will
+   * store a copy of the chart repository's {@code index.yaml} file;
+   * if {@code null} then a {@link Path} relative to the absolute
+   * directory represented by the value of the {@code helm.home}
+   * system property, or the value of the {@code HELM_HOME}
+   * environment variable, and bearing a name consisting of the
+   * supplied {@code name} suffixed with {@code -index.yaml} will be
+   * used instead
+   *
+   * @param proxy a {@link Proxy} used to connect to chart repository
+   * It's default value is NO_PROXY
+   *
+   * @exception NullPointerException if either {@code name} or {@code
+   * uri} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code uri} is {@linkplain
+   * URI#isAbsolute() not absolute}, or if there is no existing "Helm
+   * home" directory
+   *
+   * @see #ChartRepository(String, URI, Path, Path, Path)
+   *
+   * @see #getName()
+   *
+   * @see #getUri()
+   *
+   * @see #getCachedIndexPath()
+   */
+  public ChartRepository(final String name, final URI uri, final Path archiveCacheDirectory, Path indexCacheDirectory, Path cachedIndexPath, Proxy proxy) {
     super();
     Objects.requireNonNull(name);
     Objects.requireNonNull(uri);    
@@ -341,6 +403,7 @@ public class ChartRepository extends AbstractChartResolver {
     
     this.name = name;
     this.uri = uri;
+    this.proxy = proxy;
   }
 
 
@@ -593,7 +656,7 @@ public class ChartRepository extends AbstractChartResolver {
     }
     final Path temporaryPath = Files.createTempFile(new StringBuilder(this.getName()).append("-index-").toString(), ".yaml");
     assert temporaryPath != null;
-    try (final BufferedInputStream stream = new BufferedInputStream(indexUrl.openStream())) {
+    try (final BufferedInputStream stream = new BufferedInputStream(indexUrl.openConnection(proxy).getInputStream())) {
       Files.copy(stream, temporaryPath, StandardCopyOption.REPLACE_EXISTING);
     } catch (final IOException throwMe) {
       try {
@@ -689,7 +752,7 @@ public class ChartRepository extends AbstractChartResolver {
             assert chartUrl != null;
             final Path temporaryPath = Files.createTempFile(chartKey.append("-").toString(), ".tgz");
             assert temporaryPath != null;
-            try (final InputStream stream = new BufferedInputStream(chartUrl.openStream())) {
+            try (final InputStream stream = new BufferedInputStream(chartUrl.openConnection(proxy).getInputStream())) {
               Files.copy(stream, temporaryPath, StandardCopyOption.REPLACE_EXISTING);
             } catch (final IOException throwMe) {
               try {
