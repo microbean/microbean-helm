@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
  *
  * @see org.microbean.helm.ReleaseManager
  */
-@Version("2.7.0")
+@Version("2.8.2.1.0.4")
 package org.microbean.helm;
 
 import org.microbean.development.annotation.Version;

@@ -361,7 +361,7 @@ public final class Requirements {
    * null}
    */
   public static final Chart.Builder apply(final Chart.Builder chartBuilder, ConfigOrBuilder userSuppliedValues) {
-    return apply(chartBuilder, userSuppliedValues, true);
+    return apply(chartBuilder, userSuppliedValues, true /* top level, i.e. non-recursive call */);
   }
 
   /**
@@ -378,8 +378,8 @@ public final class Requirements {
    * @param userSuppliedValues a {@link ConfigOrBuilder} representing
    * overriding values; may be {@code null}
    *
-   * @param firstInvocation {@code true} if this is a non-recursive
-   * call, and hence certain "top-level" processing should take place
+   * @param topLevel {@code true} if this is a non-recursive call, and
+   * hence certain "top-level" processing should take place
    *
    * @return the supplied {@code chartBuilder} for convenience; never
    * {@code null}
@@ -612,8 +612,8 @@ public final class Requirements {
     private String name;
 
     /**
-     * The version of the subchart being represented by this {@link
-     * Requirements.Dependency}.
+     * The range of acceptable semantic versions of the subchart being
+     * represented by this {@link Requirements.Dependency}.
      *
      * <p>This field may be {@code null}.</p>
      *
@@ -621,7 +621,7 @@ public final class Requirements {
      *
      * @see #setVersion(String)
      */
-    private String version;
+    private String versionRange;
 
     /**
      * A {@link String} representation of a URI which, when {@code
@@ -753,30 +753,33 @@ public final class Requirements {
     }
 
     /**
-     * Returns the version of the subchart being represented by this {@link
+     * Returns the range of acceptable semantic versions of the
+     * subchart being represented by this {@link
      * Requirements.Dependency}.
      *
      * <p>This method may return {@code null}.</p>
      *
-     * @return the version of the subchart being represented by this {@link
+     * @return the range of acceptable semantic versions of the
+     * subchart being represented by this {@link
      * Requirements.Dependency}, or {@code null}
      *
      * @see #setVersion(String)
      */
     public final String getVersion() {
-      return this.version;
+      return this.versionRange;
     }
 
     /**
-     * Sets the version of the subchart being represented by this {@link
-     * Requirements.Dependency}.
+     * Sets the range of acceptable semantic versions of the subchart
+     * being represented by this {@link Requirements.Dependency}.
      *
-     * @param version the new version; may be {@code null}
+     * @param versionRange the new semantic version range; may be {@code
+     * null}
      *
      * @see #getVersion()
      */
-    public final void setVersion(final String version) {
-      this.version = version;
+    public final void setVersion(final String versionRange) {
+      this.versionRange = versionRange;
     }
 
     /**
@@ -998,7 +1001,7 @@ public final class Requirements {
     private final boolean selects(final MetadataOrBuilder metadata) {
       final boolean returnValue;
       if (metadata == null) {
-        returnValue = this.selects(null, null);
+        returnValue = false;
       } else {
         returnValue = this.selects(metadata.getName(), metadata.getVersion());
       }
@@ -1006,6 +1009,10 @@ public final class Requirements {
     }
 
     private final boolean selects(final String name, final String versionString) {
+      if (versionString == null) {
+        return false;
+      }
+      
       final Object myName = this.getName();
       if (myName == null) {
         if (name != null) {
@@ -1015,23 +1022,14 @@ public final class Requirements {
         return false;
       }
 
-      final String myVersion = this.getVersion();
-      if (myVersion == null) {
-        if (versionString != null) {
-          return false;
-        }
-      } else {
-        final Version version = Version.valueOf(myVersion);
-        assert version != null;
-        final Parser<Expression> parser = ExpressionParser.newInstance();
-        assert parser != null;
-        final Expression semVerConstraint = parser.parse(versionString);
-        assert semVerConstraint != null;
-        if (!version.satisfies(semVerConstraint)) {
-          return false;
-        }
+      final String myVersionRange = this.getVersion();
+      if (myVersionRange == null) {
+        return false;
       }
-      return true;
+      
+      final Version version = Version.valueOf(versionString);
+      assert version != null;
+      return version.satisfies(ExpressionParser.newInstance().parse(myVersionRange));
     }
 
     final boolean adjustName(final Chart.Builder subchart) {

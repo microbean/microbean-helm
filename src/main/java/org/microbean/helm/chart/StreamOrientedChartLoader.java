@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,12 @@ import org.kamranzafar.jtar.TarInputStream;
 
 import org.microbean.development.annotation.Issue;
 
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+
+import org.yaml.snakeyaml.representer.Representer;
 
 /**
  * A partial {@link AbstractChartLoader} implementation that is capable of
@@ -99,8 +104,9 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
    * </ul>
    */
   private static final Pattern fileNamePattern = Pattern.compile("^/*[^/]+(?!.*/(?:charts|templates)/)/(.+)$");
-  
-  private static final Pattern templateFileNamePattern = Pattern.compile("^.+/(templates/[^/]+)$");
+
+  @Issue(uri = "https://github.com/microbean/microbean-helm/issues/88")
+  private static final Pattern templateFileNamePattern = Pattern.compile("^.+/(templates/.+)$");
 
   @Issue(uri = "https://github.com/microbean/microbean-helm/issues/63")
   private static final Pattern subchartFileNamePattern = Pattern.compile("^.+/charts/([^._][^/]+/?(.*))$");
@@ -610,7 +616,7 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
     Objects.requireNonNull(chartBuilder);
     Objects.requireNonNull(stream);
     Metadata returnValue = null;
-    final Map<?, ?> map = new Yaml().loadAs(stream, Map.class);
+    final Map<?, ?> map = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions(), new StringResolver()).load(stream);
     assert map != null;
     final Metadata.Builder metadataBuilder = chartBuilder.getMetadataBuilder();
     assert metadataBuilder != null;

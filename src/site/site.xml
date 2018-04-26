@@ -7,7 +7,7 @@
     name="${project.name}"
     combine.self="merge">
   <bannerRight>
-    <name>μb ${project.artifactId}</name>
+    <name>µb ${project.artifactId}</name>
     <src>https://avatars0.githubusercontent.com/u/25515632?s=60</src>
     <href>${project.url}</href>
   </bannerRight>
@@ -36,3 +36,4 @@
   </custom>
 
 </project>
+

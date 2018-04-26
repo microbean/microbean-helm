@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import hapi.chart.TemplateOuterClass.TemplateOrBuilder;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import org.yaml.snakeyaml.introspector.BeanAccess;
 import org.yaml.snakeyaml.introspector.MethodProperty;
@@ -252,7 +252,7 @@ public abstract class AbstractChartWriter implements Closeable {
     representer.setPropertyUtils(new CustomPropertyUtils());
     final DumperOptions options = new DumperOptions();
     options.setAllowReadOnlyProperties(true);
-    return new Yaml(new Constructor(), representer, options);
+    return new Yaml(new SafeConstructor(), representer, options);
   }
 
   /**
@@ -760,6 +760,7 @@ public abstract class AbstractChartWriter implements Closeable {
       if (MetadataOrBuilder.class.isAssignableFrom(type)) {
         returnValue = new TreeSet<>();
         try {
+          returnValue.add(new MethodProperty(new PropertyDescriptor("annotations", type, "getAnnotationsMap", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("apiVersion", type, "getApiVersion", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("appVersion", type, "getAppVersion", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("condition", type, "getCondition", null)));
@@ -769,6 +770,7 @@ public abstract class AbstractChartWriter implements Closeable {
           returnValue.add(new MethodProperty(new PropertyDescriptor("home", type, "getHome", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("icon", type, "getIcon", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("keywords", type, "getKeywordsList", null)));
+          returnValue.add(new MethodProperty(new PropertyDescriptor("kubeVersion", type, "getKubeVersion", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("maintainers", type, "getMaintainersOrBuilderList", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("name", type, "getName", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("sources", type, "getSourcesList", null)));
@@ -781,8 +783,9 @@ public abstract class AbstractChartWriter implements Closeable {
       } else if (MaintainerOrBuilder.class.isAssignableFrom(type)) {
         returnValue = new TreeSet<>();
         try {
-          returnValue.add(new MethodProperty(new PropertyDescriptor("name", type, "getName", null)));
           returnValue.add(new MethodProperty(new PropertyDescriptor("email", type, "getEmail", null)));
+          returnValue.add(new MethodProperty(new PropertyDescriptor("name", type, "getName", null)));
+          returnValue.add(new MethodProperty(new PropertyDescriptor("url", type, "getUrl", null)));
         } catch (final IntrospectionException introspectionException) {
           throw new IllegalStateException(introspectionException.getMessage(), introspectionException);
         }

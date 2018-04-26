@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -298,9 +298,11 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
   }
 
   /**
-   * Returns {@code true} if at least one of the patterns added via
-   * the {@link #addPatterns(Collection)} method logically matches the
-   * supplied {@link Path}.
+   * Returns {@code true} if the supplied {@link Path} is neither
+   * {@code null}, the empty path ({@code ""}) nor the "current
+   * directory" path ("{@code .}" or "{@code ./}"), and if at least
+   * one of the patterns added via the {@link
+   * #addPatterns(Collection)} method logically matches it.
    *
    * @param path the {@link Path} to match; may be {@code null} in
    * which case {@code false} will be returned
@@ -314,8 +316,9 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
     boolean returnValue = false;
     if (path != null) {
       final String pathString = path.toString();
-      // See https://github.com/kubernetes/helm/issues/1776.
-      if (!pathString.equals(".") && !pathString.equals("./")) {
+      // See https://github.com/kubernetes/helm/issues/1776 and
+      // https://github.com/kubernetes/helm/pull/3114
+      if (!pathString.isEmpty() && !pathString.equals(".") && !pathString.equals("./")) {
         synchronized (this.rules) {
           for (final Predicate<Path> rule : this.rules) {
             if (rule != null && rule.test(path)) {

@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import java.util.concurrent.TimeUnit;
+
 import hapi.services.tiller.ReleaseServiceGrpc;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceBlockingStub;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceFutureStub;
@@ -40,11 +42,17 @@ import io.fabric8.kubernetes.client.ConfigAware;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient; // for javadoc only
 import io.fabric8.kubernetes.client.HttpClientAware;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException; // for javadoc only
 import io.fabric8.kubernetes.client.LocalPortForward;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
+
+import io.grpc.health.v1.HealthGrpc;
+import io.grpc.health.v1.HealthGrpc.HealthBlockingStub;
+import io.grpc.health.v1.HealthGrpc.HealthFutureStub;
+import io.grpc.health.v1.HealthGrpc.HealthStub;
 
 import io.grpc.stub.MetadataUtils;
 
@@ -77,7 +85,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    *
    * <p>This field is never {@code null}.</p>
    */
-  public static final String VERSION = "2.7.0";
+  public static final String VERSION = "2.8.2";
 
   /**
    * The Kubernetes namespace into which Tiller server instances are
@@ -99,6 +107,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * <p>This field is never {@code null}.</p>
    */
   public static final Map<String, String> DEFAULT_LABELS;
+
+  /**
+   * The maximum size, in bytes, that messages destined for Tiller may
+   * be.
+   */
+  public static final int MAX_MESSAGE_SIZE = 20 * 1024 * 1024;
   
   /**
    * A {@link Metadata} that ensures that certain Tiller-related
@@ -263,6 +277,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * identifying a Pod within the cluster that houses a Tiller instance
    *
    * @exception NullPointerException if {@code client} is {@code null}
+   *
+   * @exception KubernetesClientException if there was a problem
+   * connecting to Kubernetes
+   *
+   * @exception TillerException if a ready Tiller pod could not be
+   * found and consequently a connection could not be established
    */
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client, final String namespaceHousingTiller) throws MalformedURLException {
     this(client, namespaceHousingTiller, DEFAULT_PORT, DEFAULT_LABELS);
@@ -304,6 +324,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * identifying a Pod within the cluster that houses a Tiller instance
    *
    * @exception NullPointerException if {@code client} is {@code null}
+   *
+   * @exception KubernetesClientException if there was a problem
+   * connecting to Kubernetes
+   *
+   * @exception TillerException if a ready Tiller pod could not be
+   * found and consequently a connection could not be established
    */
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client,
                                                                String namespaceHousingTiller,
@@ -325,8 +351,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     if (httpClient == null) {
       throw new IllegalArgumentException("client", new IllegalStateException("client.getHttpClient() == null"));
     }
+    LocalPortForward portForward = null;
+    
     this.portForward = Pods.forwardPort(httpClient, client.pods().inNamespace(namespaceHousingTiller).withLabels(tillerLabels), tillerPort);
-    assert this.portForward != null;
+    if (this.portForward == null) {
+      throw new TillerException("Could not forward port to a Ready Tiller pod's port " + tillerPort + " in namespace " + namespaceHousingTiller + " with labels " + tillerLabels);
+    }
     this.channel = this.buildChannel(this.portForward);
   }
 
@@ -385,7 +415,12 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     if (hostAddress == null) {
       throw new IllegalArgumentException("portForward", new IllegalStateException("portForward.getLocalAddress().getHostAddress() == null"));
     }
-    return ManagedChannelBuilder.forAddress(hostAddress, portForward.getLocalPort()).usePlaintext(true).build();
+    return ManagedChannelBuilder.forAddress(hostAddress, portForward.getLocalPort())
+      .idleTimeout(5L, TimeUnit.SECONDS)
+      .keepAliveTime(30L, TimeUnit.SECONDS)
+      .maxInboundMessageSize(MAX_MESSAGE_SIZE)
+      .usePlaintext(true)
+      .build();
   }
 
   /**
@@ -468,6 +503,30 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     ReleaseServiceStub returnValue = null;
     if (this.channel != null) {
       returnValue = MetadataUtils.attachHeaders(ReleaseServiceGrpc.newStub(this.channel), metadata);
+    }
+    return returnValue;
+  }
+
+  public HealthBlockingStub getHealthBlockingStub() {
+    HealthBlockingStub returnValue = null;
+    if (this.channel != null) {
+      returnValue = MetadataUtils.attachHeaders(HealthGrpc.newBlockingStub(this.channel), metadata);
+    }
+    return returnValue;
+  }
+
+  public HealthFutureStub getHealthFutureStub() {
+    HealthFutureStub returnValue = null;
+    if (this.channel != null) {
+      returnValue = MetadataUtils.attachHeaders(HealthGrpc.newFutureStub(this.channel), metadata);
+    }
+    return returnValue;
+  }
+  
+  public HealthStub getHealthStub() {
+    HealthStub returnValue = null;
+    if (this.channel != null) {
+      returnValue = MetadataUtils.attachHeaders(HealthGrpc.newStub(this.channel), metadata);
     }
     return returnValue;
   }

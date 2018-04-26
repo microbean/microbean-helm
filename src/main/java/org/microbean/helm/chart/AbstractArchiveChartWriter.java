@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.microbean.helm.chart;
 
 import java.io.IOException;
 
+import java.util.Map;
 import java.util.Objects;
 
 import com.google.protobuf.AnyOrBuilder;
@@ -134,7 +135,12 @@ public abstract class AbstractArchiveChartWriter extends AbstractChartWriter {
       final String raw = config.getRaw();
       final String yaml;
       if (raw == null || raw.isEmpty()) {
-        yaml = "";
+        final Map<String, Object> valuesMap = Configs.toMap(config);
+        if (valuesMap == null || valuesMap.isEmpty()) {
+          yaml = "";
+        } else {
+          yaml = this.toYAML(context, valuesMap);
+        }
       } else {
         yaml = raw;
       }

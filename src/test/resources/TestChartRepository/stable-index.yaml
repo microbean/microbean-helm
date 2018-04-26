@@ -2,6 +2,7 @@ apiVersion: v1
 entries:
   acs-engine-autoscaler:
   - apiVersion: v1
+    appVersion: 2017-09-22
     created: 2017-09-22T09:19:05.860245076Z
     description: Scales worker nodes within agent pools
     digest: 4514cdd7ae86186ab2b9b56e31753b7e2ec90d745fb550dee53a90a042a20ac4

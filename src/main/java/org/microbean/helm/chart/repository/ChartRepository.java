@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 
 import java.nio.ByteBuffer;
 
@@ -65,14 +66,26 @@ import hapi.chart.MetadataOuterClass.MetadataOrBuilder;
 import org.kamranzafar.jtar.TarInputStream;
 
 import org.microbean.development.annotation.Experimental;
+import org.microbean.development.annotation.Issue;
 
 import org.microbean.helm.chart.Metadatas;
+import org.microbean.helm.chart.StringResolver;
 import org.microbean.helm.chart.TapeArchiveChartLoader;
 
 import org.microbean.helm.chart.resolver.AbstractChartResolver;
 import org.microbean.helm.chart.resolver.ChartResolverException;
 
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+
+import org.yaml.snakeyaml.nodes.NodeId;
+import org.yaml.snakeyaml.nodes.Tag;
+
+import org.yaml.snakeyaml.representer.Representer;
+
+import org.yaml.snakeyaml.resolver.Resolver;
 
 /**
  * An {@link AbstractChartResolver} that {@linkplain #resolve(String,
@@ -267,9 +280,9 @@ public class ChartRepository extends AbstractChartResolver {
    * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
    * absolute} {@link Path} representing a directory that the supplied
    * {@code cachedIndexPath} parameter value will be considered to be
-   * relative to; will be ignored and hence may be {@code null} if the
-   * supplied {@code cachedIndexPath} parameter value {@linkplain
-   * Path#isAbsolute()}
+   * relative to; <strong>will be ignored and hence may be {@code
+   * null}</strong> if the supplied {@code cachedIndexPath} parameter
+   * value {@linkplain Path#isAbsolute() is absolute}
    *
    * @param cachedIndexPath a {@link Path} naming the file that will
    * store a copy of the chart repository's {@code index.yaml} file;
@@ -285,7 +298,9 @@ public class ChartRepository extends AbstractChartResolver {
    *
    * @exception IllegalArgumentException if {@code uri} is {@linkplain
    * URI#isAbsolute() not absolute}, or if there is no existing "Helm
-   * home" directory
+   * home" directory, or if {@code archiveCacheDirectory} is
+   * non-{@code null} and either empty or not {@linkplain
+   * Path#isAbsolute()}
    *
    * @see #ChartRepository(String, URI, Path, Path, Path)
    *
@@ -364,6 +379,7 @@ public class ChartRepository extends AbstractChartResolver {
       helmHome = getHelmHome();
       assert helmHome != null;
       this.archiveCacheDirectory = helmHome.resolve("cache/archive");
+      assert this.archiveCacheDirectory != null;
       assert this.archiveCacheDirectory.isAbsolute();
     } else if (archiveCacheDirectory.toString().isEmpty()) {
       throw new IllegalArgumentException("archiveCacheDirectory.toString().isEmpty(): " + archiveCacheDirectory);
@@ -372,6 +388,8 @@ public class ChartRepository extends AbstractChartResolver {
     } else {
       this.archiveCacheDirectory = archiveCacheDirectory;
     }
+    assert this.archiveCacheDirectory != null;
+    assert this.archiveCacheDirectory.isAbsolute();
     if (!Files.isDirectory(this.archiveCacheDirectory)) {
       throw new IllegalArgumentException("!Files.isDirectory(this.archiveCacheDirectory): " + this.archiveCacheDirectory);
     }
@@ -379,10 +397,11 @@ public class ChartRepository extends AbstractChartResolver {
     if (cachedIndexPath == null || cachedIndexPath.toString().isEmpty()) {
       cachedIndexPath = Paths.get(new StringBuilder(name).append("-index.yaml").toString());
     }
-    this.cachedIndexPath = cachedIndexPath;
+    assert cachedIndexPath != null;
 
     if (cachedIndexPath.isAbsolute()) {
       this.indexCacheDirectory = null;
+      this.cachedIndexPath = cachedIndexPath;
     } else {
       if (indexCacheDirectory == null) {
         if (helmHome == null) {
@@ -395,11 +414,15 @@ public class ChartRepository extends AbstractChartResolver {
         throw new IllegalArgumentException("!indexCacheDirectory.isAbsolute(): " + indexCacheDirectory);
       } else {
         this.indexCacheDirectory = indexCacheDirectory;
+        assert this.indexCacheDirectory.isAbsolute();
       }
-      if (!Files.isDirectory(indexCacheDirectory)) {
-        throw new IllegalArgumentException("!Files.isDirectory(indexCacheDirectory): " + indexCacheDirectory);
+      if (!Files.isDirectory(this.indexCacheDirectory)) {
+        throw new IllegalArgumentException("!Files.isDirectory(this.indexCacheDirectory): " + this.indexCacheDirectory);
       }
+      this.cachedIndexPath = this.indexCacheDirectory.resolve(cachedIndexPath);
     }
+    assert this.cachedIndexPath != null;
+    assert this.cachedIndexPath.isAbsolute();
     
     this.name = name;
     this.uri = uri;
@@ -429,8 +452,11 @@ public class ChartRepository extends AbstractChartResolver {
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * @return the non-{@code null} {@link URI} of the root of this
-   * {@link ChartRepository}
+   * <p>The {@link URI} returned by this method is guaranteed to be
+   * {@linkplain URI#isAbsolute() absolute}.</p>
+   *
+   * @return the non-{@code null}, {@linkplain URI#isAbsolute()
+   * absolute} {@link URI} of the root of this {@link ChartRepository}
    */
   public final URI getUri() {
     return this.uri;
@@ -656,7 +682,7 @@ public class ChartRepository extends AbstractChartResolver {
     }
     final Path temporaryPath = Files.createTempFile(new StringBuilder(this.getName()).append("-index-").toString(), ".yaml");
     assert temporaryPath != null;
-    try (final BufferedInputStream stream = new BufferedInputStream(indexUrl.openConnection(proxy).getInputStream())) {
+    try (final BufferedInputStream stream = new BufferedInputStream(this.openStream(indexUrl))) {
       Files.copy(stream, temporaryPath, StandardCopyOption.REPLACE_EXISTING);
     } catch (final IOException throwMe) {
       try {
@@ -746,13 +772,24 @@ public class ChartRepository extends AbstractChartResolver {
         assert index != null;
         final Index.Entry entry = index.getEntry(chartName, chartVersion);
         if (entry != null) {
-          final URI chartUri = entry.getFirstUri();
+          URI chartUri = entry.getFirstUri();
           if (chartUri != null) {
+
+            // See https://github.com/kubernetes/helm/issues/3057
+            if (!chartUri.isAbsolute()) {
+              final URI chartRepositoryUri = this.getUri();
+              assert chartRepositoryUri != null;
+              assert chartRepositoryUri.isAbsolute();
+              chartUri = chartRepositoryUri.resolve(chartUri);
+              assert chartUri != null;
+              assert chartUri.isAbsolute();
+            }
+            
             final URL chartUrl = chartUri.toURL();
             assert chartUrl != null;
             final Path temporaryPath = Files.createTempFile(chartKey.append("-").toString(), ".tgz");
             assert temporaryPath != null;
-            try (final InputStream stream = new BufferedInputStream(chartUrl.openConnection(proxy).getInputStream())) {
+            try (final InputStream stream = new BufferedInputStream(this.openStream(chartUrl))) {
               Files.copy(stream, temporaryPath, StandardCopyOption.REPLACE_EXISTING);
             } catch (final IOException throwMe) {
               try {
@@ -771,6 +808,36 @@ public class ChartRepository extends AbstractChartResolver {
     return returnValue;
   }
 
+  /**
+   * Returns an {@link InputStream} corresponding to the supplied
+   * {@link URL}.
+   *
+   * <p>This method may return {@code null}.</p>
+   *
+   * <p>Overrides of this method are permitted to return {@code
+   * null}.</p>
+   *
+   * @param url the {@link URL} whose affiliated {@link InputStream}
+   * should be returned; may be {@code null} in which case {@code
+   * null} will be returned
+   *
+   * @return an {@link InputStream} appropriate for the supplied
+   * {@link URL}, or {@code null}
+   *
+   * @exception IOException if an error occurs while connecting to the
+   * supplied {@link URL}
+   */
+  protected InputStream openStream(final URL url) throws IOException {
+    InputStream returnValue = null;
+    if (url != null) {
+      final URLConnection urlConnection = url.openConnection(this.proxy);
+      assert urlConnection != null;
+      urlConnection.setRequestProperty("User-Agent", "microbean-helm");
+      returnValue = urlConnection.getInputStream();
+    }
+    return returnValue;
+  }
+  
   /**
    * {@inheritDoc}
    *
@@ -1065,7 +1132,11 @@ public class ChartRepository extends AbstractChartResolver {
     public static final Index loadFrom(final InputStream stream) throws IOException, URISyntaxException {
       Objects.requireNonNull(stream);
       final Index returnValue;
-      final Map<?, ?> yamlMap = new Yaml().loadAs(stream, Map.class);
+      @Issue(
+        id = "131",
+        uri = "https://github.com/microbean/microbean-helm/issues/131"
+      )
+      final Map<?, ?> yamlMap = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions(), new StringResolver()).load(stream);
       if (yamlMap == null || yamlMap.isEmpty()) {
         returnValue = new Index(null);
       } else {
@@ -1199,8 +1270,8 @@ public class ChartRepository extends AbstractChartResolver {
        */
       private final Set<URI> uris;
 
-      
       private final String digest;
+      
 
       /*
        * Constructors.
