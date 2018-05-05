@@ -178,8 +178,13 @@ public class ChartRepository extends AbstractChartResolver {
   private final URI uri;
 
   /**
-   * The {@link Proxy} representing the proxy to connect to the chart repository
+   * The {@link Proxy} representing the proxy server used to establish
+   * a connection to the chart repository represented by this {@link
+   * ChartRepository}.
+   *
    * <p>This field is never {@code null}.</p>
+   *
+   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy)
    */
   private final Proxy proxy;
 
@@ -211,7 +216,7 @@ public class ChartRepository extends AbstractChartResolver {
    * URI#isAbsolute() not absolute}, or if there is no existing "Helm
    * home" directory
    *
-   * @see #ChartRepository(String, URI, Path, Path, Path)
+   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy)
    *
    * @see #getName()
    *
@@ -248,7 +253,7 @@ public class ChartRepository extends AbstractChartResolver {
    * URI#isAbsolute() not absolute}, or if there is no existing "Helm
    * home" directory
    *
-   * @see #ChartRepository(String, URI, Path, Path, Path)
+   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy)
    *
    * @see #getName()
    *
@@ -302,7 +307,7 @@ public class ChartRepository extends AbstractChartResolver {
    * non-{@code null} and either empty or not {@linkplain
    * Path#isAbsolute()}
    *
-   * @see #ChartRepository(String, URI, Path, Path, Path)
+   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy)
    *
    * @see #getName()
    *
@@ -347,8 +352,10 @@ public class ChartRepository extends AbstractChartResolver {
    * supplied {@code name} suffixed with {@code -index.yaml} will be
    * used instead
    *
-   * @param proxy a {@link Proxy} used to connect to chart repository
-   * It's default value is NO_PROXY
+   * @param proxy a {@link Proxy} representing a proxy server used to
+   * establish a connection to the chart repository represented by
+   * this {@link ChartRepository}; may be {@code null} in which case
+   * {@link Proxy#NO_PROXY} will be used instead
    *
    * @exception NullPointerException if either {@code name} or {@code
    * uri} is {@code null}
@@ -357,15 +364,13 @@ public class ChartRepository extends AbstractChartResolver {
    * URI#isAbsolute() not absolute}, or if there is no existing "Helm
    * home" directory
    *
-   * @see #ChartRepository(String, URI, Path, Path, Path)
-   *
    * @see #getName()
    *
    * @see #getUri()
    *
    * @see #getCachedIndexPath()
    */
-  public ChartRepository(final String name, final URI uri, final Path archiveCacheDirectory, Path indexCacheDirectory, Path cachedIndexPath, Proxy proxy) {
+  public ChartRepository(final String name, final URI uri, final Path archiveCacheDirectory, Path indexCacheDirectory, Path cachedIndexPath, final Proxy proxy) {
     super();
     Objects.requireNonNull(name);
     Objects.requireNonNull(uri);    
@@ -426,7 +431,7 @@ public class ChartRepository extends AbstractChartResolver {
     
     this.name = name;
     this.uri = uri;
-    this.proxy = proxy;
+    this.proxy = proxy == null ? Proxy.NO_PROXY : proxy;
   }
 
 
@@ -830,6 +835,7 @@ public class ChartRepository extends AbstractChartResolver {
   protected InputStream openStream(final URL url) throws IOException {
     InputStream returnValue = null;
     if (url != null) {
+      assert this.proxy != null;
       final URLConnection urlConnection = url.openConnection(this.proxy);
       assert urlConnection != null;
       urlConnection.setRequestProperty("User-Agent", "microbean-helm");
