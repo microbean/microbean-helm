@@ -104,7 +104,89 @@ try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
   requestBuilder.setWait(true); // Wait for Pods to be ready
   // Install the loaded chart with no user-supplied overrides.
   // To override any values, call the requestBuilder.getValuesBuilder() method,
-  // and add values to the resulting Builder.
+  // and add values to the resulting Builder, using its setRaw(String) method,
+  // which takes a YAML string.
+  //
+  // Why setRaw(String)? Due to limitations in Tiller itself, Tiller will use
+  // only the return value from Config.Builder#getRaw()
+  // (https://microbean.github.io/microbean-helm/apidocs/hapi/chart/ConfigOuterClass.Config.Builder.html#getRaw--),
+  // which is taken to be a YAML String representing the user-supplied overrides.
+  // Tiller ignores any other values-related "getter" methods.
+  final Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chartBuilder);
+  assert releaseFuture != null;
+  final Release release = releaseFuture.get().getRelease();
+  assert release != null;
+}
+```
+
+## Installing a Release With User-Supplied Overriding Values
+
+This example shows loading a `Chart.Builder` from a URL, and then
+using it to install a release into a Kubernetes cluster with
+user-supplied overriding values.  This is analogous to a `helm install
+--set wordpressEmail="sample@example.com"` operation, or a `helm
+install -f ./userValues.yaml` operation.
+
+```
+import java.net.URI;
+import java.net.URL;
+
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import java.util.concurrent.Future;
+
+import hapi.chart.ChartOuterClass.Chart;
+
+import hapi.release.ReleaseOuterClass.Release;
+
+import hapi.services.tiller.Tiller.InstallReleaseRequest;
+import hapi.services.tiller.Tiller.InstallReleaseResponse;
+
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+
+import org.microbean.helm.ReleaseManager;
+import org.microbean.helm.Tiller;
+
+import org.microbean.helm.chart.URLChartLoader;
+
+import org.yaml.snakeyaml.Yaml;
+
+final URI uri = URI.create("https://kubernetes-charts.storage.googleapis.com/wordpress-0.6.6.tgz");
+assert uri != null;
+final URL url = uri.toURL();
+assert url != null;
+Chart.Builder chart = null;
+try (final URLChartLoader chartLoader = new URLChartLoader()) {
+  chart = chartLoader.load(url);
+}
+assert chart != null;
+
+try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
+     final Tiller = new Tiller(client);
+     final ReleaseManager releaseManager = new ReleaseManager(tiller)) {
+
+  final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
+  assert requestBuilder != null;
+  requestBuilder.setTimeout(300L);
+  requestBuilder.setName("test-charts"); // Set the Helm release name
+  requestBuilder.setWait(true); // Wait for Pods to be ready
+
+  // Create a structure that will hold user-supplied overriding values.
+  final Map<String, Object> yaml = new LinkedHashMap<>();
+  yaml.put("wordpressEmail", "sample@example.com");
+  
+  // Convert it to a YAML string using SnakeYaml.
+  final String yamlString = new Yaml().dump(yaml);
+  
+  // Set the user-supplied values in the only way that will be readable by
+  // Tiller.  For some reason, Tiller itself only ever looks at the return
+  // value of Config.Builder#getRaw(), and no other values-related "getter"
+  // method.
+  requestBuilder.getValuesBuilder().setRaw(yamlString);
+  
+  // Install the loaded chart with the user-supplied overrides.
   final Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chartBuilder);
   assert releaseFuture != null;
   final Release release = releaseFuture.get().getRelease();
