@@ -697,7 +697,7 @@ public class ChartRepository extends AbstractChartResolver {
       }
       throw throwMe;
     }
-    return Files.move(temporaryPath, path, StandardCopyOption.ATOMIC_MOVE);
+    return Files.move(temporaryPath, path);
   }
 
   /**
@@ -804,7 +804,7 @@ public class ChartRepository extends AbstractChartResolver {
               }
               throw throwMe;
             }
-            Files.move(temporaryPath, cachedChartPath, StandardCopyOption.ATOMIC_MOVE);
+            Files.move(temporaryPath, cachedChartPath);
           }
         }
       }
