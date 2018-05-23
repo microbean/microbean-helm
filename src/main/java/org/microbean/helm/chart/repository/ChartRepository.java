@@ -652,8 +652,7 @@ public class ChartRepository extends AbstractChartResolver {
    * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
    * index.yaml}</a> file to a {@linkplain
    * Files#createTempFile(String, String, FileAttribute...) temporary
-   * file} first, and then {@linkplain StandardCopyOption#ATOMIC_MOVE
-   * atomically renames it}.</p>
+   * file} first, and then renames it.</p>
    *
    * @param path the {@link Path} to download the <a
    * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
