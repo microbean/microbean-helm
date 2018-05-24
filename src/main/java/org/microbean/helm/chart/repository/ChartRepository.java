@@ -40,6 +40,7 @@ import java.nio.file.attribute.FileAttribute; // for javadoc only
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -187,6 +188,24 @@ public class ChartRepository extends AbstractChartResolver {
    * @see #ChartRepository(String, URI, Path, Path, Path, Proxy)
    */
   private final Proxy proxy;
+
+  /**
+   * The login to access {@link ChartRepository} via HTTP.
+   *
+   * <p>This field can be {@code null}.</p>
+   *
+   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy, String, String)
+   */
+  private final String login;
+
+  /**
+   * The password to access {@link ChartRepository} via HTTP.
+   *
+   * <p>This field can be {@code null}.</p>
+   *
+   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy, String, String)
+   */
+  private final String password;
 
 
   /*
@@ -371,13 +390,77 @@ public class ChartRepository extends AbstractChartResolver {
    * @see #getCachedIndexPath()
    */
   public ChartRepository(final String name, final URI uri, final Path archiveCacheDirectory, Path indexCacheDirectory, Path cachedIndexPath, final Proxy proxy) {
+    this(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath, proxy, null, null);
+  }
+
+  /**
+   * Creates a new {@link ChartRepository}.
+   *
+   * @param name the name of this {@link ChartRepository}; must not be
+   * {@code null}
+   *
+   * @param uri the {@link URI} to the root of this {@link
+   * ChartRepository}; must not be {@code null}
+   *
+   * @param archiveCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory where Helm chart
+   * archives may be stored; if {@code null} then a {@link Path}
+   * beginning with the absolute directory represented by the value of
+   * the {@code helm.home} system property, or the value of the {@code
+   * HELM_HOME} environment variable, appended with {@code
+   * cache/archive} will be used instead
+   *
+   * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory that the supplied
+   * {@code cachedIndexPath} parameter value will be considered to be
+   * relative to; will be ignored and hence may be {@code null} if the
+   * supplied {@code cachedIndexPath} parameter value {@linkplain
+   * Path#isAbsolute()}
+   *
+   * @param cachedIndexPath a {@link Path} naming the file that will
+   * store a copy of the chart repository's {@code index.yaml} file;
+   * if {@code null} then a {@link Path} relative to the absolute
+   * directory represented by the value of the {@code helm.home}
+   * system property, or the value of the {@code HELM_HOME}
+   * environment variable, and bearing a name consisting of the
+   * supplied {@code name} suffixed with {@code -index.yaml} will be
+   * used instead
+   *
+   * @param proxy a {@link Proxy} representing a proxy server used to
+   * establish a connection to the chart repository represented by
+   * this {@link ChartRepository}; may be {@code null} in which case
+   * {@link Proxy#NO_PROXY} will be used instead
+   *
+   * @param login the Basic Authorization HTTP login used to establish
+   * a connection to the chart repository represented by this {@link ChartRepository};
+   * may be {@code null} in which case no auth will be used
+   *
+   *
+   * @param password the Basic Authorization HTTP password used to establish
+   * a connection to the chart repository represented by this {@link ChartRepository};
+   * may be {@code null} in which case no auth will be used
+   *
+   * @exception NullPointerException if either {@code name} or {@code
+   * uri} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code uri} is {@linkplain
+   * URI#isAbsolute() not absolute}, or if there is no existing "Helm
+   * home" directory
+   *
+   * @see #getName()
+   *
+   * @see #getUri()
+   *
+   * @see #getCachedIndexPath()
+   */
+  public ChartRepository(final String name, final URI uri, final Path archiveCacheDirectory, Path indexCacheDirectory, Path cachedIndexPath, final Proxy proxy, final String login, final String password) {
     super();
     Objects.requireNonNull(name);
-    Objects.requireNonNull(uri);    
+    Objects.requireNonNull(uri);
     if (!uri.isAbsolute()) {
       throw new IllegalArgumentException("!uri.isAbsolute(): " + uri);
     }
-    
+
     Path helmHome = null;
 
     if (archiveCacheDirectory == null) {
@@ -428,10 +511,12 @@ public class ChartRepository extends AbstractChartResolver {
     }
     assert this.cachedIndexPath != null;
     assert this.cachedIndexPath.isAbsolute();
-    
+
     this.name = name;
     this.uri = uri;
     this.proxy = proxy == null ? Proxy.NO_PROXY : proxy;
+    this.login = login;
+    this.password = password;
   }
 
 
@@ -544,7 +629,7 @@ public class ChartRepository extends AbstractChartResolver {
    * index.yaml}</a> file {@linkplain #isCachedIndexExpired() has
    * expired}, then one is {@linkplain #downloadIndex() downloaded}
    * first.</p>
-   * 
+   *
    * @param forceDownload if {@code true} then no caching will happen
    *
    * @return the {@link Index} representing the contents of this {@link
@@ -788,7 +873,7 @@ public class ChartRepository extends AbstractChartResolver {
               assert chartUri != null;
               assert chartUri.isAbsolute();
             }
-            
+
             final URL chartUrl = chartUri.toURL();
             assert chartUrl != null;
             final Path temporaryPath = Files.createTempFile(chartKey.append("-").toString(), ".tgz");
@@ -838,11 +923,24 @@ public class ChartRepository extends AbstractChartResolver {
       final URLConnection urlConnection = url.openConnection(this.proxy);
       assert urlConnection != null;
       urlConnection.setRequestProperty("User-Agent", "microbean-helm");
+
+      if (isNotEmpty(login) && isNotEmpty(password)) {
+        String authStr = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
+        //setting Authorization header
+        urlConnection.setRequestProperty("Authorization", "Basic " + authStr);
+      }
+
       returnValue = urlConnection.getInputStream();
     }
+
     return returnValue;
   }
-  
+
+  //Just a method from Apache Commons StringUtils
+  private boolean isNotEmpty(String string) {
+    return !(string == null || string.length() == 0);
+  }
+
   /**
    * {@inheritDoc}
    *
