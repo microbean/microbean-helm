@@ -87,6 +87,8 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import org.yaml.snakeyaml.resolver.Resolver;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 /**
  * An {@link AbstractChartResolver} that {@linkplain #resolve(String,
  * String) resolves} <a
@@ -688,7 +690,7 @@ public class ChartRepository extends AbstractChartResolver {
     final Path temporaryPath = Files.createTempFile(new StringBuilder(this.getName()).append("-index-").toString(), ".yaml");
     assert temporaryPath != null;
     try (final BufferedInputStream stream = new BufferedInputStream(this.openStream(indexUrl))) {
-      Files.copy(stream, temporaryPath, StandardCopyOption.REPLACE_EXISTING);
+      Files.copy(stream, temporaryPath, REPLACE_EXISTING);
     } catch (final IOException throwMe) {
       try {
         Files.deleteIfExists(temporaryPath);
@@ -697,7 +699,7 @@ public class ChartRepository extends AbstractChartResolver {
       }
       throw throwMe;
     }
-    return Files.move(temporaryPath, path);
+    return Files.move(temporaryPath, path, REPLACE_EXISTING);
   }
 
   /**
@@ -795,7 +797,7 @@ public class ChartRepository extends AbstractChartResolver {
             final Path temporaryPath = Files.createTempFile(chartKey.append("-").toString(), ".tgz");
             assert temporaryPath != null;
             try (final InputStream stream = new BufferedInputStream(this.openStream(chartUrl))) {
-              Files.copy(stream, temporaryPath, StandardCopyOption.REPLACE_EXISTING);
+              Files.copy(stream, temporaryPath, REPLACE_EXISTING);
             } catch (final IOException throwMe) {
               try {
                 Files.deleteIfExists(temporaryPath);
@@ -804,7 +806,7 @@ public class ChartRepository extends AbstractChartResolver {
               }
               throw throwMe;
             }
-            Files.move(temporaryPath, cachedChartPath);
+            Files.move(temporaryPath, cachedChartPath, REPLACE_EXISTING);
           }
         }
       }
