@@ -29,6 +29,7 @@ import java.net.URLConnection;
 
 import java.nio.ByteBuffer;
 
+import java.nio.file.CopyOption;
 import java.nio.file.LinkOption; // for javadoc only
 import java.nio.file.StandardCopyOption;
 import java.nio.file.Files;
@@ -262,7 +263,7 @@ public class ChartRepository extends AbstractChartResolver {
    * @see #getCachedIndexPath()
    */
   public ChartRepository(final String name, final URI uri, final Path cachedIndexPath) {
-    this(name, uri, null, null, cachedIndexPath);
+    this(name, uri, null, null, cachedIndexPath, Proxy.NO_PROXY);
   }
 
   /**
@@ -517,12 +518,12 @@ public class ChartRepository extends AbstractChartResolver {
    * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
    * index.yaml}</a> file is invalid
    *
-   * @see #getIndex(boolean)
+   * @see #getIndex(boolean, CopyOption...)
    *
    * @see #downloadIndex()
    */
   public final Index getIndex() throws IOException, URISyntaxException {
-    return this.getIndex(false);
+    return this.getIndex(false, StandardCopyOption.REPLACE_EXISTING);
   }
 
   /**
@@ -559,18 +560,65 @@ public class ChartRepository extends AbstractChartResolver {
    * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
    * index.yaml}</a> file is invalid
    *
-   * @see #getIndex(boolean)
+   * @see #getIndex(boolean, CopyOption...)
    *
-   * @see #downloadIndex()
+   * @see #downloadIndexTo(Path, CopyOption...)
    *
    * @see #isCachedIndexExpired()
    */
   public final Index getIndex(final boolean forceDownload) throws IOException, URISyntaxException {
+    return this.getIndex(forceDownload, StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  /**
+   * Returns the {@link Index} for this {@link ChartRepository}.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>If this method has not been invoked before on this {@link
+   * ChartRepository}, then the {@linkplain #getCachedIndexPath()
+   * cached copy} of the chart repository's <a
+   * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
+   * index.yaml}</a> file is parsed into an {@link Index} and that
+   * {@link Index} is stored in an instance variable before it is
+   * returned.</p>
+   *
+   * <p>If the {@linkplain #getCachedIndexPath() cached copy} of the
+   * chart repository's <a
+   * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
+   * index.yaml}</a> file {@linkplain #isCachedIndexExpired() has
+   * expired}, then one is {@linkplain #downloadIndex() downloaded}
+   * first.</p>
+   * 
+   * @param forceDownload if {@code true} then no caching will happen
+   *
+   * @param copyOptions any {@link CopyOption} instances that will be
+   * passed to any {@link Files#move(Path, Path, CopyOption...)}
+   * invocation that may be necessary; may be {@code null}
+   *
+   * @return the {@link Index} representing the contents of this {@link
+   * ChartRepository}; never {@code null}
+   *
+   * @exception IOException if there was a problem either parsing an
+   * <a
+   * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
+   * index.yaml}</a> file or downloading it
+   *
+   * @exception URISyntaxException if one of the URIs in the <a
+   * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
+   * index.yaml}</a> file is invalid
+   *
+   * @see #downloadIndexTo(Path, CopyOption...)
+   *
+   * @see #isCachedIndexExpired()
+   */
+  @Issue(id = "156", uri = "https://github.com/microbean/microbean-helm/issues/156")
+  public final Index getIndex(final boolean forceDownload, final CopyOption... copyOptions) throws IOException, URISyntaxException {
     if (forceDownload || this.index == null) {
       final Path cachedIndexPath = this.getCachedIndexPath();
       assert cachedIndexPath != null;
       if (forceDownload || this.isCachedIndexExpired()) {
-        this.downloadIndexTo(cachedIndexPath);
+        this.downloadIndexTo(cachedIndexPath, copyOptions);
       }
       this.index = Index.loadFrom(cachedIndexPath);
       assert this.index != null;
@@ -620,8 +668,11 @@ public class ChartRepository extends AbstractChartResolver {
   }
 
   /**
-   * Invokes the {@link #downloadIndexTo(Path)} method with the return
-   * value of the {@link #getCachedIndexPath()} method.
+   * Invokes the {@link #downloadIndexTo(Path, CopyOption...)} method
+   * with the return value of the {@link #getCachedIndexPath()} method
+   * as its first parameter value, and {@link
+   * StandardCopyOption#REPLACE_EXISTING} as its second parameter
+   * value.
    *
    * <p>This method never returns {@code null}.</p>
    *
@@ -630,10 +681,33 @@ public class ChartRepository extends AbstractChartResolver {
    *
    * @exception IOException if there was a problem downloading
    *
-   * @see #downloadIndexTo(Path)
+   * @see #downloadIndexTo(Path, CopyOption...)
    */
   public final Path downloadIndex() throws IOException {
-    return this.downloadIndexTo(this.getCachedIndexPath());
+    return this.downloadIndexTo(this.getCachedIndexPath(), StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  /**
+   * Invokes the {@link #downloadIndexTo(Path, CopyOption...)} method
+   * with the return value of the {@link #getCachedIndexPath()}
+   * method.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * @param copyOptions any {@link CopyOption} instances that will be
+   * passed to any {@link Files#move(Path, Path, CopyOption...)}
+   * invocations that may be necessary; may be {@code null}
+   *
+   * @return {@link Path} the {@link Path} to which the {@code
+   * index.yaml} file was downloaded; never {@code null}
+   *
+   * @exception IOException if there was a problem downloading
+   *
+   * @see #downloadIndexTo(Path, CopyOption...)
+   */
+  @Issue(id = "156", uri = "https://github.com/microbean/microbean-helm/issues/156")
+  public final Path downloadIndex(final CopyOption... copyOptions) throws IOException {
+    return this.downloadIndexTo(this.getCachedIndexPath(), copyOptions);
   }
 
   /**
@@ -652,7 +726,8 @@ public class ChartRepository extends AbstractChartResolver {
    * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
    * index.yaml}</a> file to a {@linkplain
    * Files#createTempFile(String, String, FileAttribute...) temporary
-   * file} first, and then renames it.</p>
+   * file} first, and then renames it, replacing any existing file
+   * with that name.</p>
    *
    * @param path the {@link Path} to download the <a
    * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
@@ -663,8 +738,48 @@ public class ChartRepository extends AbstractChartResolver {
    * @return the {@link Path} to the file; never {@code null}
    *
    * @exception IOException if there was a problem downloading
+   *
+   * @see #downloadIndexTo(Path, CopyOption...)
    */
   public Path downloadIndexTo(Path path) throws IOException {
+    return this.downloadIndexTo(path, StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  /**
+   * Downloads a copy of the chart repository's <a
+   * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
+   * index.yaml}</a> file to the {@link Path} specified and returns
+   * the canonical representation of the {@link Path} to which the
+   * file was actually downloaded.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * <p>The default implementation of this method actually downloads
+   * the <a
+   * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
+   * index.yaml}</a> file to a {@linkplain
+   * Files#createTempFile(String, String, FileAttribute...) temporary
+   * file} first, and then renames it, replacing any existing file
+   * with that name.</p>
+   *
+   * @param path the {@link Path} to download the <a
+   * href="https://docs.helm.sh/developing_charts/#the-chart-repository-structure">{@code
+   * index.yaml}</a> file to; may be {@code null} in which case the
+   * return value of the {@link #getCachedIndexPath()} method will be
+   * used instead
+   *
+   * @param copyOptions any {@link CopyOption} instances that will be
+   * passed to an {@link Files#move(Path, Path, CopyOption...)}
+   * invocation; may be {@code null}
+   *
+   * @return the {@link Path} to the file; never {@code null}
+   *
+   * @exception IOException if there was a problem downloading
+   */
+  @Issue(id = "156", uri = "https://github.com/microbean/microbean-helm/issues/156")
+  public Path downloadIndexTo(Path path, final CopyOption... copyOptions) throws IOException {
     final URI baseUri = this.getUri();
     if (baseUri == null) {
       throw new IllegalStateException("getUri() == null");
@@ -696,7 +811,13 @@ public class ChartRepository extends AbstractChartResolver {
       }
       throw throwMe;
     }
-    return Files.move(temporaryPath, path);
+    final Path returnValue;
+    if (copyOptions == null || copyOptions.length <= 0) {
+      returnValue = Files.move(temporaryPath, path);
+    } else {
+      returnValue = Files.move(temporaryPath, path, copyOptions);
+    }
+    return returnValue;
   }
 
   /**
@@ -733,7 +854,8 @@ public class ChartRepository extends AbstractChartResolver {
    * Given a Helm chart name and its version, returns the local {@link
    * Path}, representing a local copy of the Helm chart as downloaded
    * from the chart repository represented by this {@link
-   * ChartRepository}, downloading the archive if necessary.
+   * ChartRepository}, downloading the archive if necessary, and
+   * replacing any prior copy that may exist.
    *
    * <p>This method may return {@code null}.</p>
    *
@@ -753,8 +875,44 @@ public class ChartRepository extends AbstractChartResolver {
    *
    * @exception NullPointerException if {@code chartName} is {@code
    * null}
+   *
+   * @see #getCachedChartPath(String, String, CopyOption...)
    */
   public final Path getCachedChartPath(final String chartName, String chartVersion) throws IOException, URISyntaxException {
+    return this.getCachedChartPath(chartName, chartVersion, StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  /**
+   * Given a Helm chart name and its version, returns the local {@link
+   * Path}, representing a local copy of the Helm chart as downloaded
+   * from the chart repository represented by this {@link
+   * ChartRepository}, downloading the archive if necessary.
+   *
+   * <p>This method may return {@code null}.</p>
+   *
+   * @param chartName the name of the chart whose local {@link Path}
+   * should be returned; must not be {@code null}
+   *
+   * @param chartVersion the version of the chart to select; may be
+   * {@code null} in which case "latest" semantics are implied
+   *
+   * @param copyOptions any {@link CopyOption} instances that will be
+   * passed to any {@link Files#move(Path, Path, CopyOption...)}
+   * invocations that may be necessary; may be {@code null}
+   *
+   * @return the {@link Path} to the chart archive, or {@code null}
+   *
+   * @exception IOException if there was a problem downloading
+   *
+   * @exception URISyntaxException if this {@link ChartRepository}'s
+   * {@linkplain #getIndex() associated <code>Index</code>} could not
+   * be parsed
+   *
+   * @exception NullPointerException if {@code chartName} is {@code
+   * null}
+   */
+  @Issue(id = "156", uri = "https://github.com/microbean/microbean-helm/issues/156")
+  public final Path getCachedChartPath(final String chartName, String chartVersion, final CopyOption... copyOptions) throws IOException, URISyntaxException {
     Objects.requireNonNull(chartName);
     Path returnValue = null;
     if (chartVersion == null) {
@@ -803,7 +961,11 @@ public class ChartRepository extends AbstractChartResolver {
               }
               throw throwMe;
             }
-            Files.move(temporaryPath, cachedChartPath);
+            if (copyOptions == null || copyOptions.length <= 0) {
+              Files.move(temporaryPath, cachedChartPath);
+            } else {
+              Files.move(temporaryPath, cachedChartPath, copyOptions);
+            }
           }
         }
       }
@@ -1137,10 +1299,7 @@ public class ChartRepository extends AbstractChartResolver {
     public static final Index loadFrom(final InputStream stream) throws IOException, URISyntaxException {
       Objects.requireNonNull(stream);
       final Index returnValue;
-      @Issue(
-        id = "131",
-        uri = "https://github.com/microbean/microbean-helm/issues/131"
-      )
+      @Issue(id = "131", uri = "https://github.com/microbean/microbean-helm/issues/131")
       final Map<?, ?> yamlMap = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions(), new StringResolver()).load(stream);
       if (yamlMap == null || yamlMap.isEmpty()) {
         returnValue = new Index(null);
