@@ -1,10 +1,10 @@
-# microbean-helm
+# microBean Helm
 
 [![Build Status](https://travis-ci.org/microbean/microbean-helm.svg?branch=master)](https://travis-ci.org/microbean/microbean-helm)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.microbean/microbean-helm/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.microbean/microbean-helm)
 
 
-The [microbean-helm project][12] lets you work with the server-side
+The [microBean Helm project][12] lets you work with the server-side
 componentry of [Helm][0] from Java.
 
 This means your Java applications can now manage applications in your
@@ -16,15 +16,15 @@ to do these operations.
 
 # Versioning
 
-The microbean-helm project's version number tracks the Helm and Tiller
+The microBean Helm project's version number tracks the Helm and Tiller
 release it works with, together with its own version semantics.  For
-example, a microbean-helm version of `2.8.2.1.1.0` means that the Helm
+example, a microBean Helm version of `2.8.2.1.1.0` means that the Helm
 version it tracks is `2.8.2` and the (SemVer-compatible) version of
 the non-generated code that is part of _this_ project is `1.1.0`.
 
 # Installation
 
-To install microbean-helm, simply include it as a dependency in your
+To install microBean Helm, simply include it as a dependency in your
 project.  If you're using Maven, the dependency stanza should look
 like this:
 
@@ -41,7 +41,7 @@ in [Sonatype Snapshots][11].
 
 # Documentation
 
-The microbean-helm project [documentation is online][8].
+The microBean Helm project [documentation is online][8].
 
 # Helm
 
@@ -53,7 +53,7 @@ Tiller.  `helm` serves as a Tiller client.
 
 [Tiller][2] is the server-side component of Helm.  Tiller accepts and
 works with Helm [_charts_][3]&mdash;packaged Kubernetes manifest
-templates together with their values.  microbean-helm lets
+templates together with their values.  microBean Helm lets
 you
 [build and work with those charts and the _releases_ they produce from Java][4] and
 send them back and forth to and from Tiller.
@@ -63,7 +63,7 @@ send them back and forth to and from Tiller.
 In a normal Helm usage scenario, Tiller
 is
 [installed just-in-time by the `helm` command line client (via the `helm init` subcommand)][5].
-It runs as a Pod in a Kubernetes cluster.  microbean-helm features
+It runs as a Pod in a Kubernetes cluster.  microBean Helm features
 the [`TillerInstaller` class][13] that can do the same thing from
 Java.
 
@@ -73,12 +73,12 @@ Because Tiller normally runs as a Pod, communicating with it from
 outside the cluster is not straightforward.  The `helm` command line
 client internally forwards a local port to a port on the Tiller Pod
 and, via this tunnel, establishes communication with the Tiller
-server.  The microbean-helm project does the same thing but via a Java
+server.  The microBean Helm project does the same thing but via a Java
 library.
 
 ## Tiller Communication
 
-Tiller is fundamentally a [gRPC][6] application.  The microbean-helm
+Tiller is fundamentally a [gRPC][6] application.  The microBean Helm
 project [generates the Java bindings][7] to its gRPC API, allowing
 applications to communicate with Tiller using Java classes.
 
@@ -89,7 +89,7 @@ entirely encapsulated within the Tiller server.  Unfortunately, this
 is not the case.  The `helm` command-line program investigates and
 processes a Helm chart's `requirements.yaml` file at installation time
 and uses it to alter what is actually dispatched to Tiller.  For this
-reason, if you are using the microbean-helm project, you must use the
+reason, if you are using the microBean Helm project, you must use the
 _non_-generated [`ReleaseManager` class][4] to perform your
 Helm-related operations, since it contains a port of the business
 logic embedded in the `helm` program.

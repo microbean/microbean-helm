@@ -288,6 +288,16 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
             <doclint>-missing</doclint>
+            <groups>
+              <group>
+                <title>Generated Code</title>
+                <packages>hapi*</packages>
+              </group>
+              <group>
+                <title>microBean Helm Code</title>
+                <packages>org.microbean*</packages>
+              </group>
+            </groups>
             <offlineLinks>
               <offlineLink>
                 <url>http://static.javadoc.io/com.github.zafarkhaja/java-semver/0.9.0</url>
