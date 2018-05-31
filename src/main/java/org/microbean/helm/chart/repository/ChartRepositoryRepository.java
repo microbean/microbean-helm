@@ -73,6 +73,14 @@ public class ChartRepositoryRepository extends AbstractChartResolver {
    */
   private static final Pattern slashPattern = Pattern.compile("/");
 
+  /**
+   * A {@link HelmHome} instance representing the directory tree where
+   * Helm stores its local information.
+   *
+   * <p>This field is never {@code null}.</p>
+   */
+  private static final HelmHome helmHome = new HelmHome();
+
 
   /*
    * Instance fields.
@@ -267,11 +275,41 @@ public class ChartRepositoryRepository extends AbstractChartResolver {
    * @exception URISyntaxException if there was an invalid URI in the
    * file
    *
-   * @see #fromYaml(InputStream, Path, Path)
+   * @see #fromHelmRepositoriesYaml(boolean)
    */
   public static final ChartRepositoryRepository fromHelmRepositoriesYaml() throws IOException, URISyntaxException {
-    try (final InputStream stream = new BufferedInputStream(Files.newInputStream(ChartRepository.getHelmHome().resolve("repository/repositories.yaml")))) {
-      return fromYaml(stream);
+    return fromHelmRepositoriesYaml(false);
+  }
+
+  /**
+   * Creates and returns a new {@link ChartRepositoryRepository} from
+   * the contents of a {@code repositories.yaml} file typically
+   * located in the {@code ~/.helm/repository} directory.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * @param reifyHelmHomeIfNecessary if {@code true} and, for whatever
+   * reason, the local Helm home directory structure needs to be
+   * partially or entirely created, then this method will attempt to
+   * reify it
+   *
+   * @return a new {@link ChartRepositoryRepository}; never {@code
+   * null}
+   *
+   * @exception IOException if there was a problem reading the file or
+   * reifying the local Helm home directory structure
+   *
+   * @exception URISyntaxException if there was an invalid URI in the
+   * file
+   *
+   * @see #fromYaml(InputStream, Path, Path, boolean, ChartRepositoryFactory)
+   */
+  public static final ChartRepositoryRepository fromHelmRepositoriesYaml(final boolean reifyHelmHomeIfNecessary) throws IOException, URISyntaxException {
+    if (reifyHelmHomeIfNecessary) {
+      helmHome.reify();
+    }
+    try (final InputStream stream = new BufferedInputStream(Files.newInputStream(helmHome.toPath().resolve("repository/repositories.yaml")))) {
+      return fromYaml(stream, null, null, false /* already reified */, null);
     }
   }
 
@@ -291,10 +329,38 @@ public class ChartRepositoryRepository extends AbstractChartResolver {
    * @exception URISyntaxException if there was an invalid URI in the
    * file
    *
-   * @see #fromYaml(InputStream, Path, Path)
+   * @see #fromYaml(InputStream, Path, Path, boolean, ChartRepositoryFactory)
    */
   public static final ChartRepositoryRepository fromYaml(final InputStream stream) throws IOException, URISyntaxException {
-    return fromYaml(stream, null, null);
+    return fromYaml(stream, null, null, false, null);
+  }
+
+  /**
+   * Creates and returns a new {@link ChartRepositoryRepository} from
+   * the contents of a {@code repositories.yaml} file represented by
+   * the supplied {@link InputStream}.
+   *
+   * @param stream the {@link InputStream} to read from; must not be
+   * {@code null}
+   *
+   * @param reifyHelmHomeIfNecessary if {@code true} and, for whatever
+   * reason, the local Helm home directory structure needs to be
+   * partially or entirely created, then this method will attempt to
+   * reify it
+   *
+   * @return a new {@link ChartRepositoryRepository}; never {@code
+   * null}
+   *
+   * @exception IOException if there was a problem reading the file or
+   * reifying the local Helm home directory structure
+   *
+   * @exception URISyntaxException if there was an invalid URI in the
+   * file
+   *
+   * @see #fromYaml(InputStream, Path, Path, boolean, ChartRepositoryFactory)
+   */
+  public static final ChartRepositoryRepository fromYaml(final InputStream stream, final boolean reifyHelmHomeIfNecessary) throws IOException, URISyntaxException {
+    return fromYaml(stream, null, null, reifyHelmHomeIfNecessary, null);
   }
 
   /**
@@ -328,10 +394,57 @@ public class ChartRepositoryRepository extends AbstractChartResolver {
    * @exception URISyntaxException if there was an invalid URI in the
    * file
    *
-   * @see #fromYaml(InputStream, Path, Path, ChartRepositoryFactory)
+   * @see #fromYaml(InputStream, Path, Path, boolean, ChartRepositoryFactory)
    */
   public static final ChartRepositoryRepository fromYaml(final InputStream stream, Path archiveCacheDirectory, Path indexCacheDirectory) throws IOException, URISyntaxException {
-    return fromYaml(stream, archiveCacheDirectory, indexCacheDirectory, null);
+    return fromYaml(stream, archiveCacheDirectory, indexCacheDirectory, false, null);
+  }
+
+  /**
+   * Creates and returns a new {@link ChartRepositoryRepository} from
+   * the contents of a {@code repositories.yaml} file represented by
+   * the supplied {@link InputStream}.
+   *
+   * @param stream the {@link InputStream} to read from; must not be
+   * {@code null}
+   *
+   * @param archiveCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory where Helm chart
+   * archives may be stored; if {@code null} then a {@link Path}
+   * beginning with the absolute directory represented by the value of
+   * the {@code helm.home} system property, or the value of the {@code
+   * HELM_HOME} environment variable, appended with {@code
+   * cache/archive} will be used instead
+   *
+   * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory that the supplied
+   * {@code cachedIndexPath} parameter value will be considered to be
+   * relative to; will be ignored and hence may be {@code null} if the
+   * supplied {@code cachedIndexPath} parameter value {@linkplain
+   * Path#isAbsolute()}
+   *
+   * @param reifyHelmHomeIfNecessary if {@code true} and, for whatever
+   * reason, the local Helm home directory structure needs to be
+   * partially or entirely created, then this method will attempt to
+   * reify it
+   *
+   * @return a new {@link ChartRepositoryRepository}; never {@code
+   * null}
+   *
+   * @exception IOException if there was a problem reading the file or
+   * reifying the local Helm home directory structure
+   *
+   * @exception URISyntaxException if there was an invalid URI in the
+   * file
+   *
+   * @see #fromYaml(InputStream, Path, Path, boolean, ChartRepositoryFactory)
+   */
+  public static final ChartRepositoryRepository fromYaml(final InputStream stream,
+                                                         Path archiveCacheDirectory,
+                                                         Path indexCacheDirectory,
+                                                         final boolean reifyHelmHomeIfNecessary)
+    throws IOException, URISyntaxException {
+    return fromYaml(stream, archiveCacheDirectory, indexCacheDirectory, reifyHelmHomeIfNecessary, null);
   }
 
   /**
@@ -369,33 +482,95 @@ public class ChartRepositoryRepository extends AbstractChartResolver {
    *
    * @exception URISyntaxException if there was an invalid URI in the
    * file
+   *
+   * @see #fromYaml(InputStream, Path, Path, boolean, ChartRepositoryFactory)
    */
   public static final ChartRepositoryRepository fromYaml(final InputStream stream,
                                                          Path archiveCacheDirectory,
                                                          Path indexCacheDirectory,
                                                          ChartRepositoryFactory factory)
     throws IOException, URISyntaxException {
+    return fromYaml(stream, archiveCacheDirectory, indexCacheDirectory, false, factory);
+  }
+
+  /**
+   * Creates and returns a new {@link ChartRepositoryRepository} from
+   * the contents of a {@code repositories.yaml} file represented by
+   * the supplied {@link InputStream}.
+   *
+   * @param stream the {@link InputStream} to read from; must not be
+   * {@code null}
+   *
+   * @param archiveCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory where Helm chart
+   * archives may be stored; if {@code null} then a {@link Path}
+   * beginning with the absolute directory represented by the value of
+   * the {@code helm.home} system property, or the value of the {@code
+   * HELM_HOME} environment variable, appended with {@code
+   * cache/archive} will be used instead
+   *
+   * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory that the supplied
+   * {@code cachedIndexPath} parameter value will be considered to be
+   * relative to; will be ignored and hence may be {@code null} if the
+   * supplied {@code cachedIndexPath} parameter value {@linkplain
+   * Path#isAbsolute()}
+   *
+   * @param reifyHelmHomeIfNecessary if {@code true} and, for whatever
+   * reason, the local Helm home directory structure needs to be
+   * partially or entirely created, then this method will attempt to
+   * reify it
+   *
+   * @param factory a {@link ChartRepositoryFactory} that can create
+   * {@link ChartRepository} instances; may be {@code null} in which
+   * case the {@link ChartRepository#ChartRepository(String, URI,
+   * Path, Path, Path)} constructor will be used instead
+   *
+   * @return a new {@link ChartRepositoryRepository}; never {@code
+   * null}
+   *
+   * @exception IOException if there was a problem reading the file or
+   * reifying the local Helm home directory structure
+   *
+   * @exception URISyntaxException if there was an invalid URI in the
+   * file
+   */
+  public static final ChartRepositoryRepository fromYaml(final InputStream stream,
+                                                         Path archiveCacheDirectory,
+                                                         Path indexCacheDirectory,
+                                                         final boolean reifyHelmHomeIfNecessary,
+                                                         ChartRepositoryFactory factory)
+    throws IOException, URISyntaxException {
     Objects.requireNonNull(stream);
     if (factory == null) {
       factory = ChartRepository::new;
     }
-    Path helmHome = null;
+    boolean reified = false;
+    Path helmHomePath = null;
     if (archiveCacheDirectory == null) {
-      helmHome = ChartRepository.getHelmHome();
-      assert helmHome != null;
-      archiveCacheDirectory = helmHome.resolve("cache/archive");
+      helmHomePath = helmHome.toPath();
+      assert helmHomePath != null;
+      archiveCacheDirectory = helmHomePath.resolve("cache/archive");
       assert archiveCacheDirectory != null;
+      if (reifyHelmHomeIfNecessary) {
+        helmHome.reify();
+        reified = true;
+      }
     }
     if (!Files.isDirectory(archiveCacheDirectory)) {
       throw new IllegalArgumentException("!Files.isDirectory(archiveCacheDirectory): " + archiveCacheDirectory);
     }
     if (indexCacheDirectory == null) {
-      if (helmHome == null) {
-        helmHome = ChartRepository.getHelmHome();
-        assert helmHome != null;
+      if (helmHomePath == null) {
+        helmHomePath = helmHome.toPath();
+        assert helmHomePath != null;
       }
-      indexCacheDirectory = helmHome.resolve("repository/cache");
+      indexCacheDirectory = helmHomePath.resolve("repository/cache");
       assert indexCacheDirectory != null;
+      if (!reified && reifyHelmHomeIfNecessary) {
+        helmHome.reify();
+        reified = true;
+      }
     }
     if (!Files.isDirectory(indexCacheDirectory)) {
       throw new IllegalArgumentException("!Files.isDirectory(indexCacheDirectory): " + indexCacheDirectory);
@@ -421,7 +596,6 @@ public class ChartRepositoryRepository extends AbstractChartResolver {
             assert cachedIndexPath.isAbsolute();
           }
           
-          // final ChartRepository chartRepository = new ChartRepository(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath);
           final ChartRepository chartRepository = factory.createChartRepository(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath);
           if (chartRepository == null) {
             throw new IllegalStateException("factory.createChartRepository() == null");

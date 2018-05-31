@@ -38,7 +38,7 @@ public class TestIssue80 {
 
   @Test
   public void testLoadIndex() throws IOException, URISyntaxException {
-    final Path helmHome = ChartRepository.getHelmHome();
+    final Path helmHome = new HelmHome().toPath();
     assertNotNull(helmHome);
     assumeTrue(Files.isDirectory(helmHome));
     final ChartRepository chartRepository = new ChartRepository("stable", new URI("https://kubernetes-charts.storage.googleapis.com/"));
