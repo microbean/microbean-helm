@@ -46,7 +46,7 @@
 <span class="sourceLineNo">038</span><a name="line.38"></a>
 <span class="sourceLineNo">039</span>  @Test<a name="line.39"></a>
 <span class="sourceLineNo">040</span>  public void testLoadIndex() throws IOException, URISyntaxException {<a name="line.40"></a>
-<span class="sourceLineNo">041</span>    final Path helmHome = ChartRepository.getHelmHome();<a name="line.41"></a>
+<span class="sourceLineNo">041</span>    final Path helmHome = new HelmHome().toPath();<a name="line.41"></a>
 <span class="sourceLineNo">042</span>    assertNotNull(helmHome);<a name="line.42"></a>
 <span class="sourceLineNo">043</span>    assumeTrue(Files.isDirectory(helmHome));<a name="line.43"></a>
 <span class="sourceLineNo">044</span>    final ChartRepository chartRepository = new ChartRepository("stable", new URI("https://kubernetes-charts.storage.googleapis.com/"));<a name="line.44"></a>
