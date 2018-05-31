@@ -106,6 +106,20 @@ public class ChartRepository extends AbstractChartResolver {
 
 
   /*
+   * Static fields.
+   */
+
+
+  /**
+   * A {@link HelmHome} instance representing the directory tree where
+   * Helm stores its local information.
+   *
+   * <p>This field is never {@code null}.</p>
+   */
+  private static final HelmHome helmHome = new HelmHome();
+  
+
+  /*
    * Instance fields.
    */
 
@@ -185,7 +199,8 @@ public class ChartRepository extends AbstractChartResolver {
    *
    * <p>This field is never {@code null}.</p>
    *
-   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy)
+   * @see #ChartRepository(String, URI, Path, Path, Path, boolean,
+   * Proxy)
    */
   private final Proxy proxy;
 
@@ -217,7 +232,8 @@ public class ChartRepository extends AbstractChartResolver {
    * URI#isAbsolute() not absolute}, or if there is no existing "Helm
    * home" directory
    *
-   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy)
+   * @see #ChartRepository(String, URI, Path, Path, Path, boolean,
+   * Proxy)
    *
    * @see #getName()
    *
@@ -226,7 +242,47 @@ public class ChartRepository extends AbstractChartResolver {
    * @see #getCachedIndexPath()
    */
   public ChartRepository(final String name, final URI uri) {
-    this(name, uri, null, null, null);
+    this(name, uri, null, null, null, false, Proxy.NO_PROXY);
+  }
+
+  /**
+   * Creates a new {@link ChartRepository} whose {@linkplain
+   * #getCachedIndexPath() cached index path} will be a {@link Path}
+   * relative to the absolute directory represented by the value of
+   * the {@code helm.home} system property, or the value of the {@code
+   * HELM_HOME} environment variable, and bearing a name consisting of
+   * the supplied {@code name} suffixed with {@code -index.yaml}.
+   *
+   * @param name the name of this {@link ChartRepository}; must not be
+   * {@code null}
+   *
+   * @param uri the {@linkplain URI#isAbsolute() absolute} {@link URI}
+   * to the root of this {@link ChartRepository}; must not be {@code
+   * null}
+   *
+   * @param reifyHelmHomeIfNecessary if {@code true} and, for whatever
+   * reason, the local Helm home directory structure needs to be
+   * partially or entirely created, then this constructor will attempt
+   * to reify it
+   *
+   * @exception NullPointerException if either {@code name} or {@code
+   * uri} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code uri} is {@linkplain
+   * URI#isAbsolute() not absolute}, or if there is no existing "Helm
+   * home" directory
+   *
+   * @see #ChartRepository(String, URI, Path, Path, Path, boolean,
+   * Proxy)
+   *
+   * @see #getName()
+   *
+   * @see #getUri()
+   *
+   * @see #getCachedIndexPath()
+   */
+  public ChartRepository(final String name, final URI uri, final boolean reifyHelmHomeIfNecessary) {
+    this(name, uri, null, null, null, reifyHelmHomeIfNecessary, Proxy.NO_PROXY);
   }
 
   /**
@@ -254,7 +310,8 @@ public class ChartRepository extends AbstractChartResolver {
    * URI#isAbsolute() not absolute}, or if there is no existing "Helm
    * home" directory
    *
-   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy)
+   * @see #ChartRepository(String, URI, Path, Path, Path, boolean,
+   * Proxy)
    *
    * @see #getName()
    *
@@ -264,6 +321,52 @@ public class ChartRepository extends AbstractChartResolver {
    */
   public ChartRepository(final String name, final URI uri, final Path cachedIndexPath) {
     this(name, uri, null, null, cachedIndexPath, Proxy.NO_PROXY);
+  }
+
+  /**
+   * Creates a new {@link ChartRepository}.
+   *
+   * @param name the name of this {@link ChartRepository}; must not be
+   * {@code null}
+   *
+   * @param uri the {@link URI} to the root of this {@link
+   * ChartRepository}; must not be {@code null}
+   *
+   * @param cachedIndexPath a {@link Path} naming the file that will
+   * store a copy of the chart repository's {@code index.yaml} file;
+   * if {@code null} then a {@link Path} relative to the absolute
+   * directory represented by the value of the {@code helm.home}
+   * system property, or the value of the {@code HELM_HOME}
+   * environment variable, and bearing a name consisting of the
+   * supplied {@code name} suffixed with {@code -index.yaml} will be
+   * used instead
+   *
+   * @param reifyHelmHomeIfNecessary if {@code true} and, for whatever
+   * reason, the local Helm home directory structure needs to be
+   * partially or entirely created, then this constructor will attempt
+   * to reify it
+   *
+   * @exception NullPointerException if either {@code name} or {@code
+   * uri} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code uri} is {@linkplain
+   * URI#isAbsolute() not absolute}, or if there is no existing "Helm
+   * home" directory
+   *
+   * @see #ChartRepository(String, URI, Path, Path, Path, boolean,
+   * Proxy)
+   *
+   * @see #getName()
+   *
+   * @see #getUri()
+   *
+   * @see #getCachedIndexPath()
+   */
+  public ChartRepository(final String name,
+                         final URI uri,
+                         final Path cachedIndexPath,
+                         final boolean reifyHelmHomeIfNecessary) {
+    this(name, uri, null, null, cachedIndexPath, reifyHelmHomeIfNecessary, Proxy.NO_PROXY);
   }
 
   /**
@@ -308,7 +411,8 @@ public class ChartRepository extends AbstractChartResolver {
    * non-{@code null} and either empty or not {@linkplain
    * Path#isAbsolute()}
    *
-   * @see #ChartRepository(String, URI, Path, Path, Path, Proxy)
+   * @see #ChartRepository(String, URI, Path, Path, Path, boolean,
+   * Proxy)
    *
    * @see #getName()
    *
@@ -316,8 +420,77 @@ public class ChartRepository extends AbstractChartResolver {
    *
    * @see #getCachedIndexPath()
    */
-  public ChartRepository(final String name, final URI uri, final Path archiveCacheDirectory, Path indexCacheDirectory, Path cachedIndexPath) {
-    this(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath, Proxy.NO_PROXY);
+  public ChartRepository(final String name,
+                         final URI uri,
+                         final Path archiveCacheDirectory,
+                         final Path indexCacheDirectory,
+                         final Path cachedIndexPath) {
+    this(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath, false, Proxy.NO_PROXY);
+  }
+
+  /**
+   * Creates a new {@link ChartRepository}.
+   *
+   * @param name the name of this {@link ChartRepository}; must not be
+   * {@code null}
+   *
+   * @param uri the {@link URI} to the root of this {@link
+   * ChartRepository}; must not be {@code null}
+   *
+   * @param archiveCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory where Helm chart
+   * archives may be stored; if {@code null} then a {@link Path}
+   * beginning with the absolute directory represented by the value of
+   * the {@code helm.home} system property, or the value of the {@code
+   * HELM_HOME} environment variable, appended with {@code
+   * cache/archive} will be used instead
+   *
+   * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory that the supplied
+   * {@code cachedIndexPath} parameter value will be considered to be
+   * relative to; <strong>will be ignored and hence may be {@code
+   * null}</strong> if the supplied {@code cachedIndexPath} parameter
+   * value {@linkplain Path#isAbsolute() is absolute}
+   *
+   * @param cachedIndexPath a {@link Path} naming the file that will
+   * store a copy of the chart repository's {@code index.yaml} file;
+   * if {@code null} then a {@link Path} relative to the absolute
+   * directory represented by the value of the {@code helm.home}
+   * system property, or the value of the {@code HELM_HOME}
+   * environment variable, and bearing a name consisting of the
+   * supplied {@code name} suffixed with {@code -index.yaml} will be
+   * used instead
+   *
+   * @param reifyHelmHomeIfNecessary if {@code true} and, for whatever
+   * reason, the local Helm home directory structure needs to be
+   * partially or entirely created, then this constructor will attempt
+   * to reify it
+   *
+   * @exception NullPointerException if either {@code name} or {@code
+   * uri} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code uri} is {@linkplain
+   * URI#isAbsolute() not absolute}, or if there is no existing "Helm
+   * home" directory and/or it could not be reified, or if {@code
+   * archiveCacheDirectory} is non-{@code null} and either empty or
+   * not {@linkplain Path#isAbsolute()}
+   *
+   * @see #ChartRepository(String, URI, Path, Path, Path, boolean,
+   * Proxy)
+   *
+   * @see #getName()
+   *
+   * @see #getUri()
+   *
+   * @see #getCachedIndexPath()
+   */
+  public ChartRepository(final String name,
+                         final URI uri,
+                         final Path archiveCacheDirectory,
+                         final Path indexCacheDirectory,
+                         final Path cachedIndexPath,
+                         final boolean reifyHelmHomeIfNecessary) {
+    this(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath, false, Proxy.NO_PROXY);
   }
 
   /**
@@ -371,22 +544,102 @@ public class ChartRepository extends AbstractChartResolver {
    *
    * @see #getCachedIndexPath()
    */
-  public ChartRepository(final String name, final URI uri, final Path archiveCacheDirectory, Path indexCacheDirectory, Path cachedIndexPath, final Proxy proxy) {
+  public ChartRepository(final String name,
+                         final URI uri,
+                         final Path archiveCacheDirectory,
+                         final Path indexCacheDirectory,
+                         final Path cachedIndexPath,
+                         final Proxy proxy) {
+    this(name, uri, archiveCacheDirectory, indexCacheDirectory, cachedIndexPath, false, proxy);
+  }
+
+  /**
+   * Creates a new {@link ChartRepository}.
+   *
+   * @param name the name of this {@link ChartRepository}; must not be
+   * {@code null}
+   *
+   * @param uri the {@link URI} to the root of this {@link
+   * ChartRepository}; must not be {@code null}
+   *
+   * @param archiveCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory where Helm chart
+   * archives may be stored; if {@code null} then a {@link Path}
+   * beginning with the absolute directory represented by the value of
+   * the {@code helm.home} system property, or the value of the {@code
+   * HELM_HOME} environment variable, appended with {@code
+   * cache/archive} will be used instead
+   *
+   * @param indexCacheDirectory an {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} representing a directory that the supplied
+   * {@code cachedIndexPath} parameter value will be considered to be
+   * relative to; will be ignored and hence may be {@code null} if the
+   * supplied {@code cachedIndexPath} parameter value {@linkplain
+   * Path#isAbsolute()}
+   *
+   * @param cachedIndexPath a {@link Path} naming the file that will
+   * store a copy of the chart repository's {@code index.yaml} file;
+   * if {@code null} then a {@link Path} relative to the absolute
+   * directory represented by the value of the {@code helm.home}
+   * system property, or the value of the {@code HELM_HOME}
+   * environment variable, and bearing a name consisting of the
+   * supplied {@code name} suffixed with {@code -index.yaml} will be
+   * used instead
+   *
+   * @param reifyHelmHomeIfNecessary if {@code true} and, for whatever
+   * reason, the local Helm home directory structure needs to be
+   * partially or entirely created, then this constructor will attempt
+   * to reify it
+   *
+   * @param proxy a {@link Proxy} representing a proxy server used to
+   * establish a connection to the chart repository represented by
+   * this {@link ChartRepository}; may be {@code null} in which case
+   * {@link Proxy#NO_PROXY} will be used instead
+   *
+   * @exception NullPointerException if either {@code name} or {@code
+   * uri} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code uri} is {@linkplain
+   * URI#isAbsolute() not absolute}, or if there is no existing "Helm
+   * home" directory and/or it could not be reified
+   *
+   * @see #getName()
+   *
+   * @see #getUri()
+   *
+   * @see #getCachedIndexPath()
+   */
+  public ChartRepository(final String name,
+                         final URI uri,
+                         final Path archiveCacheDirectory,
+                         Path indexCacheDirectory,
+                         Path cachedIndexPath,
+                         final boolean reifyHelmHomeIfNecessary,
+                         final Proxy proxy) {
     super();
     Objects.requireNonNull(name);
     Objects.requireNonNull(uri);    
     if (!uri.isAbsolute()) {
       throw new IllegalArgumentException("!uri.isAbsolute(): " + uri);
     }
-    
-    Path helmHome = null;
+
+    boolean reified = false;
+    Path helmHomePath = null;
 
     if (archiveCacheDirectory == null) {
-      helmHome = getHelmHome();
-      assert helmHome != null;
-      this.archiveCacheDirectory = helmHome.resolve("cache/archive");
+      helmHomePath = helmHome.toPath();
+      assert helmHomePath != null;
+      this.archiveCacheDirectory = helmHomePath.resolve("cache/archive");
       assert this.archiveCacheDirectory != null;
       assert this.archiveCacheDirectory.isAbsolute();
+      if (reifyHelmHomeIfNecessary) {
+        try {
+          helmHome.reify();
+          reified = true;
+        } catch (final IOException ioException) {
+          throw new IllegalStateException(ioException.getMessage(), ioException);
+        }
+      }
     } else if (archiveCacheDirectory.toString().isEmpty()) {
       throw new IllegalArgumentException("archiveCacheDirectory.toString().isEmpty(): " + archiveCacheDirectory);
     } else if (!archiveCacheDirectory.isAbsolute()) {
@@ -410,12 +663,20 @@ public class ChartRepository extends AbstractChartResolver {
       this.cachedIndexPath = cachedIndexPath;
     } else {
       if (indexCacheDirectory == null) {
-        if (helmHome == null) {
-          helmHome = getHelmHome();
-          assert helmHome != null;
+        if (helmHomePath == null) {
+          helmHomePath = helmHome.toPath();
+          assert helmHomePath != null;
         }
-        this.indexCacheDirectory = helmHome.resolve("repository/cache");
+        this.indexCacheDirectory = helmHomePath.resolve("repository/cache");
         assert this.indexCacheDirectory.isAbsolute();
+        if (!reified && reifyHelmHomeIfNecessary) {
+          try {
+            helmHome.reify();
+            reified = true;
+          } catch (final IOException ioException) {
+            throw new IllegalStateException(ioException.getMessage(), ioException);
+          }
+        }
       } else if (!indexCacheDirectory.isAbsolute()) {
         throw new IllegalArgumentException("!indexCacheDirectory.isAbsolute(): " + indexCacheDirectory);
       } else {
@@ -1050,13 +1311,9 @@ public class ChartRepository extends AbstractChartResolver {
    * @exception SecurityException if there are not sufficient
    * permissions to read system properties or environment variables
    */
+  @Deprecated
   static final Path getHelmHome() {
-    String helmHome = System.getProperty("helm.home", System.getenv("HELM_HOME"));
-    if (helmHome == null) {
-      helmHome = Paths.get(System.getProperty("user.home")).resolve(".helm").toString();
-      assert helmHome != null;
-    }
-    return Paths.get(helmHome);
+    return helmHome.toPath();
   }
 
 

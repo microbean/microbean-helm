@@ -14,19 +14,30 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
+package org.microbean.helm.chart.repository;
 
-/**
- * Provides classes and interfaces for working with <a
- * href="https://helm.sh/">Helm</a> from Java.
- *
- * @author <a href="https://about.me/lairdnelson"
- * target="_parent">Laird Nelson</a>
- *
- * @see org.microbean.helm.Tiller
- *
- * @see org.microbean.helm.ReleaseManager
- */
-@Version("2.8.2.1.1.0")
-package org.microbean.helm;
+import java.io.IOException;
 
-import org.microbean.development.annotation.Version;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
+
+public class TestHelmHome {
+
+  public TestHelmHome() {
+    super();
+  }
+
+  @Test
+  public void testReify() throws IOException {
+    final HelmHome helmHome = new HelmHome();
+    final Path helmHomePath = helmHome.toPath();
+    helmHome.reify();
+  }
+  
+}
