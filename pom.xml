@@ -287,6 +287,9 @@
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
+            <additionalJOptions combine.children="append">
+              <additionalJOption>-J-Dhttp.agent=maven-javadoc-plugin</additionalJOption>
+            </additionalJOptions>
             <doclint>-missing</doclint>
             <groups>
               <group>
@@ -298,28 +301,6 @@
                 <packages>org.microbean*</packages>
               </group>
             </groups>
-            <offlineLinks>
-              <offlineLink>
-                <url>http://static.javadoc.io/com.github.zafarkhaja/java-semver/0.9.0</url>
-                <location>${project.basedir}/src/main/javadoc/com.github.zafarkhaja/java-semver/0.9.0</location>
-              </offlineLink>
-              <offlineLink>
-                <url>http://static.javadoc.io/io.fabric8/kubernetes-client/3.1.8</url>
-                <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-client/3.1.8</location>
-              </offlineLink>
-              <offlineLink>
-                <url>http://static.javadoc.io/io.fabric8/kubernetes-model/2.0.4</url>
-                <location>${project.basedir}/src/main/javadoc/io.fabric8/kubernetes-model/2.0.4</location>
-              </offlineLink>
-              <offlineLink>
-                <url>http://static.javadoc.io/org.kamranzafar/jtar/2.3</url>
-                <location>${project.basedir}/src/main/javadoc/org.kamranzafar/jtar/2.3</location>
-              </offlineLink>
-              <offlineLink>
-                <url>http://static.javadoc.io/org.yaml/snakeyaml/1.19</url>
-                <location>${project.basedir}/src/main/javadoc/org.yaml/snakeyaml/1.19</location>
-              </offlineLink>
-            </offlineLinks>
           </configuration>
         </plugin>
         
@@ -468,7 +449,7 @@
 
     <!-- maven-javadoc-plugin properties; see https://maven.apache.org/plugins/maven-javadoc-plugin/javadoc-mojo.html -->
     <doctitle>&lt;a href="${project.url}" target="_parent"&gt;&lt;span style="font-family:Lobster, cursive;"&gt;µb&lt;/span&gt; ${project.artifactId}&lt;/a&gt; ${project.version} &lt;a href="https://travis-ci.org/microbean/${project.artifactId}" target="_parent"&gt;&lt;img src="https://travis-ci.org/microbean/${project.artifactId}.svg?branch=master"&gt;&lt;/a&gt;</doctitle>
-    <links>https://www.grpc.io/grpc-java/javadoc/,https://developers.google.com/protocol-buffers/docs/reference/java/,https://google.github.io/guava/releases/19.0/api/docs/,https://microbean.github.io/microbean-kubernetes/apidocs/,https://microbean.github.io/microbean-development-annotations/apidocs/</links>
+    <links>https://www.grpc.io/grpc-java/javadoc/,https://developers.google.com/protocol-buffers/docs/reference/java/,https://google.github.io/guava/releases/19.0/api/docs/,https://microbean.github.io/microbean-kubernetes/apidocs/,https://microbean.github.io/microbean-development-annotations/apidocs/,http://static.javadoc.io/com.github.zafarkhaja/java-semver/0.9.0,http://static.javadoc.io/io.fabric8/kubernetes-client/3.1.8,http://static.javadoc.io/io.fabric8/kubernetes-model/2.0.4,http://static.javadoc.io/org.kamranzafar/jtar/2.3,http://static.javadoc.io/org.yaml/snakeyaml/1.19</links>
     <stylesheetfile>css/stylesheet.css</stylesheetfile>
     
     <!-- maven-release-plugin properties; see http://maven.apache.org/maven-release/maven-release-plugin/perform-mojo.html -->
