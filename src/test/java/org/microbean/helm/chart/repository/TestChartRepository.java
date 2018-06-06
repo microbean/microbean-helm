@@ -57,5 +57,25 @@ public class TestChartRepository {
     assertEquals("wordpress", mostRecentWordpress.getName());
     assertEquals("0.6.12", mostRecentWordpress.getVersion());
   }
+
+  @Test
+  public void testIssue172() throws IOException, URISyntaxException {
+    final Path indexPath = Paths.get(Thread.currentThread().getContextClassLoader().getResource("TestChartRepository/stable-index-172.yaml").getPath());
+    assertNotNull(indexPath);
+    final ChartRepository chartRepository = new ChartRepository("stable", new URI("https://kubernetes-charts.storage.googleapis.com/"), indexPath);
+    final ChartRepository.Index index = chartRepository.loadIndex();
+    assertNotNull(index);
+    final Map<String, SortedSet<ChartRepository.Index.Entry>> entries = index.getEntries();
+    assertNotNull(entries);
+    assertEquals(177, entries.size());
+    // Pick a couple at random and verify versions are in the proper order
+    final SortedSet<ChartRepository.Index.Entry> wordpressEntries = entries.get("wordpress");
+    assertNotNull(wordpressEntries);
+    assertEquals(65, wordpressEntries.size());
+    final ChartRepository.Index.Entry mostRecentWordpress = wordpressEntries.first();
+    assertNotNull(mostRecentWordpress);
+    assertEquals("wordpress", mostRecentWordpress.getName());
+    assertEquals("1.0.10", mostRecentWordpress.getVersion());
+  }
   
 }
