@@ -28,6 +28,18 @@ To install microBean Helm, simply include it as a dependency in your
 project.  If you're using Maven, the dependency stanza should look
 like this:
 
+```
+    <build>
+      <extensions>
+        <extension>
+          <groupId>kr.motd.maven</groupId>
+          <!-- needed to resolve os-dependent classifiers -->
+          <artifactId>os-maven-plugin</artifactId>
+          <version>1.5.0.Final</version>
+        </extension>
+      </extensions>
+    </build>
+
     <dependency>
       <groupId>org.microbean</groupId>
       <artifactId>microbean-helm</artifactId>
@@ -35,7 +47,8 @@ like this:
       <version>2.8.2.1.1.0</version>
       <type>jar</type>
     </dependency>
-    
+```
+
 Releases are [available in Maven Central][10].  Snapshots are available
 in [Sonatype Snapshots][11].
 
