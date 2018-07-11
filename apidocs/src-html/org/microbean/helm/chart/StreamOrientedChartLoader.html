@@ -723,95 +723,94 @@
 <span class="sourceLineNo">715</span>    builder.setTypeUrl(name);<a name="line.715"></a>
 <span class="sourceLineNo">716</span>    final ByteString fileContents = ByteString.readFrom(stream);<a name="line.716"></a>
 <span class="sourceLineNo">717</span>    assert fileContents != null;<a name="line.717"></a>
-<span class="sourceLineNo">718</span>    assert fileContents.isValidUtf8();<a name="line.718"></a>
-<span class="sourceLineNo">719</span>    builder.setValue(fileContents);<a name="line.719"></a>
-<span class="sourceLineNo">720</span>  }<a name="line.720"></a>
+<span class="sourceLineNo">718</span>    builder.setValue(fileContents);<a name="line.718"></a>
+<span class="sourceLineNo">719</span>  }<a name="line.719"></a>
+<span class="sourceLineNo">720</span><a name="line.720"></a>
 <span class="sourceLineNo">721</span><a name="line.721"></a>
-<span class="sourceLineNo">722</span><a name="line.722"></a>
-<span class="sourceLineNo">723</span>  /*<a name="line.723"></a>
-<span class="sourceLineNo">724</span>   * Inner and nested classes.<a name="line.724"></a>
-<span class="sourceLineNo">725</span>   */<a name="line.725"></a>
+<span class="sourceLineNo">722</span>  /*<a name="line.722"></a>
+<span class="sourceLineNo">723</span>   * Inner and nested classes.<a name="line.723"></a>
+<span class="sourceLineNo">724</span>   */<a name="line.724"></a>
+<span class="sourceLineNo">725</span><a name="line.725"></a>
 <span class="sourceLineNo">726</span><a name="line.726"></a>
-<span class="sourceLineNo">727</span><a name="line.727"></a>
-<span class="sourceLineNo">728</span>  /**<a name="line.728"></a>
-<span class="sourceLineNo">729</span>   * An {@link Iterable} implementation that {@linkplain #iterator()<a name="line.729"></a>
-<span class="sourceLineNo">730</span>   * returns an empty &lt;code&gt;Iterator&lt;/code&gt;}.<a name="line.730"></a>
-<span class="sourceLineNo">731</span>   *<a name="line.731"></a>
-<span class="sourceLineNo">732</span>   * @author &lt;a href="https://about.me/lairdnelson"<a name="line.732"></a>
-<span class="sourceLineNo">733</span>   * target="_parent"&gt;Laird Nelson&lt;/a&gt;<a name="line.733"></a>
-<span class="sourceLineNo">734</span>   */<a name="line.734"></a>
-<span class="sourceLineNo">735</span>  static final class EmptyIterable implements Iterable&lt;Entry&lt;String, InputStream&gt;&gt; {<a name="line.735"></a>
+<span class="sourceLineNo">727</span>  /**<a name="line.727"></a>
+<span class="sourceLineNo">728</span>   * An {@link Iterable} implementation that {@linkplain #iterator()<a name="line.728"></a>
+<span class="sourceLineNo">729</span>   * returns an empty &lt;code&gt;Iterator&lt;/code&gt;}.<a name="line.729"></a>
+<span class="sourceLineNo">730</span>   *<a name="line.730"></a>
+<span class="sourceLineNo">731</span>   * @author &lt;a href="https://about.me/lairdnelson"<a name="line.731"></a>
+<span class="sourceLineNo">732</span>   * target="_parent"&gt;Laird Nelson&lt;/a&gt;<a name="line.732"></a>
+<span class="sourceLineNo">733</span>   */<a name="line.733"></a>
+<span class="sourceLineNo">734</span>  static final class EmptyIterable implements Iterable&lt;Entry&lt;String, InputStream&gt;&gt; {<a name="line.734"></a>
+<span class="sourceLineNo">735</span><a name="line.735"></a>
 <span class="sourceLineNo">736</span><a name="line.736"></a>
-<span class="sourceLineNo">737</span><a name="line.737"></a>
-<span class="sourceLineNo">738</span>    /*<a name="line.738"></a>
-<span class="sourceLineNo">739</span>     * Constructors.<a name="line.739"></a>
-<span class="sourceLineNo">740</span>     */<a name="line.740"></a>
+<span class="sourceLineNo">737</span>    /*<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * Constructors.<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     */<a name="line.739"></a>
+<span class="sourceLineNo">740</span><a name="line.740"></a>
 <span class="sourceLineNo">741</span><a name="line.741"></a>
-<span class="sourceLineNo">742</span><a name="line.742"></a>
-<span class="sourceLineNo">743</span>    /**<a name="line.743"></a>
-<span class="sourceLineNo">744</span>     * Creates a new {@link EmptyIterable}.<a name="line.744"></a>
-<span class="sourceLineNo">745</span>     */<a name="line.745"></a>
-<span class="sourceLineNo">746</span>    EmptyIterable() {<a name="line.746"></a>
-<span class="sourceLineNo">747</span>      super();<a name="line.747"></a>
-<span class="sourceLineNo">748</span>    }<a name="line.748"></a>
+<span class="sourceLineNo">742</span>    /**<a name="line.742"></a>
+<span class="sourceLineNo">743</span>     * Creates a new {@link EmptyIterable}.<a name="line.743"></a>
+<span class="sourceLineNo">744</span>     */<a name="line.744"></a>
+<span class="sourceLineNo">745</span>    EmptyIterable() {<a name="line.745"></a>
+<span class="sourceLineNo">746</span>      super();<a name="line.746"></a>
+<span class="sourceLineNo">747</span>    }<a name="line.747"></a>
+<span class="sourceLineNo">748</span><a name="line.748"></a>
 <span class="sourceLineNo">749</span><a name="line.749"></a>
-<span class="sourceLineNo">750</span><a name="line.750"></a>
-<span class="sourceLineNo">751</span>    /*<a name="line.751"></a>
-<span class="sourceLineNo">752</span>     * Instance methods.<a name="line.752"></a>
-<span class="sourceLineNo">753</span>     */<a name="line.753"></a>
-<span class="sourceLineNo">754</span>    <a name="line.754"></a>
-<span class="sourceLineNo">755</span><a name="line.755"></a>
-<span class="sourceLineNo">756</span>    /**<a name="line.756"></a>
-<span class="sourceLineNo">757</span>     * Returns the return value of the {@link<a name="line.757"></a>
-<span class="sourceLineNo">758</span>     * Collections#emptyIterator()} method when invoked.<a name="line.758"></a>
-<span class="sourceLineNo">759</span>     *<a name="line.759"></a>
-<span class="sourceLineNo">760</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.760"></a>
-<span class="sourceLineNo">761</span>     *<a name="line.761"></a>
-<span class="sourceLineNo">762</span>     * @return an empty {@link Iterator}; never {@code null}<a name="line.762"></a>
-<span class="sourceLineNo">763</span>     */<a name="line.763"></a>
-<span class="sourceLineNo">764</span>    @Override<a name="line.764"></a>
-<span class="sourceLineNo">765</span>    public final Iterator&lt;Entry&lt;String, InputStream&gt;&gt; iterator() {<a name="line.765"></a>
-<span class="sourceLineNo">766</span>      return Collections.emptyIterator();<a name="line.766"></a>
-<span class="sourceLineNo">767</span>    }<a name="line.767"></a>
-<span class="sourceLineNo">768</span>    <a name="line.768"></a>
-<span class="sourceLineNo">769</span>  }<a name="line.769"></a>
+<span class="sourceLineNo">750</span>    /*<a name="line.750"></a>
+<span class="sourceLineNo">751</span>     * Instance methods.<a name="line.751"></a>
+<span class="sourceLineNo">752</span>     */<a name="line.752"></a>
+<span class="sourceLineNo">753</span>    <a name="line.753"></a>
+<span class="sourceLineNo">754</span><a name="line.754"></a>
+<span class="sourceLineNo">755</span>    /**<a name="line.755"></a>
+<span class="sourceLineNo">756</span>     * Returns the return value of the {@link<a name="line.756"></a>
+<span class="sourceLineNo">757</span>     * Collections#emptyIterator()} method when invoked.<a name="line.757"></a>
+<span class="sourceLineNo">758</span>     *<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     *<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     * @return an empty {@link Iterator}; never {@code null}<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     */<a name="line.762"></a>
+<span class="sourceLineNo">763</span>    @Override<a name="line.763"></a>
+<span class="sourceLineNo">764</span>    public final Iterator&lt;Entry&lt;String, InputStream&gt;&gt; iterator() {<a name="line.764"></a>
+<span class="sourceLineNo">765</span>      return Collections.emptyIterator();<a name="line.765"></a>
+<span class="sourceLineNo">766</span>    }<a name="line.766"></a>
+<span class="sourceLineNo">767</span>    <a name="line.767"></a>
+<span class="sourceLineNo">768</span>  }<a name="line.768"></a>
+<span class="sourceLineNo">769</span><a name="line.769"></a>
 <span class="sourceLineNo">770</span><a name="line.770"></a>
-<span class="sourceLineNo">771</span><a name="line.771"></a>
-<span class="sourceLineNo">772</span>  <a name="line.772"></a>
-<span class="sourceLineNo">773</span>  private static final class ChartPathComparator implements Comparator&lt;String&gt; {<a name="line.773"></a>
-<span class="sourceLineNo">774</span><a name="line.774"></a>
-<span class="sourceLineNo">775</span>    private ChartPathComparator() {<a name="line.775"></a>
-<span class="sourceLineNo">776</span>      super();<a name="line.776"></a>
-<span class="sourceLineNo">777</span>    }<a name="line.777"></a>
-<span class="sourceLineNo">778</span><a name="line.778"></a>
-<span class="sourceLineNo">779</span>    @Override<a name="line.779"></a>
-<span class="sourceLineNo">780</span>    public final int compare(final String chartPath1, final String chartPath2) {<a name="line.780"></a>
-<span class="sourceLineNo">781</span>      if (chartPath1 == null) {<a name="line.781"></a>
-<span class="sourceLineNo">782</span>        if (chartPath2 == null) {<a name="line.782"></a>
-<span class="sourceLineNo">783</span>          return 0;<a name="line.783"></a>
-<span class="sourceLineNo">784</span>        } else {<a name="line.784"></a>
-<span class="sourceLineNo">785</span>          return -1; // nulls go to the left<a name="line.785"></a>
-<span class="sourceLineNo">786</span>        }<a name="line.786"></a>
-<span class="sourceLineNo">787</span>      } else if (chartPath1.equals(chartPath2)) {<a name="line.787"></a>
-<span class="sourceLineNo">788</span>        return 0;<a name="line.788"></a>
-<span class="sourceLineNo">789</span>      } else if (chartPath2 == null) {<a name="line.789"></a>
-<span class="sourceLineNo">790</span>        return 1;<a name="line.790"></a>
-<span class="sourceLineNo">791</span>      } else {<a name="line.791"></a>
-<span class="sourceLineNo">792</span>        final int chartPath1Length = chartPath1.length();<a name="line.792"></a>
-<span class="sourceLineNo">793</span>        final int chartPath2Length = chartPath2.length();<a name="line.793"></a>
-<span class="sourceLineNo">794</span>        if (chartPath1Length == chartPath2Length) {<a name="line.794"></a>
-<span class="sourceLineNo">795</span>          return chartPath1.compareTo(chartPath2);<a name="line.795"></a>
-<span class="sourceLineNo">796</span>        } else if (chartPath1Length &gt; chartPath2Length) {<a name="line.796"></a>
-<span class="sourceLineNo">797</span>          return 1;<a name="line.797"></a>
-<span class="sourceLineNo">798</span>        } else {<a name="line.798"></a>
-<span class="sourceLineNo">799</span>          return -1;<a name="line.799"></a>
-<span class="sourceLineNo">800</span>        }<a name="line.800"></a>
-<span class="sourceLineNo">801</span>      }<a name="line.801"></a>
-<span class="sourceLineNo">802</span>    }<a name="line.802"></a>
-<span class="sourceLineNo">803</span>    <a name="line.803"></a>
-<span class="sourceLineNo">804</span>  }<a name="line.804"></a>
-<span class="sourceLineNo">805</span>  <a name="line.805"></a>
-<span class="sourceLineNo">806</span>}<a name="line.806"></a>
+<span class="sourceLineNo">771</span>  <a name="line.771"></a>
+<span class="sourceLineNo">772</span>  private static final class ChartPathComparator implements Comparator&lt;String&gt; {<a name="line.772"></a>
+<span class="sourceLineNo">773</span><a name="line.773"></a>
+<span class="sourceLineNo">774</span>    private ChartPathComparator() {<a name="line.774"></a>
+<span class="sourceLineNo">775</span>      super();<a name="line.775"></a>
+<span class="sourceLineNo">776</span>    }<a name="line.776"></a>
+<span class="sourceLineNo">777</span><a name="line.777"></a>
+<span class="sourceLineNo">778</span>    @Override<a name="line.778"></a>
+<span class="sourceLineNo">779</span>    public final int compare(final String chartPath1, final String chartPath2) {<a name="line.779"></a>
+<span class="sourceLineNo">780</span>      if (chartPath1 == null) {<a name="line.780"></a>
+<span class="sourceLineNo">781</span>        if (chartPath2 == null) {<a name="line.781"></a>
+<span class="sourceLineNo">782</span>          return 0;<a name="line.782"></a>
+<span class="sourceLineNo">783</span>        } else {<a name="line.783"></a>
+<span class="sourceLineNo">784</span>          return -1; // nulls go to the left<a name="line.784"></a>
+<span class="sourceLineNo">785</span>        }<a name="line.785"></a>
+<span class="sourceLineNo">786</span>      } else if (chartPath1.equals(chartPath2)) {<a name="line.786"></a>
+<span class="sourceLineNo">787</span>        return 0;<a name="line.787"></a>
+<span class="sourceLineNo">788</span>      } else if (chartPath2 == null) {<a name="line.788"></a>
+<span class="sourceLineNo">789</span>        return 1;<a name="line.789"></a>
+<span class="sourceLineNo">790</span>      } else {<a name="line.790"></a>
+<span class="sourceLineNo">791</span>        final int chartPath1Length = chartPath1.length();<a name="line.791"></a>
+<span class="sourceLineNo">792</span>        final int chartPath2Length = chartPath2.length();<a name="line.792"></a>
+<span class="sourceLineNo">793</span>        if (chartPath1Length == chartPath2Length) {<a name="line.793"></a>
+<span class="sourceLineNo">794</span>          return chartPath1.compareTo(chartPath2);<a name="line.794"></a>
+<span class="sourceLineNo">795</span>        } else if (chartPath1Length &gt; chartPath2Length) {<a name="line.795"></a>
+<span class="sourceLineNo">796</span>          return 1;<a name="line.796"></a>
+<span class="sourceLineNo">797</span>        } else {<a name="line.797"></a>
+<span class="sourceLineNo">798</span>          return -1;<a name="line.798"></a>
+<span class="sourceLineNo">799</span>        }<a name="line.799"></a>
+<span class="sourceLineNo">800</span>      }<a name="line.800"></a>
+<span class="sourceLineNo">801</span>    }<a name="line.801"></a>
+<span class="sourceLineNo">802</span>    <a name="line.802"></a>
+<span class="sourceLineNo">803</span>  }<a name="line.803"></a>
+<span class="sourceLineNo">804</span>  <a name="line.804"></a>
+<span class="sourceLineNo">805</span>}<a name="line.805"></a>
 
 
 
