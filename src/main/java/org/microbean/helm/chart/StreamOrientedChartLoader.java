@@ -715,7 +715,6 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
     builder.setTypeUrl(name);
     final ByteString fileContents = ByteString.readFrom(stream);
     assert fileContents != null;
-    assert fileContents.isValidUtf8();
     builder.setValue(fileContents);
   }
 
