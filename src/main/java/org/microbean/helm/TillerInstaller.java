@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 
 import com.github.zafarkhaja.semver.Version;
 
+import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.HttpClientAware;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -45,25 +46,6 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 
 import io.fabric8.kubernetes.client.dsl.Listable;
 import io.fabric8.kubernetes.client.dsl.Resource;
-
-import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.ContainerPort;
-import io.fabric8.kubernetes.api.model.EnvVar;
-import io.fabric8.kubernetes.api.model.HTTPGetAction;
-import io.fabric8.kubernetes.api.model.IntOrString;
-import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.PodList;
-import io.fabric8.kubernetes.api.model.PodSpec;
-import io.fabric8.kubernetes.api.model.PodTemplateSpec;
-import io.fabric8.kubernetes.api.model.Probe;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretVolumeSource;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.ServicePort;
-import io.fabric8.kubernetes.api.model.ServiceSpec;
-import io.fabric8.kubernetes.api.model.Status;
-import io.fabric8.kubernetes.api.model.Volume;
-import io.fabric8.kubernetes.api.model.VolumeMount;
 
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
@@ -578,7 +560,7 @@ public class TillerInstaller {
                             tls,
                             verifyTls);
         
-    this.kubernetesClient.extensions().deployments().inNamespace(namespace).create(deployment);
+    this.kubernetesClient.apps().deployments().inNamespace(namespace).create(deployment);
 
     final Service service = this.createService(namespace, normalizeServiceName(serviceName), labels);
     this.kubernetesClient.services().inNamespace(namespace).create(service);
@@ -627,7 +609,7 @@ public class TillerInstaller {
     namespace = normalizeNamespace(namespace);
     serviceName = normalizeServiceName(serviceName);
 
-    final Resource<Deployment, DoneableDeployment> resource = this.kubernetesClient.extensions()
+    final Resource<Deployment, DoneableDeployment> resource = this.kubernetesClient.apps()
       .deployments()
       .inNamespace(namespace)
       .withName(normalizeDeploymentName(deploymentName));
@@ -836,7 +818,10 @@ public class TillerInstaller {
       podSpec.setVolumes(Arrays.asList(volume));
     }
     podTemplateSpec.setSpec(podSpec);
-    deploymentSpec.setTemplate(podTemplateSpec);    
+    deploymentSpec.setTemplate(podTemplateSpec);
+    LabelSelector selector = new LabelSelector();
+    selector.setMatchLabels(labels);
+    deploymentSpec.setSelector(selector);
     return deploymentSpec;
   }
 
