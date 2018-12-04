@@ -94,7 +94,7 @@ try (final URLChartLoader chartLoader = new URLChartLoader()) {
 assert chart != null;
 
 try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
-     final Tiller = new Tiller(client);
+     final Tiller tiller = new Tiller(client);
      final ReleaseManager releaseManager = new ReleaseManager(tiller)) {
 
   final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
@@ -164,7 +164,7 @@ try (final URLChartLoader chartLoader = new URLChartLoader()) {
 assert chart != null;
 
 try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
-     final Tiller = new Tiller(client);
+     final Tiller tiller = new Tiller(client);
      final ReleaseManager releaseManager = new ReleaseManager(tiller)) {
 
   final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
@@ -187,7 +187,7 @@ try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
   requestBuilder.getValuesBuilder().setRaw(yamlString);
   
   // Install the loaded chart with the user-supplied overrides.
-  final Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chartBuilder);
+  final Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chart);
   assert releaseFuture != null;
   final Release release = releaseFuture.get().getRelease();
   assert release != null;
