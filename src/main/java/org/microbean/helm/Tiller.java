@@ -19,15 +19,12 @@ package org.microbean.helm;
 import java.io.Closeable;
 import java.io.IOException;
 
-import java.net.InetAddress;
 import java.net.MalformedURLException;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import java.util.concurrent.TimeUnit;
 
 import hapi.services.tiller.ReleaseServiceGrpc;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceBlockingStub;
@@ -46,7 +43,6 @@ import io.fabric8.kubernetes.client.KubernetesClientException; // for javadoc on
 import io.fabric8.kubernetes.client.LocalPortForward;
 
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 
 import io.grpc.health.v1.HealthGrpc;
@@ -57,8 +53,6 @@ import io.grpc.health.v1.HealthGrpc.HealthStub;
 import io.grpc.stub.MetadataUtils;
 
 import okhttp3.OkHttpClient;
-
-import org.microbean.development.annotation.Issue;
 
 import org.microbean.kubernetes.Pods;
 
@@ -113,7 +107,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * be.
    */
   public static final int MAX_MESSAGE_SIZE = 20 * 1024 * 1024;
-  
+
   /**
    * A {@link Metadata} that ensures that certain Tiller-related
    * headers are passed with every gRPC call.
@@ -122,11 +116,10 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    */
   private static final Metadata metadata = new Metadata();
 
-
   /*
    * Static initializer.
    */
-  
+
 
   /**
    * Static initializer; initializes the {@link #DEFAULT_LABELS}
@@ -173,7 +166,6 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    */
   private final ManagedChannel channel;
 
-
   /*
    * Constructors.
    */
@@ -209,11 +201,30 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * null}
    */
   public Tiller(final LocalPortForward portForward) {
+    this(portForward, new DefaultManagedChannelFactory());
+  }
+
+
+  /**
+   * Creates a new {@link Tiller} that will use information from the
+   * supplied {@link LocalPortForward} to establish a communications
+   * channel with the Tiller server.
+   *
+   * @param portForward the {@link LocalPortForward} to use; must not
+   * be {@code null}
+   *
+   * @param managedChannelFactory the {@link ManagedChannelFactory} that will be used to create a
+   * {@link ManagedChannel} to communicate with Tiller
+   *
+   * @exception NullPointerException if {@code portForward} is {@code
+   * null}
+   */
+  public Tiller(final LocalPortForward portForward, final ManagedChannelFactory managedChannelFactory) {
     super();
     Objects.requireNonNull(portForward);
     this.config = null;
     this.portForward = null; // yes, null
-    this.channel = this.buildChannel(portForward);
+    this.channel = managedChannelFactory.create(portForward);
   }
 
   /**
@@ -244,7 +255,41 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * @exception NullPointerException if {@code client} is {@code null}
    */
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client) throws MalformedURLException {
-    this(client, DEFAULT_NAMESPACE, DEFAULT_PORT, DEFAULT_LABELS);
+    this(client, DEFAULT_NAMESPACE, DEFAULT_PORT, DEFAULT_LABELS, new DefaultManagedChannelFactory());
+  }
+
+  /**
+   * Creates a new {@link Tiller} that will forward a local port to
+   * port {@code 44134} on a Pod housing Tiller in the {@code
+   * kube-system} namespace running in the Kubernetes cluster with
+   * which the supplied {@link KubernetesClient} is capable of
+   * communicating.
+   *
+   * <p>The {@linkplain Pods#getFirstReadyPod(Listable) first ready
+   * Pod} with a {@code name} label whose value is {@code tiller} and
+   * with an {@code app} label whose value is {@code helm} is deemed
+   * to be the pod housing the Tiller instance to connect to.  (This
+   * duplicates the default logic of the {@code helm} command line
+   * executable.)</p>
+   *
+   * @param <T> a {@link KubernetesClient} implementation that is also
+   * an {@link HttpClientAware} implementation, such as {@link
+   * DefaultKubernetesClient}
+   *
+   * @param client the {@link KubernetesClient}-and-{@link
+   * HttpClientAware} implementation that can communicate with a
+   * Kubernetes cluster; must not be {@code null}
+   *
+   * @param managedChannelFactory the {@link ManagedChannelFactory} that will be used to create a
+   * {@link ManagedChannel} to communicate with Tiller
+   *
+   * @exception MalformedURLException if there was a problem
+   * identifying a Pod within the cluster that houses a Tiller instance
+   *
+   * @exception NullPointerException if {@code client} is {@code null}
+   */
+  public <T extends HttpClientAware & KubernetesClient> Tiller(final T client, final ManagedChannelFactory managedChannelFactory) throws MalformedURLException {
+    this(client, DEFAULT_NAMESPACE, DEFAULT_PORT, DEFAULT_LABELS, managedChannelFactory);
   }
 
   /**
@@ -285,7 +330,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * found and consequently a connection could not be established
    */
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client, final String namespaceHousingTiller) throws MalformedURLException {
-    this(client, namespaceHousingTiller, DEFAULT_PORT, DEFAULT_LABELS);
+    this(client, namespaceHousingTiller, DEFAULT_PORT, DEFAULT_LABELS, new DefaultManagedChannelFactory());
   }
 
   /**
@@ -320,6 +365,9 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * instance; if {@code null} then the value of {@link
    * #DEFAULT_LABELS} will be used instead
    *
+   * @param managedChannelFactory the {@link ManagedChannelFactory} that will be used to create a
+   * {@link ManagedChannel} to communicate with Tiller
+   *
    * @exception MalformedURLException if there was a problem
    * identifying a Pod within the cluster that houses a Tiller instance
    *
@@ -334,7 +382,8 @@ public class Tiller implements ConfigAware<Config>, Closeable {
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client,
                                                                String namespaceHousingTiller,
                                                                int tillerPort,
-                                                               Map<String, String> tillerLabels) throws MalformedURLException {
+                                                               Map<String, String> tillerLabels,
+                                                               ManagedChannelFactory managedChannelFactory) throws MalformedURLException {
     super();
     Objects.requireNonNull(client);
     this.config = client.getConfiguration();
@@ -352,19 +401,18 @@ public class Tiller implements ConfigAware<Config>, Closeable {
       throw new IllegalArgumentException("client", new IllegalStateException("client.getHttpClient() == null"));
     }
     LocalPortForward portForward = null;
-    
+
     this.portForward = Pods.forwardPort(httpClient, client.pods().inNamespace(namespaceHousingTiller).withLabels(tillerLabels), tillerPort);
     if (this.portForward == null) {
       throw new TillerException("Could not forward port to a Ready Tiller pod's port " + tillerPort + " in namespace " + namespaceHousingTiller + " with labels " + tillerLabels);
     }
-    this.channel = this.buildChannel(this.portForward);
+    this.channel = managedChannelFactory.create(this.portForward);
   }
 
 
   /*
    * Instance methods.
    */
-
 
   /**
    * Returns any {@link Config} available at construction time.
@@ -376,51 +424,6 @@ public class Tiller implements ConfigAware<Config>, Closeable {
   @Override
   public Config getConfiguration() {
     return this.config;
-  }
-  
-
-  /**
-   * Creates a {@link ManagedChannel} for communication with Tiller
-   * from the information contained in the supplied {@link
-   * LocalPortForward}.
-   *
-   * <p><strong>Note:</strong> This method is (deliberately) called
-   * from constructors so must have stateless semantics.</p>
-   *
-   * <p>This method never returns {@code null}.</p>
-   *
-   * <p>Overrides of this method must not return {@code null}.</p>
-   *
-   * @param portForward a {@link LocalPortForward}; must not be {@code
-   * null}
-   *
-   * @return a non-{@code null} {@link ManagedChannel}
-   *
-   * @exception NullPointerException if {@code portForward} is {@code
-   * null}
-   *
-   * @exception IllegalArgumentException if {@code portForward}'s
-   * {@link LocalPortForward#getLocalAddress()} method returns {@code
-   * null}
-   */
-  @Issue(id = "42", uri = "https://github.com/microbean/microbean-helm/issues/42")
-  protected ManagedChannel buildChannel(final LocalPortForward portForward) {
-    Objects.requireNonNull(portForward);
-    @Issue(id = "43", uri = "https://github.com/microbean/microbean-helm/issues/43")
-    final InetAddress localAddress = portForward.getLocalAddress();
-    if (localAddress == null) {
-      throw new IllegalArgumentException("portForward", new IllegalStateException("portForward.getLocalAddress() == null"));
-    }
-    final String hostAddress = localAddress.getHostAddress();
-    if (hostAddress == null) {
-      throw new IllegalArgumentException("portForward", new IllegalStateException("portForward.getLocalAddress().getHostAddress() == null"));
-    }
-    return ManagedChannelBuilder.forAddress(hostAddress, portForward.getLocalPort())
-      .idleTimeout(5L, TimeUnit.SECONDS)
-      .keepAliveTime(30L, TimeUnit.SECONDS)
-      .maxInboundMessageSize(MAX_MESSAGE_SIZE)
-      .usePlaintext(true)
-      .build();
   }
 
   /**
@@ -498,7 +501,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * @return a non-{@code null} {@link ReleaseServiceStub}
    *
    * @see ReleaseServiceStub
-   */  
+   */
   public ReleaseServiceStub getReleaseServiceStub() {
     ReleaseServiceStub returnValue = null;
     if (this.channel != null) {
@@ -522,7 +525,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     }
     return returnValue;
   }
-  
+
   public HealthStub getHealthStub() {
     HealthStub returnValue = null;
     if (this.channel != null) {
@@ -538,5 +541,5 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     assert response != null;
     return response.getVersion();
   }
-  
+
 }
