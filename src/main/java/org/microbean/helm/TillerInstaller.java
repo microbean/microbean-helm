@@ -999,7 +999,7 @@ public class TillerInstaller {
         throw new TillerPollingDeadlineExceededException(String.valueOf(timeoutInMilliseconds));
       }
       @SuppressWarnings("unchecked")
-      final Tiller tiller = new Tiller((T)this.kubernetesClient, namespace, -1 /* use default */, labels);
+      final Tiller tiller = new Tiller((T)this.kubernetesClient, namespace, -1 /* use default */, labels, new DefaultManagedChannelFactory());
       final HealthBlockingStub health = tiller.getHealthBlockingStub();
       assert health != null;
       final HealthCheckRequest.Builder builder = HealthCheckRequest.newBuilder();
