@@ -808,7 +808,7 @@ public class TillerInstaller {
 
   protected DeploymentSpec createDeploymentSpec(final Map<String, String> labels,
                                                 final Map<String, String> nodeSelector,
-                                                final String serviceAccountName,
+                                                String serviceAccountName,
                                                 final String imageName,
                                                 final ImagePullPolicy imagePullPolicy,
                                                 final int maxHistory,
@@ -823,7 +823,9 @@ public class TillerInstaller {
     metadata.setLabels(normalizeLabels(labels));
     podTemplateSpec.setMetadata(metadata);
     final PodSpec podSpec = new PodSpec();
-    podSpec.setServiceAccountName(normalizeServiceAccountName(serviceAccountName));
+    serviceAccountName = normalizeServiceAccountName(serviceAccountName);    
+    podSpec.setServiceAccountName(serviceAccountName);
+    podSpec.setAutomountServiceAccountToken(!"".equals(serviceAccountName)); // see https://github.com/helm/helm/commit/992effc1cd8870ab9061ec5d56847bf25e818af3#diff-fe5fb50606e92e999fee7ed3b189e76eR179
     podSpec.setContainers(Arrays.asList(this.createContainer(imageName, imagePullPolicy, maxHistory, namespace, tls, verifyTls)));
     podSpec.setHostNetwork(Boolean.valueOf(hostNetwork));
     if (nodeSelector != null && !nodeSelector.isEmpty()) {
