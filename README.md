@@ -14,6 +14,12 @@ and [releases][9].
 Until now, Java developers had to use the `helm` command line client
 to do these operations.
 
+# Announcements
+
+Project announcements may be found [in the
+wiki](https://github.com/microbean/microbean-helm/wiki/Announcements).
+You are encouraged to take a look!
+
 # Versioning
 
 The microBean Helm project's version number tracks the Helm and Tiller
