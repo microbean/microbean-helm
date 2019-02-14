@@ -825,7 +825,6 @@ public class TillerInstaller {
     final PodSpec podSpec = new PodSpec();
     serviceAccountName = normalizeServiceAccountName(serviceAccountName);    
     podSpec.setServiceAccountName(serviceAccountName);
-    podSpec.setAutomountServiceAccountToken(!"".equals(serviceAccountName)); // see https://github.com/helm/helm/commit/992effc1cd8870ab9061ec5d56847bf25e818af3#diff-fe5fb50606e92e999fee7ed3b189e76eR179
     podSpec.setContainers(Arrays.asList(this.createContainer(imageName, imagePullPolicy, maxHistory, namespace, tls, verifyTls)));
     podSpec.setHostNetwork(Boolean.valueOf(hostNetwork));
     if (nodeSelector != null && !nodeSelector.isEmpty()) {
