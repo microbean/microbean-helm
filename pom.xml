@@ -4,12 +4,13 @@
 
   <groupId>org.microbean</groupId>
   <artifactId>microbean-helm</artifactId>
-  <version>2.8.2.1.1.2-SNAPSHOT</version>
+  <version>2.12.3.0.0.1-SNAPSHOT</version>
 
   <parent>
     <groupId>org.microbean</groupId>
     <artifactId>microbean-pluginmanagement-pom</artifactId>
-    <version>5</version>
+    <version>9</version>
+    <relativePath/>
   </parent>
 
   <name>microBean Helm</name>
@@ -57,42 +58,42 @@
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>3.5.1</version>
+        <version>3.6.1</version>
         <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-netty</artifactId>
-        <version>1.10.0</version>
+        <version>1.18.0</version>
         <type>jar</type>
       </dependency>
       
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-protobuf</artifactId>
-        <version>1.10.0</version>
+        <version>1.18.0</version>
         <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-services</artifactId>
-        <version>1.10.0</version>
+        <version>1.18.0</version>
         <type>jar</type>
       </dependency>
       
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-stub</artifactId>
-        <version>1.10.0</version>
+        <version>1.18.0</version>
         <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>io.fabric8</groupId>
         <artifactId>kubernetes-client</artifactId>
-        <version>3.1.8</version>
+        <version>4.1.1</version>
         <type>jar</type>
       </dependency>
 
@@ -100,7 +101,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-tcnative-boringssl-static</artifactId>
-        <version>2.0.7.Final</version>
+        <version>2.0.20.Final</version>
         <type>jar</type>
         <classifier>${os.detected.classifier}</classifier>
       </dependency>
@@ -125,18 +126,20 @@
         <version>0.1.1</version>
         <type>jar</type>
       </dependency>
-      
+
+      <!--
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
         <version>1.7.25</version>
         <type>jar</type>
       </dependency>
+      -->
 
       <dependency>
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
-        <version>1.20</version>
+        <version>1.23</version>
         <type>jar</type>
       </dependency>
       
@@ -244,12 +247,14 @@
       <scope>test</scope>
     </dependency>
 
+    <!--
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <type>jar</type>
       <scope>test</scope>
     </dependency>
+    -->
     
   </dependencies>
   
@@ -259,7 +264,7 @@
       <extension>
         <groupId>kr.motd.maven</groupId>
         <artifactId>os-maven-plugin</artifactId>
-        <version>1.5.0.Final</version>
+        <version>1.6.2</version>
       </extension>
     </extensions>
 
@@ -271,7 +276,7 @@
       
       <resource>
         <targetPath>META-INF</targetPath>
-        <directory />
+        <directory>${project.basedir}</directory>
         <includes>
           <include>LICENSE</include>
         </includes>
@@ -306,14 +311,16 @@
         
         <plugin>
           <artifactId>maven-scm-plugin</artifactId>
-          <version>1.9.5</version>
+          <version>1.11.1</version>
         </plugin>
 
+        <!--
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
           <version>3.0.4</version>
         </plugin>
+        -->
         
         <plugin>
           <groupId>org.jboss.jandex</groupId>
@@ -324,7 +331,7 @@
         <plugin>
           <groupId>org.xolstice.maven.plugins</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
-          <version>0.5.1</version>
+          <version>0.6.1</version>
         </plugin>
         
       </plugins>
@@ -379,7 +386,7 @@
               <checkoutDirectory>${project.build.directory}/generated-sources/helm</checkoutDirectory>
               <connectionUrl>scm:git:https://github.com/kubernetes/helm.git</connectionUrl>
               <includes>_proto/hapi/**</includes>
-              <scmVersion>v2.8.2</scmVersion>
+              <scmVersion>v2.12.3</scmVersion>
               <scmVersionType>tag</scmVersionType>
             </configuration>
           </execution>
@@ -428,10 +435,10 @@
             </goals>
             <configuration>
               <checkStaleness>true</checkStaleness>
-              <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.10.0:exe:${os.detected.classifier}</pluginArtifact>
+              <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.18.0:exe:${os.detected.classifier}</pluginArtifact>
               <pluginId>grpc-java</pluginId>
               <protoSourceRoot>${project.build.directory}/generated-sources/helm/_proto</protoSourceRoot>
-              <protocArtifact>com.google.protobuf:protoc:3.5.1-1:exe:${os.detected.classifier}</protocArtifact>
+              <protocArtifact>com.google.protobuf:protoc:3.6.1:exe:${os.detected.classifier}</protocArtifact>
             </configuration>
           </execution>
         </executions>
@@ -449,7 +456,7 @@
 
     <!-- maven-javadoc-plugin properties; see https://maven.apache.org/plugins/maven-javadoc-plugin/javadoc-mojo.html -->
     <doctitle>&lt;a href="${project.url}" target="_parent"&gt;&lt;span style="font-family:Lobster, cursive;"&gt;µb&lt;/span&gt; ${project.artifactId}&lt;/a&gt; ${project.version} &lt;a href="https://travis-ci.org/microbean/${project.artifactId}" target="_parent"&gt;&lt;img src="https://travis-ci.org/microbean/${project.artifactId}.svg?branch=master"&gt;&lt;/a&gt;</doctitle>
-    <links>https://www.grpc.io/grpc-java/javadoc/,https://developers.google.com/protocol-buffers/docs/reference/java/,https://google.github.io/guava/releases/19.0/api/docs/,https://microbean.github.io/microbean-kubernetes/apidocs/,https://microbean.github.io/microbean-development-annotations/apidocs/,http://static.javadoc.io/com.github.zafarkhaja/java-semver/0.9.0,http://static.javadoc.io/io.fabric8/kubernetes-client/3.1.8,http://static.javadoc.io/io.fabric8/kubernetes-model/2.0.4,http://static.javadoc.io/org.kamranzafar/jtar/2.3,http://static.javadoc.io/org.yaml/snakeyaml/1.19</links>
+    <links>https://www.grpc.io/grpc-java/javadoc/,https://developers.google.com/protocol-buffers/docs/reference/java/,https://google.github.io/guava/releases/19.0/api/docs/,https://microbean.github.io/microbean-kubernetes/apidocs/,https://microbean.github.io/microbean-development-annotations/apidocs/,http://static.javadoc.io/com.github.zafarkhaja/java-semver/0.9.0,http://static.javadoc.io/io.fabric8/kubernetes-client/4.1.1,http://static.javadoc.io/io.fabric8/kubernetes-model/4.1.1,http://static.javadoc.io/org.kamranzafar/jtar/2.3,http://static.javadoc.io/org.yaml/snakeyaml/1.19</links>
     <stylesheetfile>css/stylesheet.css</stylesheetfile>
     
     <!-- maven-release-plugin properties; see http://maven.apache.org/maven-release/maven-release-plugin/perform-mojo.html -->

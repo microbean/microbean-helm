@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017-2018 microBean.
+ * Copyright © 2017-2019 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,19 +38,12 @@ import java.util.regex.Pattern;
 
 import com.github.zafarkhaja.semver.Version;
 
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.HttpClientAware;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClientException;
-
-import io.fabric8.kubernetes.client.dsl.Listable;
-import io.fabric8.kubernetes.client.dsl.Resource;
-
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.HTTPGetAction;
 import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.LabelSelector;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.PodSpec;
@@ -65,9 +58,17 @@ import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 
-import io.fabric8.kubernetes.api.model.extensions.Deployment;
-import io.fabric8.kubernetes.api.model.extensions.DeploymentSpec;
-import io.fabric8.kubernetes.api.model.extensions.DoneableDeployment;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
+import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
+
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.HttpClientAware;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+
+import io.fabric8.kubernetes.client.dsl.Listable;
+import io.fabric8.kubernetes.client.dsl.Resource;
 
 import io.grpc.health.v1.HealthCheckRequest;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
@@ -127,7 +128,7 @@ public class TillerInstaller {
   /**
    * The version of Tiller to install.
    */
-  public static final String VERSION = "2.8.2";
+  public static final String VERSION = "2.12.3";
 
   /*
    * Derivative static fields.
@@ -578,7 +579,8 @@ public class TillerInstaller {
                             tls,
                             verifyTls);
         
-    this.kubernetesClient.extensions().deployments().inNamespace(namespace).create(deployment);
+    // this.kubernetesClient.extensions().deployments().inNamespace(namespace).create(deployment);
+    this.kubernetesClient.apps().deployments().inNamespace(namespace).create(deployment);
 
     final Service service = this.createService(namespace, normalizeServiceName(serviceName), labels);
     this.kubernetesClient.services().inNamespace(namespace).create(service);
@@ -627,7 +629,7 @@ public class TillerInstaller {
     namespace = normalizeNamespace(namespace);
     serviceName = normalizeServiceName(serviceName);
 
-    final Resource<Deployment, DoneableDeployment> resource = this.kubernetesClient.extensions()
+    final Resource<Deployment, DoneableDeployment> resource = this.kubernetesClient.apps()
       .deployments()
       .inNamespace(namespace)
       .withName(normalizeDeploymentName(deploymentName));
@@ -836,7 +838,10 @@ public class TillerInstaller {
       podSpec.setVolumes(Arrays.asList(volume));
     }
     podTemplateSpec.setSpec(podSpec);
-    deploymentSpec.setTemplate(podTemplateSpec);    
+    deploymentSpec.setTemplate(podTemplateSpec);
+    final LabelSelector selector = new LabelSelector();
+    selector.setMatchLabels(labels);
+    deploymentSpec.setSelector(selector);
     return deploymentSpec;
   }
 

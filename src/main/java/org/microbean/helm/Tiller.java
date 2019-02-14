@@ -29,6 +29,8 @@ import java.util.Objects;
 
 import java.util.concurrent.TimeUnit;
 
+import java.util.function.Function;
+
 import hapi.services.tiller.ReleaseServiceGrpc;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceBlockingStub;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceFutureStub;
@@ -85,7 +87,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    *
    * <p>This field is never {@code null}.</p>
    */
-  public static final String VERSION = "2.8.2";
+  public static final String VERSION = "2.12.3";
 
   /**
    * The Kubernetes namespace into which Tiller server instances are
@@ -207,13 +209,43 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    *
    * @exception NullPointerException if {@code portForward} is {@code
    * null}
+   *
+   * @see #Tiller(LocalPortForward, Function)
    */
   public Tiller(final LocalPortForward portForward) {
+    this(portForward, null);
+  }
+
+  /**
+   * Creates a new {@link Tiller} that will use information from the
+   * supplied {@link LocalPortForward} to establish a communications
+   * channel with the Tiller server.
+   *
+   * @param portForward the {@link LocalPortForward} to use; must not
+   * be {@code null}
+   *
+   * @param channelBuilder a {@link Function} capable of accepting a
+   * {@link LocalPortForward} and returning a new {@link
+   * ManagedChannel}; if {@code null} the {@link
+   * #buildChannel(LocalPortForward)} method will be used instead; if
+   * non-{@code null} then the {@link #buildChannel(LocalPortForward)}
+   * method will never be called
+   *
+   * @exception NullPointerException if {@code portForward} is {@code
+   * null}
+   *
+   * @see #Tiller(LocalPortForward, Function)
+   */
+  public Tiller(final LocalPortForward portForward, final Function<? super LocalPortForward, ? extends ManagedChannel> channelBuilder) {
     super();
     Objects.requireNonNull(portForward);
     this.config = null;
     this.portForward = null; // yes, null
-    this.channel = this.buildChannel(portForward);
+    if (channelBuilder == null) {
+      this.channel = this.buildChannel(portForward);
+    } else {
+      this.channel = channelBuilder.apply(portForward);
+    }
   }
 
   /**
@@ -242,9 +274,11 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    * identifying a Pod within the cluster that houses a Tiller instance
    *
    * @exception NullPointerException if {@code client} is {@code null}
+   *
+   * @see #Tiller(HttpClientAware, String, int, Map, Function)
    */
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client) throws MalformedURLException {
-    this(client, DEFAULT_NAMESPACE, DEFAULT_PORT, DEFAULT_LABELS);
+    this(client, DEFAULT_NAMESPACE, DEFAULT_PORT, DEFAULT_LABELS, null);
   }
 
   /**
@@ -283,9 +317,11 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    *
    * @exception TillerException if a ready Tiller pod could not be
    * found and consequently a connection could not be established
+   *
+   * @see #Tiller(HttpClientAware, String, int, Map, Function)
    */
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client, final String namespaceHousingTiller) throws MalformedURLException {
-    this(client, namespaceHousingTiller, DEFAULT_PORT, DEFAULT_LABELS);
+    this(client, namespaceHousingTiller, DEFAULT_PORT, DEFAULT_LABELS, null);
   }
 
   /**
@@ -330,11 +366,72 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    *
    * @exception TillerException if a ready Tiller pod could not be
    * found and consequently a connection could not be established
+   *
+   * @see #Tiller(HttpClientAware, String, int, Map, Function)
    */
   public <T extends HttpClientAware & KubernetesClient> Tiller(final T client,
                                                                String namespaceHousingTiller,
                                                                int tillerPort,
-                                                               Map<String, String> tillerLabels) throws MalformedURLException {
+                                                               Map<String, String> tillerLabels)
+    throws MalformedURLException {
+    this(client, namespaceHousingTiller, tillerPort, tillerLabels, null);
+  }
+
+  /**
+   * Creates a new {@link Tiller} that will forward a local port to
+   * the supplied (remote) port on a Pod housing Tiller in the supplied
+   * namespace running in the Kubernetes cluster with which the
+   * supplied {@link KubernetesClient} is capable of communicating.
+   *
+   * <p>The {@linkplain Pods#getFirstReadyPod(Listable) first ready
+   * Pod} with labels matching the supplied {@code tillerLabels} is
+   * deemed to be the pod housing the Tiller instance to connect
+   * to.</p>
+   *
+   * @param <T> a {@link KubernetesClient} implementation that is also
+   * an {@link HttpClientAware} implementation, such as {@link
+   * DefaultKubernetesClient}
+   *
+   * @param client the {@link KubernetesClient}-and-{@link
+   * HttpClientAware} implementation that can communicate with a
+   * Kubernetes cluster; must not be {@code null}; no reference to
+   * this object is retained by this {@link Tiller} instance
+   *
+   * @param namespaceHousingTiller the namespace within which a Tiller
+   * instance is hopefully running; if {@code null}, then the value of
+   * {@link #DEFAULT_NAMESPACE} will be used instead
+   *
+   * @param tillerPort the remote port to attempt to forward a local
+   * port to; normally {@code 44134}
+   *
+   * @param tillerLabels a {@link Map} representing the Kubernetes
+   * labels (and their values) identifying a Pod housing a Tiller
+   * instance; if {@code null} then the value of {@link
+   * #DEFAULT_LABELS} will be used instead
+   *
+   * @param channelBuilder a {@link Function} capable of accepting a
+   * {@link LocalPortForward} and returning a new {@link
+   * ManagedChannel}; if {@code null} the {@link
+   * #buildChannel(LocalPortForward)} method will be used instead; if
+   * non-{@code null} then the {@link #buildChannel(LocalPortForward)}
+   * method will never be called
+   *
+   * @exception MalformedURLException if there was a problem
+   * identifying a Pod within the cluster that houses a Tiller instance
+   *
+   * @exception NullPointerException if {@code client} is {@code null}
+   *
+   * @exception KubernetesClientException if there was a problem
+   * connecting to Kubernetes
+   *
+   * @exception TillerException if a ready Tiller pod could not be
+   * found and consequently a connection could not be established
+   */
+  public <T extends HttpClientAware & KubernetesClient> Tiller(final T client,
+                                                               String namespaceHousingTiller,
+                                                               int tillerPort,
+                                                               Map<String, String> tillerLabels,
+                                                               Function<? super LocalPortForward, ? extends ManagedChannel> channelBuilder) throws MalformedURLException {  
     super();
     Objects.requireNonNull(client);
     this.config = client.getConfiguration();
@@ -357,7 +454,11 @@ public class Tiller implements ConfigAware<Config>, Closeable {
     if (this.portForward == null) {
       throw new TillerException("Could not forward port to a Ready Tiller pod's port " + tillerPort + " in namespace " + namespaceHousingTiller + " with labels " + tillerLabels);
     }
-    this.channel = this.buildChannel(this.portForward);
+    if (channelBuilder == null) {
+      this.channel = this.buildChannel(this.portForward);
+    } else {
+      this.channel = channelBuilder.apply(this.portForward);
+    }
   }
 
 
