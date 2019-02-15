@@ -225,7 +225,7 @@ public class TillerInstaller {
   
   public void init() {
     try {
-      this.init(false, null, null, null, null, null, null, null, null, 0, false, false, false, null, null, null, -1L);
+      this.init(false, null, null, 1, null, null, null, null, null, null, 0, false, false, false, null, null, null, -1L);
     } catch (final IOException willNotHappen) {
       throw new AssertionError(willNotHappen);
     }
@@ -233,7 +233,7 @@ public class TillerInstaller {
   
   public void init(final boolean upgrade) {
     try {
-      this.init(upgrade, null, null, null, null, null, null, null, null, 0, false, false, false, null, null, null, -1L);
+      this.init(upgrade, null, null, 1, null, null, null, null, null, null, 0, false, false, false, null, null, null, -1L);
     } catch (final IOException willNotHappen) {
       throw new AssertionError(willNotHappen);
     }
@@ -241,7 +241,7 @@ public class TillerInstaller {
 
   public void init(final boolean upgrade, final long tillerConnectionTimeout) {
     try {
-      this.init(upgrade, null, null, null, null, null, null, null, null, 0, false, false, false, null, null, null, tillerConnectionTimeout);
+      this.init(upgrade, null, null, 1, null, null, null, null, null, null, 0, false, false, false, null, null, null, tillerConnectionTimeout);
     } catch (final IOException willNotHappen) {
       throw new AssertionError(willNotHappen);
     }
@@ -348,6 +348,7 @@ public class TillerInstaller {
     this.init(upgrade,
               namespace,
               deploymentName,
+              1,
               serviceName,
               labels,
               null,
@@ -467,8 +468,48 @@ public class TillerInstaller {
                    final URI tlsCaCertUri,
                    final long tillerConnectionTimeout)
     throws IOException {
+    this.init(upgrade,
+              namespace,
+              deploymentName,
+              1, /* one replica */
+              serviceName,
+              labels,
+              nodeSelector,
+              serviceAccountName,
+              imageName,
+              imagePullPolicy,
+              maxHistory,
+              hostNetwork,
+              tls,
+              verifyTls,
+              tlsKeyUri,
+              tlsCertUri,
+              tlsCaCertUri,
+              tillerConnectionTimeout);
+  }
+
+  public void init(final boolean upgrade,
+                   String namespace,
+                   String deploymentName,
+                   int replicas,
+                   String serviceName,
+                   Map<String, String> labels,
+                   Map<String, String> nodeSelector,
+                   String serviceAccountName,
+                   String imageName,
+                   final ImagePullPolicy imagePullPolicy,
+                   final int maxHistory,
+                   final boolean hostNetwork,
+                   final boolean tls,
+                   final boolean verifyTls,
+                   final URI tlsKeyUri,
+                   final URI tlsCertUri,
+                   final URI tlsCaCertUri,
+                   final long tillerConnectionTimeout)
+    throws IOException {
     namespace = normalizeNamespace(namespace);
     deploymentName = normalizeDeploymentName(deploymentName);
+    replicas = Math.max(1, replicas);
     serviceName = normalizeServiceName(serviceName);
     labels = normalizeLabels(labels);
     serviceAccountName = normalizeServiceAccountName(serviceAccountName);
@@ -477,6 +518,7 @@ public class TillerInstaller {
     try {
       this.install(namespace,
                    deploymentName,
+                   replicas,
                    serviceName,
                    labels,
                    nodeSelector,
@@ -497,11 +539,13 @@ public class TillerInstaller {
       } else if (upgrade) {
         this.upgrade(namespace,
                      deploymentName,
+                     replicas,
                      serviceName,
                      serviceAccountName,
                      imageName,
                      imagePullPolicy,
-                     labels);
+                     labels,
+                     false);
       }
     }
     if (tillerConnectionTimeout >= 0 && this.kubernetesClient instanceof HttpClientAware) {
@@ -511,12 +555,13 @@ public class TillerInstaller {
 
   public void install() {
     try {
-      this.install(null, null, null, null, null, null, null, null, 0, false, false, false, null, null, null);
+      this.install(null, null, 1, null, null, null, null, null, null, 0, false, false, false, null, null, null);
     } catch (final IOException willNotHappen) {
       throw new AssertionError(willNotHappen);
     }
   }
 
+  @Deprecated
   public void install(String namespace,
                       final String deploymentName,
                       final String serviceName,
@@ -533,6 +578,7 @@ public class TillerInstaller {
     throws IOException {
     this.install(namespace,
                  deploymentName,
+                 1,
                  serviceName,
                  labels,
                  null,
@@ -548,8 +594,44 @@ public class TillerInstaller {
                  tlsCaCertUri);
   }
 
+  @Deprecated
   public void install(String namespace,
                       final String deploymentName,
+                      final String serviceName,
+                      Map<String, String> labels,
+                      final Map<String, String> nodeSelector,
+                      final String serviceAccountName,
+                      final String imageName,
+                      final ImagePullPolicy imagePullPolicy,
+                      final int maxHistory,
+                      final boolean hostNetwork,
+                      final boolean tls,
+                      final boolean verifyTls,
+                      final URI tlsKeyUri,
+                      final URI tlsCertUri,
+                      final URI tlsCaCertUri)
+    throws IOException {
+    this.install(namespace,
+                 deploymentName,
+                 1,
+                 serviceName,
+                 labels,
+                 nodeSelector,
+                 serviceAccountName,
+                 imageName,
+                 imagePullPolicy,
+                 maxHistory,
+                 hostNetwork,
+                 tls,
+                 verifyTls,
+                 tlsKeyUri,
+                 tlsCertUri,
+                 tlsCaCertUri);
+  }
+
+  public void install(String namespace,
+                      final String deploymentName,
+                      final int replicas,
                       final String serviceName,
                       Map<String, String> labels,
                       final Map<String, String> nodeSelector,
@@ -569,6 +651,7 @@ public class TillerInstaller {
     final Deployment deployment =
       this.createDeployment(namespace,
                             normalizeDeploymentName(deploymentName),
+                            Math.max(1, replicas),
                             labels,
                             nodeSelector,
                             normalizeServiceAccountName(serviceAccountName),
@@ -579,7 +662,6 @@ public class TillerInstaller {
                             tls,
                             verifyTls);
         
-    // this.kubernetesClient.extensions().deployments().inNamespace(namespace).create(deployment);
     this.kubernetesClient.apps().deployments().inNamespace(namespace).create(deployment);
 
     final Service service = this.createService(namespace, normalizeServiceName(serviceName), labels);
@@ -600,7 +682,8 @@ public class TillerInstaller {
   public void upgrade() {
     this.upgrade(null, null, null, null, null, null, null, false);
   }
-  
+
+  @Deprecated
   public void upgrade(String namespace,
                       final String deploymentName,
                       String serviceName,
@@ -610,6 +693,7 @@ public class TillerInstaller {
                       final Map<String, String> labels) {
     this.upgrade(namespace,
                  deploymentName,
+                 1,
                  serviceName,
                  serviceAccountName,
                  imageName,
@@ -618,8 +702,29 @@ public class TillerInstaller {
                  false);
   }
 
+  @Deprecated
   public void upgrade(String namespace,
                       final String deploymentName,
+                      String serviceName,
+                      final String serviceAccountName,
+                      final String imageName,
+                      final ImagePullPolicy imagePullPolicy,
+                      final Map<String, String> labels,
+                      final boolean force) {
+    this.upgrade(namespace,
+                 deploymentName,
+                 1,
+                 serviceName,
+                 serviceAccountName,
+                 imageName,
+                 imagePullPolicy,
+                 labels,
+                 force);
+  }
+
+  public void upgrade(String namespace,
+                      final String deploymentName,
+                      final int replicas,
                       String serviceName,
                       final String serviceAccountName,
                       final String imageName,
@@ -646,15 +751,16 @@ public class TillerInstaller {
     
     resource.edit()
       .editSpec()
-      .editTemplate()
-      .editSpec()
-      .editContainer(0)
-      .withImage(normalizeImageName(imageName))
-      .withImagePullPolicy(normalizeImagePullPolicy(imagePullPolicy))
-      .and()
-      .withServiceAccountName(normalizeServiceAccountName(serviceAccountName))
-      .endSpec()
-      .endTemplate()
+      .withNewReplicas(Math.max(1, replicas))
+        .editTemplate()
+          .editSpec()
+            .editContainer(0)
+            .withImage(normalizeImageName(imageName))
+            .withImagePullPolicy(normalizeImagePullPolicy(imagePullPolicy))
+            .and()
+            .withServiceAccountName(normalizeServiceAccountName(serviceAccountName))
+          .endSpec()
+        .endTemplate()
       .endSpec()
       .done();
 
@@ -688,6 +794,7 @@ public class TillerInstaller {
     return service;
   }
 
+  @Deprecated
   protected Deployment createDeployment(String namespace,
                                         final String deploymentName,
                                         Map<String, String> labels,
@@ -699,6 +806,7 @@ public class TillerInstaller {
                                         final boolean verifyTls) {
     return this.createDeployment(namespace,
                                  deploymentName,
+                                 1,
                                  labels,
                                  null,
                                  serviceAccountName,
@@ -710,8 +818,35 @@ public class TillerInstaller {
                                  verifyTls);
   }
 
+  @Deprecated
   protected Deployment createDeployment(String namespace,
                                         final String deploymentName,
+                                        Map<String, String> labels,
+                                        final Map<String, String> nodeSelector,
+                                        final String serviceAccountName,
+                                        final String imageName,
+                                        final ImagePullPolicy imagePullPolicy,
+                                        final int maxHistory,
+                                        final boolean hostNetwork,
+                                        final boolean tls,
+                                        final boolean verifyTls) {
+    return this.createDeployment(namespace,
+                                 deploymentName,
+                                 1,
+                                 labels,
+                                 nodeSelector,
+                                 serviceAccountName,
+                                 imageName,
+                                 imagePullPolicy,
+                                 maxHistory,
+                                 hostNetwork,
+                                 tls,
+                                 verifyTls);
+  }
+
+  protected Deployment createDeployment(String namespace,
+                                        final String deploymentName,
+                                        final int replicas,
                                         Map<String, String> labels,
                                         final Map<String, String> nodeSelector,
                                         final String serviceAccountName,
@@ -732,7 +867,8 @@ public class TillerInstaller {
     metadata.setLabels(labels);
     deployment.setMetadata(metadata);
 
-    deployment.setSpec(this.createDeploymentSpec(labels,
+    deployment.setSpec(this.createDeploymentSpec(Math.max(1, replicas),
+                                                 labels,
                                                  nodeSelector,
                                                  serviceAccountName,
                                                  imageName,
@@ -785,7 +921,8 @@ public class TillerInstaller {
     
     return secret;
   }
-  
+
+  @Deprecated
   protected DeploymentSpec createDeploymentSpec(final Map<String, String> labels,
                                                 final String serviceAccountName,
                                                 final String imageName,
@@ -794,7 +931,8 @@ public class TillerInstaller {
                                                 final boolean hostNetwork,
                                                 final boolean tls,
                                                 final boolean verifyTls) {
-    return this.createDeploymentSpec(labels,
+    return this.createDeploymentSpec(1,
+                                     labels,
                                      null,
                                      serviceAccountName,
                                      imageName,
@@ -806,6 +944,7 @@ public class TillerInstaller {
                                      verifyTls);
   }
 
+  @Deprecated
   protected DeploymentSpec createDeploymentSpec(final Map<String, String> labels,
                                                 final Map<String, String> nodeSelector,
                                                 String serviceAccountName,
@@ -815,9 +954,33 @@ public class TillerInstaller {
                                                 final String namespace,
                                                 final boolean hostNetwork,
                                                 final boolean tls,
-                                                final boolean verifyTls) {    
+                                                final boolean verifyTls) {
+    return this.createDeploymentSpec(1,
+                                     labels,
+                                     nodeSelector,
+                                     serviceAccountName,
+                                     imageName,
+                                     imagePullPolicy,
+                                     maxHistory,
+                                     namespace,
+                                     hostNetwork,
+                                     tls,
+                                     verifyTls);
+  }
 
+  protected DeploymentSpec createDeploymentSpec(final int replicas,
+                                                final Map<String, String> labels,
+                                                final Map<String, String> nodeSelector,
+                                                String serviceAccountName,
+                                                final String imageName,
+                                                final ImagePullPolicy imagePullPolicy,
+                                                final int maxHistory,
+                                                final String namespace,
+                                                final boolean hostNetwork,
+                                                final boolean tls,
+                                                final boolean verifyTls) {    
     final DeploymentSpec deploymentSpec = new DeploymentSpec();
+    deploymentSpec.setReplicas(Math.max(1, replicas));
     final PodTemplateSpec podTemplateSpec = new PodTemplateSpec();
     final ObjectMeta metadata = new ObjectMeta();
     metadata.setLabels(normalizeLabels(labels));
