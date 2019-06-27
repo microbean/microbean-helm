@@ -432,6 +432,15 @@ public class Tiller implements ConfigAware<Config>, Closeable {
                                                                int tillerPort,
                                                                Map<String, String> tillerLabels,
                                                                Function<? super LocalPortForward, ? extends ManagedChannel> channelBuilder) throws MalformedURLException {  
+    this(client, namespaceHousingTiller, tillerPort, tillerLabels, channelBuilder, 0);
+  }
+
+  public <T extends HttpClientAware & KubernetesClient> Tiller(final T client,
+                                                               String namespaceHousingTiller,
+                                                               int tillerPort,
+                                                               Map<String, String> tillerLabels,
+                                                               Function<? super LocalPortForward, ? extends ManagedChannel> channelBuilder,
+                                                               int localPort) throws MalformedURLException {
     super();
     Objects.requireNonNull(client);
     this.config = client.getConfiguration();
@@ -449,8 +458,9 @@ public class Tiller implements ConfigAware<Config>, Closeable {
       throw new IllegalArgumentException("client", new IllegalStateException("client.getHttpClient() == null"));
     }
     LocalPortForward portForward = null;
-    
-    this.portForward = Pods.forwardPort(httpClient, client.pods().inNamespace(namespaceHousingTiller).withLabels(tillerLabels), tillerPort);
+
+    this.portForward = localPort <= 0 ? Pods.forwardPort(httpClient, client.pods().inNamespace(namespaceHousingTiller).withLabels(tillerLabels), tillerPort)
+            : Pods.forwardPort(httpClient, client.pods().inNamespace(namespaceHousingTiller).withLabels(tillerLabels), tillerPort, localPort);
     if (this.portForward == null) {
       throw new TillerException("Could not forward port to a Ready Tiller pod's port " + tillerPort + " in namespace " + namespaceHousingTiller + " with labels " + tillerLabels);
     }
