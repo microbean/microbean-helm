@@ -326,8 +326,8 @@ public class TillerInstaller {
    * ImagePullPolicy, Map)
    *
    * @deprecated Please use the {@link #init(boolean, String, String,
-   * String, Map, Map, String, String, ImagePullPolicy, int, boolean,
-   * boolean, boolean, URI, URI, URI, long)} method instead.
+   * int, String, Map, Map, String, String, ImagePullPolicy, int,
+   * boolean, boolean, boolean, URI, URI, URI, long)} method instead.
    */
   @Deprecated
   public void init(final boolean upgrade,
@@ -444,12 +444,21 @@ public class TillerInstaller {
    *
    * @exception IOException if a communication error occurs
    *
+   * @see #init(boolean, String, String, int, String, Map, Map,
+   * String, String, ImagePullPolicy, int, boolean, boolean, boolean,
+   * URI, URI, URI, long)
+   *
    * @see #install(String, String, String, Map, Map, String, String,
    * ImagePullPolicy, int, boolean, boolean, boolean, URI, URI, URI)
    *
    * @see #upgrade(String, String, String, String, String,
    * ImagePullPolicy, Map)
+   *
+   * @deprecated Please use the {@link #init(boolean, String, String,
+   * int, String, Map, Map, String, String, ImagePullPolicy, int,
+   * boolean, boolean, boolean, URI, URI, URI, long)} method instead.
    */
+  @Deprecated
   public void init(final boolean upgrade,
                    String namespace,
                    String deploymentName,
@@ -488,6 +497,94 @@ public class TillerInstaller {
               tillerConnectionTimeout);
   }
 
+  /**
+   * Attempts to {@linkplain #install(String, String, String, Map,
+   * String, String, ImagePullPolicy, boolean, boolean, boolean, URI,
+   * URI, URI) install} Tiller into the Kubernetes cluster, silently
+   * returning if Tiller is already installed and {@code upgrade} is
+   * {@code false}, or {@linkplain #upgrade(String, String, String,
+   * String, String, ImagePullPolicy, Map) upgrading} the Tiller
+   * installation if {@code upgrade} is {@code true} and a newer
+   * version of Tiller is available.
+   *
+   * @param upgrade whether or not to attempt an upgrade if Tiller is
+   * already installed
+   *
+   * @param namespace the Kubernetes namespace into which Tiller will
+   * be installed, if it is not already installed; may be {@code null}
+   * in which case a default will be used
+   *
+   * @param deploymentName the name that the Kubernetes Deployment
+   * representing Tiller will have; may be {@code null}; {@code
+   * tiller-deploy} by default
+   *
+   * @param replicas the number of Tiller replicas to start; the
+   * greater of {@code 1} or this value will be used
+   *
+   * @param serviceName the name that the Kubernetes Service
+   * representing Tiller will have; may be {@code null}; {@code
+   * tiller-deploy} (yes, {@code tiller-deploy}) by default
+   *
+   * @param labels the Kubernetes Labels that will be applied to
+   * various Kubernetes resources representing Tiller; may be {@code
+   * null} in which case a {@link Map} consisting of a label of {@code
+   * app} with a value of {@code helm} and a label of {@code name}
+   * with a value of {@code tiller} will be used instead
+   *
+   * @param nodeSelector a {@link Map} representing labels that will
+   * be written as a node selector; may be {@code null}
+   *
+   * @param serviceAccountName the name of the Kubernetes Service
+   * Account that Tiller should use; may be {@code null} in which case
+   * the default Service Account will be used instead
+   *
+   * @param imageName the name of the Docker image that contains the
+   * Tiller code; may be {@code null} in which case the Java {@link
+   * String} <code>"gcr.io/kubernetes-helm/tiller:v" + {@value
+   * #VERSION}</code> will be used instead
+   *
+   * @param imagePullPolicy an {@link ImagePullPolicy} specifying how
+   * the Tiller image should be pulled; may be {@code null} in which
+   * case {@link ImagePullPolicy#IF_NOT_PRESENT} will be used instead
+   *
+   * @param maxHistory the maximum number of release versions stored
+   * per release; a value that is less than or equal to zero means
+   * there is effectively no limit
+   *
+   * @param hostNetwork the value to be used for the {@linkplain
+   * PodSpec#setHostNetwork(Boolean) <code>hostNetwork</code>
+   * property} of the Tiller Pod's {@link PodSpec}
+   *
+   * @param tls whether Tiller's conversations with Kubernetes will be
+   * encrypted using TLS
+   *
+   * @param verifyTls whether, if and only if {@code tls} is {@code
+   * true}, additional TLS-related verification will be performed
+   *
+   * @param tlsKeyUri a {@link URI} to the public key used during TLS
+   * communication with Kubernetes; may be {@code null} if {@code tls}
+   * is {@code false}
+   *
+   * @param tlsCertUri a {@link URI} to the certificate used during
+   * TLS communication with Kubernetes; may be {@code null} if {@code
+   * tls} is {@code false}
+   *
+   * @param tlsCaCertUri a {@link URI} to the certificate authority
+   * used during TLS communication with Kubernetes; may be {@code
+   * null} if {@code tls} is {@code false}
+   *
+   * @param tillerConnectionTimeout the number of milliseconds to wait
+   * for a Tiller pod to become ready; if less than {@code 0} no wait
+   * will occur
+   *
+   * @exception IOException if a communication error occurs
+   *
+   * @see #install(String, String, String, Map, Map, String, String,
+   * ImagePullPolicy, int, boolean, boolean, boolean, URI, URI, URI)
+   *
+   * @see #upgrade(String, String, String, String, String,
+   * ImagePullPolicy, Map)
+   */
   public void init(final boolean upgrade,
                    String namespace,
                    String deploymentName,
@@ -751,7 +848,7 @@ public class TillerInstaller {
     
     resource.edit()
       .editSpec()
-      .withNewReplicas(Math.max(1, replicas))
+      .withReplicas(Math.max(1, replicas))
         .editTemplate()
           .editSpec()
             .editContainer(0)
