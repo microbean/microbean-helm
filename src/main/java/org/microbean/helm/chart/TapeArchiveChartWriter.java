@@ -134,7 +134,12 @@ public class TapeArchiveChartWriter extends AbstractArchiveChartWriter {
 
     final byte[] contentsBytes = contents.getBytes(StandardCharsets.UTF_8);
     final long size = contentsBytes.length;
-    final TarHeader tarHeader = TarHeader.createHeader(new StringBuilder(context.get("path", String.class)).append(path).toString(), size, System.currentTimeMillis(), false, 0755);
+    final TarHeader tarHeader =
+      TarHeader.createHeader(new StringBuilder(context.get("path", String.class)).append(path).toString(),
+                             size,
+                             System.currentTimeMillis() / 1000L, // see https://github.com/microbean/microbean-helm/issues/200
+                             false, // false == not a directory
+                             0755);
     final TarEntry tarEntry = new TarEntry(tarHeader);
     this.outputStream.putNextEntry(tarEntry);
     this.outputStream.write(contentsBytes);
