@@ -259,11 +259,11 @@ public class HelmIgnorePathMatcher implements PathMatcher, Predicate<Path> {
                 regex.append("\\.");
                 break;
               case '*':
-                regex.append("[^").append(File.separator).append("]*");
-                break;
+        	  regex.append("[^").append(File.separator).append(File.separator).append("]*");
+        	  break;
               case '?':
-                regex.append("[^").append(File.separator).append("]?");
-                break;
+        	  regex.append("[^").append(File.separator).append(File.separator).append("]?");
+        	  break;
               default:
                 regex.append(c);
                 break;
