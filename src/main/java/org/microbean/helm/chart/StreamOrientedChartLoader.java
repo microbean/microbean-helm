@@ -273,6 +273,10 @@ public abstract class StreamOrientedChartLoader<T> extends AbstractChartLoader<T
     Objects.requireNonNull(chartBuilders);
     Objects.requireNonNull(path);
     Objects.requireNonNull(stream);
+
+    if (path.length() == 0) {
+	return;
+    }
     
     final Chart.Builder builder = getChartBuilder(chartBuilders, path);
     if (builder == null) {
