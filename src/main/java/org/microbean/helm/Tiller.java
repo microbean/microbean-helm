@@ -87,7 +87,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
    *
    * <p>This field is never {@code null}.</p>
    */
-  public static final String VERSION = "2.12.3";
+  public static final String VERSION = "2.16.2";
 
   /**
    * The Kubernetes namespace into which Tiller server instances are
@@ -520,7 +520,7 @@ public class Tiller implements ConfigAware<Config>, Closeable {
       .idleTimeout(5L, TimeUnit.SECONDS)
       .keepAliveTime(30L, TimeUnit.SECONDS)
       .maxInboundMessageSize(MAX_MESSAGE_SIZE)
-      .usePlaintext(true)
+      .usePlaintext()
       .build();
   }
 
